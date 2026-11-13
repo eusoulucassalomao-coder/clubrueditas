@@ -208,3 +208,15 @@ details p{margin:0 0 16px;font-size:14px;color:var(--muted)}
 .club-chat:not([hidden])~.chat-fab{opacity:0;pointer-events:none}
 @media(max-width:640px){.club-chat{top:70px;right:10px;width:calc(100vw - 20px);height:calc(100dvh - 82px);border-radius:18px}.chat-fab{right:14px;bottom:14px;padding:12px 15px}.assistant-callout{padding:24px 18px}}
 @media(prefers-reduced-motion:reduce){.chat-messages{scroll-behavior:auto}}
+
+/* Acessos diretos ao assistente */
+.nav-assistant-btn{flex:0 0 auto;border:1px solid rgba(233,196,106,.65);border-radius:999px;padding:9px 15px;background:linear-gradient(180deg,#f0d27f,#c9a227);color:#14261a;font:700 13px var(--sans);cursor:pointer;box-shadow:0 5px 18px rgba(201,162,39,.18);white-space:nowrap}
+.nav-assistant-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(201,162,39,.28)}
+.assistant-callout .btn{margin-top:4px}
+.chat-fab{gap:9px;padding:12px 17px;animation:assistant-attention 2.8s ease-in-out infinite}
+.chat-fab-robot{font-size:21px;line-height:1}
+.chat-fab-wave{display:inline-block;font-size:19px;transform-origin:70% 80%;animation:assistant-wave 1.8s ease-in-out infinite}
+@keyframes assistant-wave{0%,60%,100%{transform:rotate(0)}10%,20%{transform:rotate(18deg)}15%,25%{transform:rotate(-12deg)}30%{transform:rotate(12deg)}}
+@keyframes assistant-attention{0%,100%{box-shadow:0 10px 30px rgba(0,0,0,.25),0 0 0 0 rgba(201,162,39,0)}50%{box-shadow:0 10px 30px rgba(0,0,0,.25),0 0 0 8px rgba(201,162,39,.16)}}
+@media(max-width:640px){.nav-in{gap:8px}.nav-assistant-btn{padding:8px 11px;font-size:12px}.chat-fab{max-width:calc(100vw - 28px);font-size:12px;padding:11px 13px}}
+@media(prefers-reduced-motion:reduce){.chat-fab,.chat-fab-wave{animation:none}}
