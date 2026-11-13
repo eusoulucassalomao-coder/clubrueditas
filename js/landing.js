@@ -137,7 +137,7 @@
       earn: rulesText(CF).earn + rulesText(CF).extra + " También sumás por traer amigos, en tu cumpleaños y por dejar tu reseña.",
       redeem: "Entrá a “Mis puntos”, elegí el premio que quieras canjear y mostrá el código en caja para retirarlo.",
       expiry: "Tus puntos vencen después de 12 meses sin visitas. Si venís con regularidad, los conservás.",
-      privacy: "Usamos tus datos para gestionar tu membresía y tus puntos. No los compartimos y podés pedir que los eliminemos cuando quieras."
+      privacy: "Usamos tus datos para administrar tu membresía, identificar tu cuenta y registrar tus puntos y beneficios. No los usamos para enviarte mensajes por WhatsApp y podés pedir que los eliminemos cuando quieras."
     };
     addMessage(answers[topic] || "No encontré esa respuesta. Elegí otra consulta o volvé al inicio.");
     showOptions([["Otra pregunta", startFaq], ["Consultar mis puntos", startLookup], ["Volver al inicio", welcome]]);
@@ -167,7 +167,7 @@
       ["No autorizo", () => {
         flow = null;
         addMessage("Entendido. Sin esta autorización no podemos crear ni administrar tu membresía. No se guardó ningún registro.");
-        showOptions([["Volver al inicio", welcome], ["Revisar mis respuestas", startJoin]]);
+        showOptions([["Volver al inicio", welcome], ["Empezar de nuevo", startJoin]]);
       }]
     ]);
   }
@@ -177,8 +177,16 @@
     showOptions([]); addMessage("Un momento, estoy guardando tu membresía…");
     try{
       const r = await F.register(flow.data);
-      const d = await F.me(r.token);
       setToken(r.token);
+      let d;
+      try { d = await F.me(r.token); }
+      catch {
+        messages.replaceChildren();
+        addMessage(`¡Listo, ${esc(r.customer.name.split(" ")[0])}! Tu inscripción quedó guardada correctamente.`, "bot");
+        addMessage(`Tu código de socio es ${esc(r.customer.code)}. Ya recibiste ${fmt(r.customer.points)} puntos de bienvenida. Podés usar ese código para consultar tu saldo.`, "bot");
+        showOptions([["Consultar mis puntos", () => startLookup()], ["Volver al inicio", welcome]]);
+        chatForm.hidden = true; flow = null; return;
+      }
       messages.replaceChildren();
       addMessage(`¡Listo, ${esc(d.customer.name.split(" ")[0])}! Tu inscripción al Club Ruedita quedó completada y guardada.`, "bot");
       addMessage(memberCard(d, { welcome: true }), "bot", true); wire(messages);
