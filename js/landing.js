@@ -7,7 +7,6 @@
   const TK = "mkf_t_" + F.slug;
   let CF = F.conf();
 
-  const waLink = () => `https://wa.me/${CF.whatsapp}?text=${encodeURIComponent("Hola! Quiero mis puntos 🎁")}`;
   const getToken = () => { try{ return localStorage.getItem(TK) || ""; }catch(e){ return ""; } };
   const setToken = t => { try{ t ? localStorage.setItem(TK, t) : localStorage.removeItem(TK); }catch(e){} };
 
@@ -26,7 +25,6 @@
     $("navName").textContent = cf.name; $("navClub").textContent = cf.club;
     $("footName").textContent = cf.name; $("footAddr").textContent = cf.address; $("copyName").textContent = cf.name; $("yr").textContent = new Date().getFullYear();
     $("lnkMenu").href = cf.menuUrl; $("lnkDelivery").href = cf.deliveryUrl; $("lnkMaps").href = cf.mapsUrl;
-    $("lnkWa").href = "https://wa.me/" + cf.whatsapp;
     document.querySelectorAll(".cn").forEach(e => e.textContent = cf.name);
     if(cf.hero){ $("heroBg").style.backgroundImage = `url(${cf.hero})`; }
     const r = rulesText(cf);
@@ -60,8 +58,7 @@
   // ---------- tarjeta de socio ----------
   function shareLinks(c){
     const link = `${base}?ref=${c.code}#unirme`;
-    const text = `Te invito al ${CF.club} de ${CF.name}: sumás puntos y canjeás premios. Registrate con mi código ${c.code} y ganamos los dos: ${link}`;
-    return { link, wa: "https://wa.me/?text=" + encodeURIComponent(text) };
+    return { link };
   }
 
   function memberCard(d, opts){
@@ -75,10 +72,9 @@
         <div class="bar" style="margin:12px 0 8px"><i style="width:${pct}%"></i></div>
         <div style="font-size:13px;opacity:.85">${nx ? `Te faltan <b>${fmt(nx.pts - c.points)}</b> para <b>${esc(nx.name)}</b>` : "¡Ya podés canjear cualquier premio!"}</div>
       </div>
-      ${c.confirmed ? "" : `<div class="wa-cta"><a class="btn wa full" target="_blank" rel="noopener" href="${esc(waLink())}">Abrir WhatsApp y confirmar</a><p class="hint" style="font-size:12px;margin-top:8px">Se abre un mensaje ya escrito: solo tocá enviar. Te respondemos al instante con tus puntos y avisos.</p></div>`}
-      ${opts.welcome ? `<p class="hint">Te sumamos <b>${fmt(cf.bonus.welcome)} puntos</b> de bienvenida. Mostrá tu WhatsApp en caja y empezás a sumar.</p>` : ""}
+      ${opts.welcome ? `<p class="hint">Te sumamos <b>${fmt(cf.bonus.welcome)} puntos</b> de bienvenida. Ya podés consultar tu saldo y tus premios directamente con el asistente.</p>` : ""}
       <p class="hint" style="margin-top:14px">Tu código para invitar</p><span class="code">${esc(c.code)}</span>
-      <div class="share"><a class="btn" target="_blank" rel="noopener" href="${esc(sh.wa)}">Invitar por WhatsApp</a><button class="btn btn-ghost" type="button" data-copy="${esc(sh.link)}">Copiar link</button></div>
+      <div class="share"><button class="btn btn-ghost" type="button" data-copy="${esc(sh.link)}">Copiar link de invitación</button></div>
       ${pend.length ? `<div class="mrewards"><h4>Premios para retirar</h4>${pend.map(r => `<div class="mr"><span>${esc(r.name)}<small>Mostrá este código en caja</small></span><b class="code" style="margin:0">${esc(r.code)}</b></div>`).join("")}</div>` : ""}
       <div class="mrewards"><h4>Canjear premios</h4>${sorted.map(w => `
         <div class="mr"><span>${esc(w.name)}<small>${fmt(w.pts)} puntos</small></span><button type="button" data-claim="${esc(w.id)}" ${c.points >= w.pts ? "" : "disabled"}>Canjear</button></div>`).join("")}</div>
@@ -120,7 +116,7 @@
   }
   function welcome(){
     flow = null; messages.replaceChildren(); greeted = true;
-    addMessage(`¡Hola! Soy el asistente del ${CF.club}. Puedo ayudarte a unirte o revisar tus puntos.`);
+    addMessage(`¡Hola! ¿Cómo estás? Soy el asistente virtual de ${CF.club}. Estoy acá para responder tus dudas, ayudarte con tus puntos y acompañarte para entrar al club. ¿Qué necesitás?`);
     showOptions([["Quiero unirme", startJoin], ["Consultar mis puntos", startLookup]]); chatForm.hidden = true;
   }
   function startJoin(){
@@ -130,16 +126,15 @@
   function startLookup(){ flow = { type: "lookup", step: "code" }; ask("Escribí tu código del Club Ruedita y busco tus puntos.", "Ej.: ANA123"); }
   function nextJoin(){
     const d = flow.data;
-    if(flow.step === "name") { d.name = flow.value; flow.step = "phone"; ask(`Gracias, ${d.name.split(" ")[0]}. ¿Cuál es tu WhatsApp?`, "Ej.: 376 4123456"); }
+    if(flow.step === "name") { d.name = flow.value; flow.step = "phone"; ask(`Gracias, ${d.name.split(" ")[0]}. ¿Cuál es tu número de celular?`, "Ej.: 376 4123456"); }
     else if(flow.step === "phone") { d.phone = flow.value; flow.step = "birthday"; ask("¿Cuál es tu fecha de cumpleaños? Es opcional.", "Podés saltear esta pregunta", [["Prefiero no decir", () => afterBirthday("")]]); chatInput.type = "date"; }
     else if(flow.step === "birthday") { afterBirthday(flow.value); }
-    else if(flow.step === "ref") { d.ref = flow.value.toUpperCase(); askConsent(); }
+    else if(flow.step === "ref") { d.ref = flow.value.toUpperCase(); submitJoin(); }
   }
-  function afterBirthday(value){ flow.data.birthday = value; if(flow.data.ref){ askConsent(); } else { flow.step = "ref"; askRef(); } }
-  function askRef(){ ask("¿Tenés el código de un amigo que te invitó? También es opcional.", "Código de invitación", [["No tengo código", () => { flow.data.ref = ""; flow.step = "consent"; askConsent(); }]]); }
-  function askConsent(){ flow.step = "consent"; ask("¿Aceptás recibir por WhatsApp avisos de puntos y novedades? Es opcional.", "Elegí una opción", [["Sí, acepto", () => submitJoin(true)], ["No, gracias", () => submitJoin(false)]]); chatForm.hidden = true; }
-  async function submitJoin(consent){
-    showOptions([]); flow.data.consent = consent; addMessage(consent ? "Sí, acepto" : "No, gracias", "user"); addMessage("Un momento, estoy creando tu membresía…");
+  function afterBirthday(value){ flow.data.birthday = value; if(flow.data.ref){ submitJoin(); } else { flow.step = "ref"; askRef(); } }
+  function askRef(){ ask("¿Tenés el código de un amigo que te invitó? También es opcional.", "Código de invitación", [["No tengo código", () => { flow.data.ref = ""; submitJoin(); }]]); }
+  async function submitJoin(){
+    showOptions([]); flow.data.consent = false; addMessage("Un momento, estoy creando tu membresía…");
     try{
       const r = await F.register(flow.data); setToken(r.token); const d = await F.me(r.token);
       messages.replaceChildren(); addMessage(`¡Listo, ${esc(d.customer.name.split(" ")[0])}! Ya sos parte del club.`, "bot");
@@ -170,8 +165,14 @@
   }
   chatForm.addEventListener("submit", e => { e.preventDefault(); submitAnswer(chatInput.value); });
   $("chatClose").onclick = () => setChat(false);
-  $("clubChatLauncher").onclick = () => setChat(chat.hidden);
-  function setChat(open){ chat.hidden = !open; $("clubChatLauncher").setAttribute("aria-expanded", String(open)); if(open && !greeted) welcome(); if(open) chatInput.focus(); }
+  const openChatButtons = ["clubChatLauncher", "chatOpenTop", "chatOpenAction"];
+  openChatButtons.forEach(id => { const button = $(id); if(button) button.onclick = () => setChat(true); });
+  function setChat(open){
+    chat.hidden = !open;
+    openChatButtons.forEach(id => { const button = $(id); if(button) button.setAttribute("aria-expanded", String(open)); });
+    if(open && !greeted) welcome();
+    if(open) chatInput.focus();
+  }
 
   // ---------- sessão já existente ----------
   async function showMine(){
@@ -189,9 +190,9 @@
     CF = await F.init(); paint();
     const q = new URLSearchParams(location.search), t = q.get("t");
     if(t){ setToken(t); history.replaceState(null, "", location.pathname + "#puntos"); }
-    const ok = await showMine();
-    if(ok && t) setChat(true);
+    await showMine();
     const ref = q.get("ref");
-    if(ref){ setTimeout(() => { setChat(true); startJoin(); }, 300); }
+    setChat(true);
+    if(ref){ startJoin(); }
   })();
 })();
