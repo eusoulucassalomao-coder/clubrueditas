@@ -116,8 +116,8 @@
   }
   function welcome(){
     flow = null; messages.replaceChildren(); greeted = true;
-    addMessage(`¡Hola! ¿Cómo estás? Soy el asistente virtual de ${CF.club}. ¿Necesitás una respuesta rápida, ayuda con tus puntos o querés entrar al club? Estoy acá para ayudarte.`);
-    showOptions([["Tengo una duda", startFaq], ["Consultar mis puntos", startLookup], ["Quiero unirme", startJoin]]); chatForm.hidden = true;
+    addMessage(`¡Hola! ¿Cómo estás? Soy el asistente virtual de ${CF.club}. Para ayudarte mejor, contame: ¿ya sos parte del club o querés conocerlo y sumarte?`);
+    showOptions([["Ya soy del club", startLookup], ["Quiero unirme", startJoin], ["Tengo una duda", startFaq]]); chatForm.hidden = true;
   }
   function startFaq(){
     flow = null; chatForm.hidden = true;
@@ -211,9 +211,8 @@
   // ---------- arranque ----------
   (async function(){
     CF = await F.init(); paint();
-    const q = new URLSearchParams(location.search), t = q.get("t");
-    if(t){ setToken(t); history.replaceState(null, "", location.pathname + "#puntos"); }
-    await showMine();
+    const q = new URLSearchParams(location.search);
+    // Cada visitante comienza por la bienvenida; nunca recuperamos automáticamente una cuenta anterior.
     const ref = q.get("ref");
     setChat(true);
     if(ref){ startJoin(); }
