@@ -116,8 +116,31 @@
   }
   function welcome(){
     flow = null; messages.replaceChildren(); greeted = true;
-    addMessage(`¡Hola! ¿Cómo estás? Soy el asistente virtual de ${CF.club}. Estoy acá para responder tus dudas, ayudarte con tus puntos y acompañarte para entrar al club. ¿Qué necesitás?`);
-    showOptions([["Quiero unirme", startJoin], ["Consultar mis puntos", startLookup]]); chatForm.hidden = true;
+    addMessage(`¡Hola! ¿Cómo estás? Soy el asistente virtual de ${CF.club}. ¿Necesitás una respuesta rápida, ayuda con tus puntos o querés entrar al club? Estoy acá para ayudarte.`);
+    showOptions([["Tengo una duda", startFaq], ["Consultar mis puntos", startLookup], ["Quiero unirme", startJoin]]); chatForm.hidden = true;
+  }
+  function startFaq(){
+    flow = null; chatForm.hidden = true;
+    addMessage("Claro. Elegí el tema y te doy la información:");
+    showOptions([
+      ["¿Cuánto cuesta?", () => answerFaq("price")],
+      ["¿Cómo sumo puntos?", () => answerFaq("earn")],
+      ["¿Cómo canjeo premios?", () => answerFaq("redeem")],
+      ["¿Los puntos vencen?", () => answerFaq("expiry")],
+      ["¿Qué hacen con mis datos?", () => answerFaq("privacy")],
+      ["Volver al inicio", welcome]
+    ]);
+  }
+  function answerFaq(topic){
+    const answers = {
+      price: "El Club Ruedita es gratuito. No hay costo de inscripción.",
+      earn: rulesText(CF).earn + rulesText(CF).extra + " También sumás por traer amigos, en tu cumpleaños y por dejar tu reseña.",
+      redeem: "Entrá a “Mis puntos”, elegí el premio que quieras canjear y mostrá el código en caja para retirarlo.",
+      expiry: "Tus puntos vencen después de 12 meses sin visitas. Si venís con regularidad, los conservás.",
+      privacy: "Usamos tus datos para gestionar tu membresía y tus puntos. No los compartimos y podés pedir que los eliminemos cuando quieras."
+    };
+    addMessage(answers[topic] || "No encontré esa respuesta. Elegí otra consulta o volvé al inicio.");
+    showOptions([["Otra pregunta", startFaq], ["Consultar mis puntos", startLookup], ["Volver al inicio", welcome]]);
   }
   function startJoin(){
     flow = { type: "join", step: "name", data: { ref: new URLSearchParams(location.search).get("ref") || "" } };
