@@ -2,7 +2,7 @@
 // os valores abaixo servem de reserva caso o servidor não responda. Para um novo cliente, é só trocar este arquivo e as imagens em /assets.
 window.CFG = {
   id: "laruedita",                       // identificador do restaurante no banco
-  api: "https://nbydqcgisptzpldencxo.supabase.co/functions/v1/fid",
+  api: "https://kwgrsliviyjweluvrkow.supabase.co/functions/v1/fid",
   name: "La Ruedita",
   club: "Club Ruedita",
   tagline: "Parrilla · Galetería",
