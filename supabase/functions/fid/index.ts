@@ -2,7 +2,6 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 // API do programa de fidelidade. Autenticação própria (token assinado), por isso verify_jwt = false.
 // Os dados só são acessados aqui, com a chave de serviço do banco (que nunca vai ao navegador).
-declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const db = createClient(Deno.env.get("SUPABASE_URL")!, SERVICE_KEY, { auth: { persistSession: false } });
 const enc = new TextEncoder();
@@ -57,19 +56,8 @@ async function rest(slug: string) {
   return data;
 }
 
-// ---------- eventos para o n8n (mensagens de WhatsApp) ----------
-// Regra: só se escreve a quem CONFIRMOU o WhatsApp (mandou mensagem ao local), aceitou e não pediu baja.
-const canMsg = (c: any) => !!(c && c.consent && c.wa_confirmed_at && !c.opted_out);
-function emit(r: any, event: string, payload: Record<string, unknown>) {
-  if (!r.n8n_webhook) return;
-  const p = fetch(r.n8n_webhook, {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-fid-event-key": r.n8n_secret || "" },
-    body: JSON.stringify({ event, slug: r.slug, restaurant: r.name, ts: new Date().toISOString(), site: r.config?.siteUrl || "", ...payload }),
-    signal: AbortSignal.timeout(8000),
-  }).catch((e) => console.error("n8n", String(e)));
-  try { EdgeRuntime?.waitUntil(p); } catch { /* sem waitUntil: segue */ }
-}
+// ---------- atendimento ao cliente ----------
+// Mensagens automáticas externas desativadas: o canal de atendimento é o assistente do site.
 // conexão do WhatsApp do local (QR): quem fala com a Evolution API é o n8n; a chave dela nunca passa por aqui
 async function waCall(r: any, action: "status" | "connect" | "logout") {
   if (!r.n8n_wa_webhook) return { state: "unconfigured" };
@@ -86,7 +74,6 @@ async function waCall(r: any, action: "status" | "connect" | "logout") {
     return { state: String(j.state || "unknown").slice(0, 20), qr, pairingCode: String(j.pairingCode || "").slice(0, 20) };
   } catch { return { state: "unavailable" }; }
 }
-const link = (r: any, token: string) => (r.config?.siteUrl ? `${r.config.siteUrl}/?t=${token}#puntos` : "");
 const pub = (c: any) => ({ name: c.name, code: c.code, points: c.points, visits: c.visits, lastVisit: c.last_visit ?? c.lastVisit ?? null });
 const digits = (s: unknown) => String(s ?? "").replace(/\D/g, "");
 
@@ -138,7 +125,7 @@ Deno.serve(async (req) => {
     if (act === "register") {
       limit(`reg:${ip}`, 8, 10 * 60000);
       const c = await rpc("fid_register", { p_slug: slug, p_name: b.name, p_phone: b.phone, p_birthday: b.birthday || null, p_ref: b.ref || null, p_consent: !!b.consent });
-      // sem mensagem automática: o cliente toca em “Abrir WhatsApp” e é o robô quem responde a ele
+      // O cadastro é concluído no próprio assistente, sem mensagens externas.
       return json({ customer: pub(c), token: c.accessToken });
     }
     if (act === "me") {
@@ -163,17 +150,11 @@ Deno.serve(async (req) => {
       limit(`claim:${ip}`, 20, 10 * 60000);
       const c = await customerByToken(r, b.token);
       const red = await rpc("fid_claim", { p_slug: slug, p_customer: c.id, p_reward: String(b.reward || "") });
-      if (canMsg(c)) emit(r, "claim", { customer: { name: c.name, phone: c.phone }, reward: { name: red.name, code: red.code, pts: red.pts } });
       return json({ redemption: red });
     }
-    if (act === "login") {   // mantido por compatibilidade: só envia o link a quem já confirmou o WhatsApp (resposta sempre igual)
+    if (act === "login") {
       limit(`login:${ip}`, 6, 10 * 60000);
-      const key = digits(b.phone).slice(-8);
-      if (key.length === 8) {
-        const { data: c } = await db.from("customers").select("name,phone,access_token,consent,opted_out,wa_confirmed_at").eq("restaurant_id", r.id).eq("phone_key", key).maybeSingle();
-        if (canMsg(c)) emit(r, "login", { customer: { name: c.name, phone: c.phone }, link: link(r, c.access_token) });
-      }
-      return json({ ok: true, channel: !!r.n8n_webhook });
+      return json({ ok: true, channel: false });
     }
     if (act === "auth") {
       limit(`auth:${ip}`, 8, 60000);
@@ -190,17 +171,12 @@ Deno.serve(async (req) => {
       if (act === "search") return json({ results: await rpc("fid_search", { p_slug: slug, p_q: String(b.q ?? "").slice(0, 60) }) });
       if (act === "visit") {
         const v = await rpc("fid_add_visit", { p_slug: slug, p_customer: b.customer, p_amount: Number(b.amount), p_staff: "caja" });
-        const { data: tk } = await db.from("customers").select("access_token,consent,opted_out,wa_confirmed_at").eq("id", v.customer.id).maybeSingle();
-        if (canMsg(tk)) {
-          emit(r, "visit", { customer: { name: v.customer.name, phone: v.customer.phone, points: v.customer.points, visits: v.customer.visits, code: v.customer.code }, pts: v.pts, mult: v.mult, bonuses: v.bonuses, link: link(r, tk!.access_token) });
-        }
         return json({ ...v, bonuses: (v.bonuses || []).map((x: any) => ({ to: x.to, pts: x.pts, why: x.why })) });
       }
       if (act === "bonus") return json(await rpc("fid_add_bonus", { p_slug: slug, p_customer: b.customer, p_type: String(b.type) }));
       if (act === "find_code") return json(await rpc("fid_find_redemption", { p_slug: slug, p_code: String(b.code ?? "") }));
       if (act === "deliver") {
         const d = await rpc("fid_deliver", { p_slug: slug, p_code: String(b.code ?? "") });
-        if (d.confirmed) emit(r, "deliver", { customer: { name: d.customer, phone: d.phone }, reward: { name: d.name } });
         return json({ ...d, phone: undefined, confirmed: undefined });
       }
       if (act === "new_customer") {
@@ -262,11 +238,6 @@ Deno.serve(async (req) => {
         const key = digits(b.phone).slice(-8);
         if (key.length === 8) await db.from("customers").update({ opted_out: true }).eq("restaurant_id", r.id).eq("phone_key", key);
         return json({ ok: true });
-      }
-      if (act === "auto_inbound") {   // o cliente escreveu “puntos” ao WhatsApp do local: confirma o número e devolve os dados da resposta
-        const c = await rpc("fid_inbound", { p_slug: slug, p_phone: String(b.phone ?? "") });
-        if (!c || !c.found) return json({ found: false, site: r.config?.siteUrl || "" });
-        return json({ found: true, name: c.name, points: c.points, code: c.code, link: link(r, c.token), site: r.config?.siteUrl || "" });
       }
     }
     return json({ error: "bad-action" }, 400);
