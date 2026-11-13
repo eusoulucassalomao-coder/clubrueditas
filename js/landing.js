@@ -154,16 +154,40 @@
     else if(flow.step === "birthday") { afterBirthday(flow.value); }
     else if(flow.step === "ref") { d.ref = flow.value.toUpperCase(); submitJoin(); }
   }
-  function afterBirthday(value){ flow.data.birthday = value; if(flow.data.ref){ submitJoin(); } else { flow.step = "ref"; askRef(); } }
-  function askRef(){ ask("¿Tenés el código de un amigo que te invitó? También es opcional.", "Código de invitación", [["No tengo código", () => { flow.data.ref = ""; submitJoin(); }]]); }
-  async function submitJoin(){
-    showOptions([]); flow.data.consent = false; addMessage("Un momento, estoy creando tu membresía…");
+  function afterBirthday(value){ flow.data.birthday = value; if(flow.data.ref){ askConsent(); } else { flow.step = "ref"; askRef(); } }
+  function askRef(){
+    ask("¿Tenés el código de un amigo que te invitó? También es opcional.", "Código de invitación",
+      [["No tengo código", () => { flow.data.ref = ""; askConsent(); }]]);
+  }
+  function askConsent(){
+    flow.step = "consent"; chatForm.hidden = true;
+    addMessage("Antes de terminar, necesitamos tu autorización para administrar tu membresía. Usaremos tu nombre, celular y, si lo compartiste, tu cumpleaños para identificarte, guardar tus puntos y gestionar tus beneficios. No usaremos estos datos para enviarte mensajes por WhatsApp.");
+    showOptions([
+      ["Acepto y quiero crear mi cuenta", () => submitJoin(true)],
+      ["No autorizo", () => {
+        flow = null;
+        addMessage("Entendido. Sin esta autorización no podemos crear ni administrar tu membresía. No se guardó ningún registro.");
+        showOptions([["Volver al inicio", welcome], ["Revisar mis respuestas", startJoin]]);
+      }]
+    ]);
+  }
+  async function submitJoin(consent){
+    if(!flow || flow.step !== "consent" || consent !== true) return;
+    flow.data.consent = true;
+    showOptions([]); addMessage("Un momento, estoy guardando tu membresía…");
     try{
-      const r = await F.register(flow.data); setToken(r.token); const d = await F.me(r.token);
-      messages.replaceChildren(); addMessage(`¡Listo, ${esc(d.customer.name.split(" ")[0])}! Ya sos parte del club.`, "bot");
+      const r = await F.register(flow.data);
+      const d = await F.me(r.token);
+      setToken(r.token);
+      messages.replaceChildren();
+      addMessage(`¡Listo, ${esc(d.customer.name.split(" ")[0])}! Tu inscripción al Club Ruedita quedó completada y guardada.`, "bot");
       addMessage(memberCard(d, { welcome: true }), "bot", true); wire(messages);
-      showOptions([["Volver al inicio", welcome]]); chatForm.hidden = true; flow = null;
-    }catch(e){ addMessage(e.message || "No pude completar el registro. Intentá de nuevo."); showOptions([["Intentar de nuevo", startJoin], ["Volver al inicio", welcome]]); chatForm.hidden = true; }
+      addMessage("¡Gracias por sumarte! Guardá tu código de socio para consultar tus puntos cuando quieras.", "bot");
+      showOptions([["Consultar mis puntos", () => { startLookup(); }], ["Volver al inicio", welcome]]); chatForm.hidden = true; flow = null;
+    }catch(e){
+      addMessage(e.message || "No pude completar el registro. Tus datos no se guardaron. Intentá de nuevo.");
+      showOptions([["Intentar de nuevo", startJoin], ["Volver al inicio", welcome]]); chatForm.hidden = true;
+    }
   }
   async function submitLookup(code){
     addMessage("Estoy buscando tu saldo…"); showOptions([]); chatForm.hidden = true;
