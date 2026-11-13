@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Club Ruedita · Sumá puntos, ganá premios</title>
+<meta name="description" content="Sumá puntos en cada visita, invitá a tus amigos y canjeá premios en La Ruedita. Gratis y sin app.">
+<meta name="theme-color" content="#0e1f15">
+<link rel="icon" href="assets/logo.webp">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top"><img id="navLogo" alt=""><span><b id="navName"></b><small id="navClub"></small></span></a>
+    <nav class="nav-links" aria-label="Secciones">
+      <a href="#como">Cómo funciona</a><a href="#premios">Premios</a><a href="#invita">Invitá</a><a href="#puntos">Mis puntos</a>
+    </nav>
+    <button class="btn btn-sm" id="chatOpenTop" type="button" aria-controls="clubChat" aria-expanded="false">Asistente virtual</button>
+  </div>
+</header>
+
+<!-- ATENCIÓN -->
+<section class="hero dark" id="top">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="wrap hero-in">
+    <div class="hero-copy">
+      <p class="eyebrow rv">Club de clientes · Gratis</p>
+      <h1 class="rv">Cada visita te acerca a tu <em>próximo premio</em></h1>
+      <p class="lead rv">Sumá puntos cuando venís, invitá a tus amigos y canjeá regalos. Sin app, en 30 segundos.</p>
+      <div class="hero-cta rv">
+        <a class="btn" href="#unirme">Quiero mis puntos</a>
+        <a class="btn btn-ghost" href="#puntos">Ya soy del club</a>
+      </div>
+      <ul class="trust rv"><li>Gratis</li><li>Sin descargar nada</li><li>Premios reales</li></ul>
+    </div>
+    <div class="hero-card rv" aria-hidden="true">
+      <div class="pcard">
+        <div class="pcard-top"><span>Tu tarjeta</span><span class="pill">Ejemplo</span></div>
+        <div class="pcard-pts"><b>240</b><span>puntos</span></div>
+        <div class="bar"><i style="width:80%"></i></div>
+        <p class="pcard-next">Te faltan <b>60 puntos</b> para un <b>postre de la casa</b></p>
+        <div class="pcard-row"><span>Martes y miércoles</span><b>x2</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTERÉS -->
+<section class="sec light" id="como">
+  <div class="wrap">
+    <div class="head rv"><p class="eyebrow">Cómo funciona</p><h2>Así de simple</h2><p class="sub">Tres pasos. Nada más.</p></div>
+    <div class="steps">
+      <article class="step rv"><span class="num">1</span>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="18" r="8"/><path d="M8 42c2-9 9-13 16-13s14 4 16 13"/></svg>
+        <h3>Registrate</h3><p>Dejá tu nombre y WhatsApp. Ganás puntos de bienvenida.</p></article>
+      <article class="step rv"><span class="num">2</span>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6l5.5 11.2 12.3 1.8-8.9 8.7 2.1 12.3L24 34.2 13 40l2.1-12.3-8.9-8.7 12.3-1.8z"/></svg>
+        <h3>Sumá puntos</h3><p id="earnTxt"></p></article>
+      <article class="step rv"><span class="num">3</span>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="19" width="34" height="22" rx="3"/><path d="M7 26h34M24 19v22M24 19c-6 0-11-3-9-7s9 0 9 7zm0 0c6 0 11-3 9-7s-9 0-9 7z"/></svg>
+        <h3>Canjeá premios</h3><p>Elegí tu regalo y mostrá el código en caja.</p></article>
+    </div>
+  </div>
+</section>
+
+<!-- DESEO -->
+<section class="sec dark" id="premios">
+  <div class="wrap">
+    <div class="head rv"><p class="eyebrow">Premios</p><h2>Regalos que se disfrutan</h2><p class="sub">Cuanto más venís, más rico se pone.</p></div>
+    <div class="rewards" id="rewards"></div>
+    <div class="extras rv" id="extras"></div>
+  </div>
+</section>
+
+<section class="sec light" id="invita">
+  <div class="wrap two">
+    <div class="rv">
+      <p class="eyebrow">Invitá y ganá</p>
+      <h2>Tu amigo come. Ustedes dos ganan.</h2>
+      <p class="sub left">Compartí tu código. Cuando tu amigo nos visita por primera vez, <b id="refPts"></b> puntos para cada uno.</p>
+      <ol class="mini">
+        <li>Te registrás y recibís tu código personal.</li>
+        <li>Se lo mandás por WhatsApp a quien quieras.</li>
+        <li>Él se registra con tu código y viene a comer.</li>
+      </ol>
+    </div>
+    <div class="ref-visual rv">
+      <img src="assets/amigos.webp" alt="Amigos compartiendo una parrillada" width="1000" height="746" loading="lazy">
+      <div class="ref-card" aria-hidden="true">
+        <div class="ref-row"><span class="av">V</span><div><b>Vos</b><small>invitás a un amigo</small></div><i>+<span class="rp"></span></i></div>
+        <div class="ref-line"></div>
+        <div class="ref-row"><span class="av g">A</span><div><b>Tu amigo</b><small>viene por primera vez</small></div><i>+<span class="rp"></span></i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACCIÓN -->
+<section class="sec dark" id="unirme">
+  <div class="wrap">
+    <div class="head rv"><p class="eyebrow">Es hora</p><h2>Unite al club</h2><p class="sub">Tarda menos de un minuto.</p></div>
+    <div class="assistant-callout" id="puntos">
+      <p>El asistente te ayuda a unirte al Club Ruedita o consultar tus puntos.</p>
+      <button class="btn" id="chatOpenAction" type="button">Abrir asistente</button>
+    </div>
+  </div>
+</section>
+
+<section class="sec light" id="faq">
+  <div class="wrap narrow">
+    <div class="head rv"><p class="eyebrow">Dudas</p><h2>Preguntas frecuentes</h2></div>
+    <details class="rv"><summary>¿Cuánto cuesta?</summary><p>Nada. El club es gratis.</p></details>
+    <details class="rv"><summary>¿Tengo que descargar una app?</summary><p>No. Todo funciona desde tu celular, con tu WhatsApp.</p></details>
+    <details class="rv"><summary>¿Cómo sumo puntos?</summary><p id="faqEarn"></p></details>
+    <details class="rv"><summary>¿Cómo canjeo un premio?</summary><p>Entrá a “Mis puntos”, elegí el premio y mostrá el código en caja. Te lo entregamos al momento.</p></details>
+    <details class="rv"><summary>¿Los puntos vencen?</summary><p>Sí: pasados 12 meses sin visitas. Así no se pierden si venís seguido.</p></details>
+    <details class="rv"><summary>¿Qué hacen con mis datos?</summary><p>Solo los usamos para darte tus puntos y avisarte de premios. No los compartimos y podés pedir que te borremos cuando quieras.</p></details>
+  </div>
+</section>
+
+<footer class="foot dark">
+  <div class="wrap foot-in">
+    <div><img id="footLogo" alt=""><p><b id="footName"></b></p><p class="small" id="footAddr"></p></div>
+    <div class="foot-links">
+      <a id="lnkMenu" target="_blank" rel="noopener">Ver la carta</a>
+      <a id="lnkDelivery" target="_blank" rel="noopener">Pedir delivery</a>
+      <a id="lnkMaps" target="_blank" rel="noopener">Cómo llegar</a>
+      <a id="lnkWa" target="_blank" rel="noopener">WhatsApp</a>
+    </div>
+  </div>
+  <p class="copy">© <span id="yr"></span> <span id="copyName"></span> · Programa de fidelidad por MK Conecta</p>
+</footer>
+
+<div class="modal" id="modal" hidden><div class="modal-box" role="dialog" aria-modal="true"><button class="x" id="modalX" aria-label="Cerrar">&times;</button><div id="modalBody"></div></div></div>
+
+<aside class="club-chat" id="clubChat" aria-label="Asistente virtual del Club Ruedita" hidden>
+  <div class="chat-head"><div class="chat-avatar" aria-hidden="true">R</div><div><b>Asistente Club Ruedita</b><small>Alta y consulta de puntos</small></div><button class="chat-close" id="chatClose" type="button" aria-label="Cerrar asistente">&times;</button></div>
+  <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-relevant="additions"></div>
+  <div class="chat-options" id="chatOptions"></div>
+  <form class="chat-input-row" id="chatForm" hidden><input id="chatInput" aria-label="Sua resposta" autocomplete="off"><button class="btn" type="submit" aria-label="Enviar resposta">Enviar</button></form>
+</aside>
+<button class="chat-fab" id="chatFab" type="button" aria-controls="clubChat" aria-expanded="false"><span class="chat-fab-dot"></span>Hablar con el club</button>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/landing.js"></script>
+</body>
+</html>
