@@ -170,8 +170,8 @@
   }
   chatForm.addEventListener("submit", e => { e.preventDefault(); submitAnswer(chatInput.value); });
   $("chatClose").onclick = () => setChat(false);
-  $("chatFab").onclick = $("chatOpenTop").onclick = $("chatOpenAction").onclick = () => setChat(!chat.hidden);
-  function setChat(open){ chat.hidden = !open; [$("chatFab"), $("chatOpenTop")].forEach(b => b.setAttribute("aria-expanded", String(open))); if(open && !greeted) welcome(); if(open) chatInput.focus(); }
+  $("clubChatLauncher").onclick = () => setChat(chat.hidden);
+  function setChat(open){ chat.hidden = !open; $("clubChatLauncher").setAttribute("aria-expanded", String(open)); if(open && !greeted) welcome(); if(open) chatInput.focus(); }
 
   // ---------- sessão já existente ----------
   async function showMine(){
