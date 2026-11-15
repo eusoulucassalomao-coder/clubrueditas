@@ -18,12 +18,12 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({ email, password }),
     });
     const session = await login.json().catch(() => ({}));
-    if (!login.ok) return res.status(login.status === 401 ? 401 : 502).json({ error: login.status === 401 ? "invalid_credentials" : "appwrite_login_failed" });
+    if (!login.ok) { console.error("Appwrite owner login rejected", { status: login.status, type: session.type || "unknown" }); return res.status(login.status === 401 ? 401 : 502).json({ error: login.status === 401 ? "invalid_credentials" : "appwrite_login_failed" }); }
     const accountResponse = await fetch(endpoint + "/v1/account", {
       headers: { "X-Appwrite-Project": project, "X-Appwrite-Session": session.secret },
     });
     const account = await accountResponse.json().catch(() => ({}));
-    if (!accountResponse.ok) return res.status(502).json({ error: "appwrite_session_check_failed" });
+    if (!accountResponse.ok) { console.error("Appwrite session validation failed", { status: accountResponse.status, type: account.type || "unknown" }); return res.status(502).json({ error: "appwrite_session_check_failed" }); }
 
     const ownerId = process.env.APPWRITE_OWNER_USER_ID || "";
     const ownerEmail = String(process.env.APPWRITE_OWNER_EMAIL || "").trim().toLowerCase();
@@ -36,6 +36,7 @@ module.exports = async function handler(req, res) {
     if (role !== "owner") return res.status(403).json({ error: "role_not_authorized" });
     return res.status(200).json({ token: mintToken(slug, "panel"), user: { id: account.$id, name: account.name || "", email: account.email, role } });
   } catch (error) {
+    console.error("Appwrite owner login unavailable", { code: error?.code || "unknown", status: error?.status || 0 });
     const code = error?.code === "APPWRITE_NOT_CONFIGURED" ? "appwrite_not_configured" : "login_unavailable";
     return res.status(503).json({ error: code });
   }
