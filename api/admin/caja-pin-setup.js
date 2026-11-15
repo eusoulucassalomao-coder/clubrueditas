@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
   }
   if (!databaseReady()) return res.status(503).json({ error: "appwrite_not_ready" });
   const pin = String(process.env.CAJA_PIN_TO_SET || "");
-  if (!/^\\d{4,8}$/.test(pin)) return res.status(503).json({ error: "pin_not_configured" });
+  if (!/^\d{4,8}$/.test(pin)) return res.status(503).json({ error: "pin_not_configured" });
   try {
     const result = await listDocuments("restaurants", [queryEqual("slug", "laruedita")]);
     const restaurant = (result.documents || [])[0];
