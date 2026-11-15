@@ -1,7 +1,7 @@
 // Acceso tipado por configuración a las colecciones Appwrite. Solo servidor.
 const { appwriteRequest } = require("./appwrite");
 
-const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || "";
+const DATABASE_ID = process.env.APPWRITE_DATABASE_ID || "clubrueditas";
 const COLLECTIONS = {
   restaurants: process.env.APPWRITE_COLLECTION_RESTAURANTS || "restaurants",
   customers: process.env.APPWRITE_COLLECTION_CUSTOMERS || "customers",
