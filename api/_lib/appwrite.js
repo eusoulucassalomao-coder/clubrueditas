@@ -1,10 +1,16 @@
 // Cliente Appwrite exclusivamente do servidor Vercel. Nunca importar no navegador.
-const APPWRITE_ENDPOINT = (process.env.APPWRITE_ENDPOINT || "").replace(/\/$/, "");
+const APPWRITE_ENDPOINT = (process.env.APPWRITE_ENDPOINT || "").replace(/\/+$/, "").replace(/\/v1$/i, "");
 const APPWRITE_PROJECT_ID = process.env.APPWRITE_PROJECT_ID || process.env.APPWRITE_PROJECT || "";
 const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY || "";
 
 function appwriteReady() {
-  return Boolean(APPWRITE_ENDPOINT && APPWRITE_PROJECT_ID && APPWRITE_API_KEY);
+  if (!APPWRITE_PROJECT_ID || !APPWRITE_API_KEY) return false;
+  try {
+    const endpoint = new URL(APPWRITE_ENDPOINT);
+    return (endpoint.protocol === "https:" || endpoint.protocol === "http:") && !!endpoint.hostname;
+  } catch (_) {
+    return false;
+  }
 }
 async function appwriteRequest(path, { method = "GET", body, headers = {} } = {}) {
   if (!appwriteReady()) {
