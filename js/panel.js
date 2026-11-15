@@ -18,9 +18,21 @@
     render();
   }
   $("passForm").addEventListener("submit", async e => {
-    e.preventDefault(); const m = $("passMsg"); m.textContent = "";
-    try{ tok = await F.auth("panel", $("pass").value); try{ sessionStorage.setItem(TK, tok); }catch(x){} $("pass").value = ""; boot(); }
-    catch(err){ m.textContent = err.message; $("pass").value = ""; }
+    e.preventDefault();
+    const m = $("passMsg"), btn = $("loginBtn");
+    const email = $("loginEmail").value.trim(), password = $("pass").value;
+    m.textContent = ""; btn.disabled = true; btn.textContent = "Validando...";
+    try{
+      tok = await F.auth("panel", email, password);
+      try{ sessionStorage.setItem(TK, tok); }catch(x){}
+      $("pass").value = "";
+      await boot();
+    }catch(err){
+      m.textContent = err.message;
+      $("pass").value = "";
+    }finally{
+      btn.disabled = false; btn.textContent = "Entrar";
+    }
   });
   $("out").onclick = () => logout("");
   if(tok) boot();

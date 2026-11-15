@@ -1,0 +1,40 @@
+// Cliente Appwrite exclusivamente do servidor Vercel. Nunca importar no navegador.
+const APPWRITE_ENDPOINT = (process.env.APPWRITE_ENDPOINT || "").replace(/\/+$/, "").replace(/\/v1$/i, "");
+const APPWRITE_PROJECT_ID = process.env.APPWRITE_PROJECT_ID || process.env.APPWRITE_PROJECT || "";
+const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY || "";
+
+function appwriteReady() {
+  if (!APPWRITE_PROJECT_ID || !APPWRITE_API_KEY) return false;
+  try {
+    const endpoint = new URL(APPWRITE_ENDPOINT);
+    return (endpoint.protocol === "https:" || endpoint.protocol === "http:") && !!endpoint.hostname;
+  } catch (_) {
+    return false;
+  }
+}
+async function appwriteRequest(path, { method = "GET", body, headers = {} } = {}) {
+  if (!appwriteReady()) {
+    const error = new Error("Appwrite server environment is not configured");
+    error.code = "APPWRITE_NOT_CONFIGURED";
+    throw error;
+  }
+  const response = await fetch(`${APPWRITE_ENDPOINT}/v1${path}`, {
+    method,
+    headers: {
+      "X-Appwrite-Project": APPWRITE_PROJECT_ID,
+      "X-Appwrite-Key": APPWRITE_API_KEY,
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+      ...headers,
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data.message || `Appwrite request failed (${response.status})`);
+    error.code = data.type || "APPWRITE_REQUEST_FAILED";
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+}
+module.exports = { APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, appwriteReady, appwriteRequest };

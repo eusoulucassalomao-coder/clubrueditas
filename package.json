@@ -1,0 +1,10 @@
+{
+  "name": "club-rueditas",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Club Ruedita API serverless",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "pg": "^8.16.3"
+  }
+}
