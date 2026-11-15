@@ -11,7 +11,8 @@ Configurar únicamente en el entorno del servidor (nunca en archivos públicos):
 - `APPWRITE_ENDPOINT`: URL base de la instalación Appwrite, por ejemplo `https://TU-HOST/v1` no; debe ser la URL base sin `/v1`.
 - `APPWRITE_PROJECT_ID`: ID del proyecto Appwrite.
 - `APPWRITE_API_KEY`: API Key del servidor, con permisos mínimos necesarios para las operaciones de backend.
-- `APPWRITE_DATABASE_ID`: ID de la base de datos Appwrite.
+- `APPWRITE_DATABASE_ID`: ID de la base de datos Appwrite (por defecto `clubrueditas`).
+- `APPWRITE_SETUP_TOKEN`: token secreto para ejecutar una sola vez el aprovisionamiento inicial de colecciones e índices mediante `POST /api/admin/appwrite-schema` (cabecera `x-setup-token`).
 - `APPWRITE_COLLECTION_RESTAURANTS`: ID de la colección de restaurantes (por defecto `restaurants`).
 - `APPWRITE_COLLECTION_CUSTOMERS`: ID de la colección de clientes (por defecto `customers`).
 - `APPWRITE_COLLECTION_VISITS`: ID de la colección de visitas (por defecto `visits`).
