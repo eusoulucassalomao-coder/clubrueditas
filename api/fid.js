@@ -88,6 +88,26 @@ function localParts(date, timeZone) {
   const p = Object.fromEntries(parts.map(x => [x.type, x.value]));
   return { year: Number(p.year), month: Number(p.month), day: Number(p.day), weekday: ({ Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 })[p.weekday] };
 }
+function addCalendarMonths(value, months) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return new Date(NaN);
+  const day = date.getUTCDate();
+  date.setUTCDate(1);
+  date.setUTCMonth(date.getUTCMonth() + months);
+  const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+  date.setUTCDate(Math.min(day, lastDay));
+  return date;
+}
+function birthdayWithinDays(birthday, today, days = 30) {
+  if (!birthday) return false;
+  const [, month, day] = String(birthday).split("-").map(Number);
+  if (!month || !day) return false;
+  for (let offset = 0; offset <= days; offset++) {
+    const date = new Date(Date.UTC(today.year, today.month - 1, today.day + offset));
+    if (date.getUTCMonth() + 1 === month && date.getUTCDate() === day) return true;
+  }
+  return false;
+}
 function cleanConfig(old, input) {
   const num = (v, min, max, integer = true) => {
     const n = Number(v);
@@ -143,12 +163,8 @@ async function statsFor(r) {
     const p=localParts(new Date(v.created_at),tz), key=`${p.year}-${p.month}-${p.day}`, slot=dayMap.get(key);
     if(slot){slot.n++;slot.sum+=Number(v.amount)||0;}
   }
-  const birthdays = customers.filter(c => {
-    if(!c.birthday) return false;
-    const [,m,d]=String(c.birthday).split("-").map(Number);
-    const delta=(m-today.month+12)%12;
-    return (delta===0 && d>=today.day) || (delta===1 && today.day>20 && d<=10);
-  }).slice(0,50).map(c=>({name:c.name,birthday:c.birthday}));
+  const birthdays = customers.filter(c => birthdayWithinDays(c.birthday, today, 30))
+    .slice(0,50).map(c=>({name:c.name,birthday:c.birthday}));
   const repeat=customers.filter(c=>c.visits>=1);
   return {
     customers:customers.length,new30:customers.filter(c=>new Date(c.created_at)>=dayStart).length,
@@ -220,7 +236,7 @@ async function addBonus(r, customer, type) {
 async function expirePoints(r) {
   const months=Math.max(1,Number(r.config?.expireMonths)||12), now=Date.now();
   const customers=await many("customers",[queryEqual("restaurant_id",r.$id)],5000);
-  const expired=customers.filter(c=>c.points>0&&c.last_visit&&now-new Date(c.last_visit).getTime()>months*30.4375*86400000);
+  const expired=customers.filter(c=>c.points>0&&c.last_visit&&now>=addCalendarMonths(c.last_visit,months));
   let count=0;
   for(let i=0;i<expired.length;i+=50){
     const batch=expired.slice(i,i+50),ops=[];
@@ -242,7 +258,11 @@ async function autoCandidates(r, kind) {
   else if(kind==="birthday") selected=customers.filter(c=>c.consent&&c.wa_confirmed_at&&!c.opted_out&&c.birthday&&String(c.birthday).slice(5)===`${String(today.month).padStart(2,"0")}-${String(today.day).padStart(2,"0")}`&&!logs.some(m=>m.customer_id===c.$id&&m.kind==="birthday"&&localParts(new Date(m.created_at),tz).year===today.year));
   else if(kind==="expiring"){
     const months=Math.max(1,Number(r.config?.expireMonths)||12);
-    selected=customers.filter(c=>c.consent&&c.wa_confirmed_at&&!c.opted_out&&c.points>0&&c.last_visit&&now-new Date(c.last_visit)>=(months-1)*30.4375*86400000&&now-new Date(c.last_visit)<months*30.4375*86400000&&!recent(c,"expiring",60));
+    selected=customers.filter(c=>{
+      if(!c.consent||!c.wa_confirmed_at||c.opted_out||c.points<=0||!c.last_visit) return false;
+      const lastVisit=new Date(c.last_visit), start=addCalendarMonths(lastVisit,months-1), end=addCalendarMonths(lastVisit,months);
+      return now>=start&&now<end&&!recent(c,"expiring",60);
+    });
   } else throw Object.assign(new Error("Tipo no válido"),{code:"kind"});
   return selected.slice(0,50).map(c=>({...publicCustomer(c),token:c.access_token}));
 }
