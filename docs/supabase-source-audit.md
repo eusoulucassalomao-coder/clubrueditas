@@ -57,7 +57,7 @@ Todas las tablas tienen RLS activado. No se encontraron políticas RLS ni trigge
 Zona horaria: `America/Argentina/Buenos_Aires`.
 Puntos: 1 punto por cada 100 pesos.
 Bonos: bienvenida 50, invitación 150 para cada persona, cumpleaños 200, reseña 100.
-Multiplicadores: domingo y lunes (índices 0 y 1 según JavaScript; revisar mapeo de día PostgreSQL antes de implementar).
+Multiplicadores: claves 2 y 3; tanto PostgreSQL EXTRACT(DOW) como JavaScript getDay() usan domingo=0, por lo que actualmente son martes y miércoles.
 Vencimiento: 12 meses.
 Inactividad: 30 días.
 Premios actuales: Postre de la casa (300), Entrada para compartir (600), 15% de descuento (1000), Mollejas de la casa (1500).
