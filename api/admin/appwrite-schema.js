@@ -14,16 +14,17 @@ async function ensure(path, createBody) {
 }
 async function ensureAttribute(base, kind, attr) {
   const [key, sizeOrRequired, requiredOrDefault, defaultValue] = attr;
-  const path = base + "/attributes/" + kind + "/" + encodeURIComponent(key);
-  try { return await appwriteRequest(base + "/attributes/" + encodeURIComponent(key)); }
+  const getPath = base + "/attributes/" + encodeURIComponent(key);
+  const createPath = base + "/attributes/" + kind;
+  try { return await appwriteRequest(getPath); }
   catch (e) {
     if (e.status !== 404) throw e;
     let body;
     if (kind === "string") body = { key, size: sizeOrRequired, required: requiredOrDefault, ...(defaultValue === undefined ? {} : { default: defaultValue }) };
     else if (kind === "integer" || kind === "float") body = { key, required: sizeOrRequired, ...(requiredOrDefault === undefined ? {} : { default: requiredOrDefault }) };
     else body = { key, required: sizeOrRequired, ...(requiredOrDefault === undefined ? {} : { default: requiredOrDefault }) };
-    try { return await appwriteRequest(path, { method: "POST", body }); }
-    catch (createError) { if (createError.status === 409) return appwriteRequest(base + "/attributes/" + encodeURIComponent(key)); throw createError; }
+    try { return await appwriteRequest(createPath, { method: "POST", body }); }
+    catch (createError) { if (createError.status === 409) return appwriteRequest(getPath); throw createError; }
   }
 }
 async function waitAttribute(base, key) {
