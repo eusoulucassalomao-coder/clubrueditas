@@ -101,5 +101,6 @@ async function deleteDocument(name, id) {
 
 module.exports = {
   DATABASE_ID, COLLECTIONS, databaseReady, collection, queryEqual, querySearch,
-  queryOrderDesc, queryOrderAsc, queryLimit, listDocuments, getDocument, createDocument, updateDocument, deleteDocument,\n  commitOperations, transactionCreate, transactionUpdate, transactionDelete,
+  queryOrderDesc, queryOrderAsc, queryLimit, listDocuments, getDocument, createDocument, updateDocument, deleteDocument,
+  commitOperations, transactionCreate, transactionUpdate, transactionDelete,
 };
