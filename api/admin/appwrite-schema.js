@@ -50,11 +50,8 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
   const expected = process.env.APPWRITE_SETUP_TOKEN || "";
   const supplied = String(req.headers["x-setup-token"] || "");
-  const bypassExpected = process.env.VERCEL_AUTOMATION_BYPASS_SECRET || "";
-  const bypassSupplied = String(req.headers["x-vercel-protection-bypass"] || "");
   const setupAuthorized = !!expected && supplied.length === expected.length && supplied === expected;
-  const bypassAuthorized = !!bypassExpected && bypassSupplied.length === bypassExpected.length && bypassSupplied === bypassExpected;
-  if (!setupAuthorized && !bypassAuthorized) return res.status(401).json({ error: "unauthorized" });
+  if (!setupAuthorized) return res.status(401).json({ error: "unauthorized" });
   try {
     // La API Key nunca sale de esta función. Las colecciones se crean sin permisos públicos.
     try { await appwriteRequest("/databases/" + encodeURIComponent(dbId)); }
