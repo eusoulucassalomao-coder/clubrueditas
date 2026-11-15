@@ -1,4 +1,4 @@
-// Cliente da API (Edge Function no Supabase). O navegador nunca fala direto com o banco.
+// Cliente da API do servidor. O navegador nunca fala direto com o banco.
 (function(){
   const C = window.CFG;
   // Em testes locais dá para trocar de restaurante com ?r=; em produção vale sempre o id do config.js.
@@ -37,7 +37,15 @@
     login: phone => call({ action: "login", phone }),
     lookupCode: code => call({ action: "lookup_code", code }),
     // acesso interno
-    async auth(role, secret){ return (await call({ action: "auth", role, secret })).token; },
+    async auth(role, secret){
+      if(role !== "panel") throw new Error("Tipo de acesso não suportado.");
+      let response;
+      try{ response = await fetch("/api/auth/login", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({ email:C.ownerEmail, password:secret }) }); }
+      catch(e){ throw Object.assign(new Error("Sin conexión. Probá de nuevo."), { code:"network" }); }
+      const data = await response.json().catch(()=>({}));
+      if(!response.ok){ const messages={invalid_credentials:"E-mail ou senha incorretos.",role_not_authorized:"Este usuário não tem permissão de administrador.",appwrite_not_configured:"A conexão com Appwrite não está configurada."}; throw Object.assign(new Error(messages[data.error] || "Não foi possível entrar. Tente novamente."), {code:data.error || "login",status:response.status}); }
+      return data.token;
+    },
     // caixa
     search: (t, q) => call({ action: "search", q }, t),
     visit: (t, customer, amount) => call({ action: "visit", customer, amount }, t),
