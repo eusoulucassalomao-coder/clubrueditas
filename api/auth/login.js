@@ -1,9 +1,10 @@
-const { appwriteRequest } = require("../_lib/appwrite");
+const { mintToken } = require("../_lib/fid-auth");
 
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
   const email = String(req.body?.email || "").trim().toLowerCase();
+  const slug = process.env.APPWRITE_OWNER_SLUG || "laruedita";
   const password = String(req.body?.password || "");
   if (!email || !password) return res.status(400).json({ error: "missing_credentials" });
   try {
@@ -32,10 +33,8 @@ module.exports = async function handler(req, res) {
     else if (labels.includes("caja")) role = "caja";
     if (!role) return res.status(403).json({ error: "role_not_authorized" });
 
-    return res.status(200).json({
-      user: { id: account.$id, name: account.name || "", email: account.email, role },
-      session: { secret: session.secret, expire: session.expire },
-    });
+    if (role !== "owner") return res.status(403).json({ error: "role_not_authorized" });
+    return res.status(200).json({ token: mintToken(slug, "panel"), user: { id: account.$id, name: account.name || "", email: account.email, role } });
   } catch (error) {
     const code = error?.code === "APPWRITE_NOT_CONFIGURED" ? "appwrite_not_configured" : "login_unavailable";
     return res.status(503).json({ error: code });
