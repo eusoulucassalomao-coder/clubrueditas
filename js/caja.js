@@ -7,9 +7,9 @@
   let tok = "", sel = null, CF = F.conf(), timer = 0;
   try{ tok = sessionStorage.getItem(TK) || ""; }catch(e){}
 
-  function logout(msg){ try{ sessionStorage.removeItem(TK); }catch(e){} tok = ""; $("app").hidden = true; $("gate").hidden = false; $("pinMsg").textContent = msg || ""; }
+  function logout(msg){ try{ sessionStorage.removeItem(TK); }catch(e){} tok = ""; $("app").hidden = true; $("gate").hidden = false; $("loginMsg").textContent = msg || ""; }
   // toda chamada passa por aqui: se a sessão venceu, volta ao PIN
-  async function run(fn){ try{ return await fn(); }catch(e){ if(e.code === "unauthorized" || e.code === "forbidden"){ logout("La sesión venció. Ingresá el PIN."); } throw e; } }
+  async function run(fn){ try{ return await fn(); }catch(e){ if(e.code === "unauthorized" || e.code === "forbidden"){ logout("La sesión venció. Ingresá nuevamente."); } throw e; } }
 
   async function boot(){
     CF = await F.init();
@@ -18,10 +18,10 @@
     $("bBirth").textContent = `Cumpleaños +${fmt(CF.bonus.birthday)}`; $("bReview").textContent = `Reseña +${fmt(CF.bonus.review)}`;
     recent();
   }
-  $("pinForm").addEventListener("submit", async e => {
-    e.preventDefault(); const m = $("pinMsg"); m.textContent = "";
-    try{ tok = await F.auth("caja", $("pin").value.trim()); try{ sessionStorage.setItem(TK, tok); }catch(x){} $("pin").value = ""; boot(); }
-    catch(err){ m.textContent = err.message; $("pin").value = ""; }
+  $("loginForm").addEventListener("submit", async e => {
+    e.preventDefault(); const m = $("loginMsg"); m.textContent = "";
+    try{ tok = await F.authCaja($("cajaEmail").value.trim(), $("cajaPassword").value); try{ sessionStorage.setItem(TK, tok); }catch(x){} $("cajaPassword").value = ""; boot(); }
+    catch(err){ m.textContent = err.message; $("cajaPassword").value = ""; }
   });
   $("out").onclick = () => logout("");
   if(tok) boot();

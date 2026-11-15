@@ -10,10 +10,13 @@
 </head>
 <body>
 <div class="gate" id="gate">
-  <form class="card" id="pinForm">
-    <h2>Caja</h2><p class="sub">Ingresá el PIN del local</p>
-    <input id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN" aria-label="PIN">
-    <p class="msg err" id="pinMsg" role="alert"></p>
+  <form class="card" id="loginForm">
+    <h2>Caja</h2><p class="sub">Ingresá con tu e-mail y contraseña</p>
+    <label for="cajaEmail">E-mail</label>
+    <input id="cajaEmail" type="email" autocomplete="username" value="caja@2027.com" aria-label="E-mail">
+    <label for="cajaPassword">Contraseña</label>
+    <input id="cajaPassword" type="password" autocomplete="current-password" placeholder="Contraseña" aria-label="Contraseña">
+    <p class="msg err" id="loginMsg" role="alert"></p>
     <button class="btn full" type="submit">Entrar</button>
   </form>
 </div>
