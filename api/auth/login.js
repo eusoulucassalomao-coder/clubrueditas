@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
   if (!email || !password) return res.status(400).json({ error: "missing_credentials" });
   try {
     // Login oficial do Appwrite Auth: a senha nunca é enviada ao banco de dados do restaurante.
-    const endpoint = (process.env.APPWRITE_ENDPOINT || "").replace(/\/$/, "");
+    const endpoint = (process.env.APPWRITE_ENDPOINT || "").replace(/\/+$/, "").replace(/\/v1$/i, "");
     const project = process.env.APPWRITE_PROJECT_ID || process.env.APPWRITE_PROJECT || "";
     if (!endpoint || !project) return res.status(503).json({ error: "appwrite_not_configured" });
     const login = await fetch(endpoint + "/v1/account/sessions/email", {
