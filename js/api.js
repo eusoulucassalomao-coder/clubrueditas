@@ -38,8 +38,7 @@
     lookupCode: code => call({ action: "lookup_code", code }),
     // acesso interno
     async auth(role, email, password){
-      // O caixa continua usando o PIN antigo, validado no servidor Appwrite.
-      if(role === "caja") return (await call({ action: "auth", role, secret: email })).token;
+      if(role === "caja") return F.authCaja(email, password);
       if(role !== "panel") throw new Error("Tipo de acesso não suportado.");
       let response;
       try{ response = await fetch("/api/auth/login", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({ email:String(email || "").trim(), password }) }); }
