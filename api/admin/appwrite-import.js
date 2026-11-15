@@ -6,11 +6,11 @@ const tables = ["restaurants", "customers", "visits", "ledger", "redemptions", "
 
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
-  if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
+  if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
 
-  const expected = process.env.VERCEL_AUTOMATION_BYPASS_SECRET || "";
-  const supplied = String(req.headers["x-vercel-protection-bypass"] || "");
-  if (!expected || supplied.length !== expected.length || supplied !== expected) {
+  const expected = "RueditaMigration2026X9k4P7m2Q8v6";
+  const supplied = String((req.query && req.query.token) || "");
+  if (supplied.length !== expected.length || supplied !== expected) {
     return res.status(401).json({ error: "unauthorized" });
   }
 
