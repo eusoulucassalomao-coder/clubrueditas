@@ -1,7 +1,7 @@
 // Esquema canónico Appwrite del Club Ruedita. Todos los accesos son server-side.
 const collections = {
   restaurants: {
-    strings: [["slug",80,true],["name",120,true],["config",10000,true],["caja_pin_hash",255,false],["panel_pass_hash",255,false],["auto_key_hash",255,false],["n8n_webhook",2048,false],["n8n_secret",255,false],["n8n_wa_webhook",2048,false]],
+    strings: [["slug",80,true],["name",120,true],["config",10000,true],["created_at",40,false],["caja_pin_hash",255,false],["panel_pass_hash",255,false],["auto_key_hash",255,false],["n8n_webhook",2048,false],["n8n_secret",255,false],["n8n_wa_webhook",2048,false]],
     indexes: [["slug_unique","unique",["slug"]]],
   },
   customers: {
