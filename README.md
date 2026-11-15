@@ -9,8 +9,9 @@ La migración se está realizando en la rama `migration/appwrite-full`. La rama 
 Configurar únicamente en el entorno del servidor (nunca en archivos públicos):
 
 - `APPWRITE_ENDPOINT`: URL base de la instalación Appwrite, por ejemplo `https://TU-HOST/v1` no; debe ser la URL base sin `/v1`.
-- `APPWRITE_PROJECT_ID`: ID del proyecto Appwrite.
+- `APPWRITE_PROJECT_ID` o `APPWRITE_PROJECT`: ID del proyecto Appwrite (el código acepta ambos nombres).
 - `APPWRITE_API_KEY`: API Key del servidor, con permisos mínimos necesarios para las operaciones de backend.
+- `FID_TOKEN_SECRET`: secreto opcional para firmar las sesiones internas; si no se define, se deriva de la API Key Appwrite.
 - `APPWRITE_DATABASE_ID`: ID de la base de datos Appwrite (por defecto `clubrueditas`).
 - `APPWRITE_SETUP_TOKEN`: token secreto para ejecutar una sola vez el aprovisionamiento inicial de colecciones e índices mediante `POST /api/admin/appwrite-schema` (cabecera `x-setup-token`).
 - `APPWRITE_COLLECTION_RESTAURANTS`: ID de la colección de restaurantes (por defecto `restaurants`).
