@@ -47,6 +47,14 @@
       if(!response.ok){ const messages={invalid_credentials:"E-mail ou senha incorretos.",role_not_authorized:"Este usuário não tem permissão de administrador.",appwrite_not_configured:"A conexão com Appwrite não está configurada."}; throw Object.assign(new Error(messages[data.error] || "Não foi possível entrar. Tente novamente."), {code:data.error || "login",status:response.status}); }
       return data.token;
     },
+    async authCaja(email, password){
+      let response;
+      try{ response = await fetch("/api/auth/caja-login", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({ email:String(email || "").trim(), password }) }); }
+      catch(e){ throw Object.assign(new Error("Sin conexión. Probá de nuevo."), { code:"network" }); }
+      const data = await response.json().catch(()=>({}));
+      if(!response.ok){ const messages={invalid_credentials:"E-mail ou senha incorretos.",role_not_authorized:"Este usuário não tem permissão para acessar a Caja.",appwrite_not_configured:"A conexão com Appwrite não está configurada.",caja_login_not_configured:"O acesso da Caja ainda não foi configurado."}; throw Object.assign(new Error(messages[data.error] || "Não foi possível entrar. Tente novamente."), {code:data.error || "login",status:response.status}); }
+      return data.token;
+    },
     // caixa
     search: (t, q) => call({ action: "search", q }, t),
     visit: (t, customer, amount) => call({ action: "visit", customer, amount }, t),
