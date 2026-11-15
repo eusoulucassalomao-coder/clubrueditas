@@ -37,10 +37,10 @@
     login: phone => call({ action: "login", phone }),
     lookupCode: code => call({ action: "lookup_code", code }),
     // acesso interno
-    async auth(role, secret){
+    async auth(role, email, password){
       if(role !== "panel") throw new Error("Tipo de acesso não suportado.");
       let response;
-      try{ response = await fetch("/api/auth/login", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({ email:C.ownerEmail, password:secret }) }); }
+      try{ response = await fetch("/api/auth/login", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({ email:String(email || "").trim(), password }) }); }
       catch(e){ throw Object.assign(new Error("Sin conexión. Probá de nuevo."), { code:"network" }); }
       const data = await response.json().catch(()=>({}));
       if(!response.ok){ const messages={invalid_credentials:"E-mail ou senha incorretos.",role_not_authorized:"Este usuário não tem permissão de administrador.",appwrite_not_configured:"A conexão com Appwrite não está configurada."}; throw Object.assign(new Error(messages[data.error] || "Não foi possível entrar. Tente novamente."), {code:data.error || "login",status:response.status}); }
