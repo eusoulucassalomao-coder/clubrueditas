@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
   try {
     // Login oficial do Appwrite Auth: a senha nunca é enviada ao banco de dados do restaurante.
     const endpoint = (process.env.APPWRITE_ENDPOINT || "").replace(/\/$/, "");
-    const project = process.env.APPWRITE_PROJECT_ID || "";
+    const project = process.env.APPWRITE_PROJECT_ID || process.env.APPWRITE_PROJECT || "";
     if (!endpoint || !project) return res.status(503).json({ error: "appwrite_not_configured" });
     const login = await fetch(endpoint + "/v1/account/sessions/email", {
       method: "POST",
