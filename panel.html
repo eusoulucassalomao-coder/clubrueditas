@@ -11,10 +11,13 @@
 <body>
 <div class="gate" id="gate">
   <form class="card" id="passForm">
-    <h2>Panel del dueño</h2><p class="sub">Ingresá tu contraseña</p>
-    <input id="pass" type="password" autocomplete="off" placeholder="Contraseña" aria-label="Contraseña">
+    <h2>Panel del dueño</h2><p class="sub">Ingresá con tu cuenta de Appwrite</p>
+    <label for="loginEmail">Correo electrónico</label>
+    <input id="loginEmail" type="email" autocomplete="username" placeholder="tu@email.com" aria-label="Correo electrónico" required>
+    <label for="pass">Contraseña</label>
+    <input id="pass" type="password" autocomplete="current-password" placeholder="Tu contraseña" aria-label="Contraseña" required>
     <p class="msg err" id="passMsg" role="alert"></p>
-    <button class="btn full" type="submit">Entrar</button>
+    <button class="btn full" id="loginBtn" type="submit">Entrar</button>
   </form>
 </div>
 
