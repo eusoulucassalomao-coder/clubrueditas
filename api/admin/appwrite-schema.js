@@ -92,6 +92,6 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, database: dbId, collections: result });
   } catch (error) {
     console.error("appwrite-schema-setup", error);
-    return res.status(500).json({ error: "setup_failed", message: error.message, code: error.code || "unknown" });
+    return res.status(500).json({ error: "setup_failed", message: "Confira o APPWRITE_ENDPOINT e as permissões da chave Appwrite.", code: error.code || "unknown" });
   }
 };
