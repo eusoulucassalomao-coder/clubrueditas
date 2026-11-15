@@ -1,4 +1,5 @@
 const { mintToken } = require("../_lib/fid-auth");
+const { APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID } = require("../_lib/appwrite");
 
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -10,8 +11,8 @@ module.exports = async function handler(req, res) {
   if (!email || !password) return res.status(400).json({ error: "missing_credentials" });
 
   try {
-    const endpoint = (process.env.APPWRITE_ENDPOINT || "").replace(/\\/+$/, "").replace(/\\/v1$/i, "");
-    const project = process.env.APPWRITE_PROJECT_ID || process.env.APPWRITE_PROJECT || "";
+    const endpoint = APPWRITE_ENDPOINT;
+    const project = APPWRITE_PROJECT_ID;
     if (!endpoint || !project) return res.status(503).json({ error: "appwrite_not_configured" });
 
     // A criação da sessão já valida e-mail e senha. O Appwrite retorna o ID do usuário.
