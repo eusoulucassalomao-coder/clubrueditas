@@ -291,7 +291,9 @@ module.exports = async function handler(req,res) {
       if(!(await verifyRestaurantSecret(r.auto_key_hash,key))) return res.status(401).json({error:"unauthorized"});
       if(action==="auto_candidates") return res.status(200).json({customers:await autoCandidates(r,String(body.kind)),site:r.config?.siteUrl||""});
       if(action==="auto_log"){
-        await commitOperations([transactionCreate("message_log",crypto.randomUUID(),{restaurant_id:r.$id,customer_id:String(body.customer||""),kind:String(body.kind||"").slice(0,40),meta:body.meta==null?null:JSON.stringify(body.meta),created_at:isoNow()})]);
+        const log={restaurant_id:r.$id,customer_id:String(body.customer||""),kind:String(body.kind||"").slice(0,40),created_at:isoNow()};
+        if(body.meta!=null) log.meta=JSON.stringify(body.meta);
+        await commitOperations([transactionCreate("message_log",crypto.randomUUID(),log)]);
         return res.status(200).json({ok:true});
       }
       if(action==="auto_stats") return res.status(200).json(await statsFor(r));
@@ -363,7 +365,7 @@ module.exports = async function handler(req,res) {
       const id=crypto.randomUUID(),now=isoNow(),pts=Number(reward.pts);
       await commitOperations([
         transactionUpdate("customers",c.$id,{points:c.points-pts}),
-        transactionCreate("redemptions",id,{restaurant_id:r.$id,customer_id:c.$id,reward_id:reward.id,name:reward.name,points:pts,code,status:"pendiente",created_at:now,used_at:null}),
+        transactionCreate("redemptions",id,{restaurant_id:r.$id,customer_id:c.$id,reward_id:reward.id,name:reward.name,points:pts,code,status:"pendiente",created_at:now}),
         transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.$id,customer_id:c.$id,points:-pts,type:"canje",note:reward.name,created_at:now}),
       ]);
       return res.status(200).json({redemption:{id,code,name:reward.name,pts,status:"pendiente",createdAt:now}});
@@ -372,7 +374,7 @@ module.exports = async function handler(req,res) {
     if(action==="customers"){
       const q=String(body.q||"").trim().toLowerCase(),d=digits(q);
       const all=await many("customers",[queryEqual("restaurant_id",r.$id)],5000);
-      const rows=all.filter(c=>!q||c.name.toLowerCase().includes(q)||c.phone.includes(d)||c.code.toLowerCase()===q)
+      const rows=all.filter(c=>!q||c.name.toLowerCase().includes(q)||(d.length>=4&&c.phone.includes(d))||c.code.toLowerCase()===q)
         .sort((a,b)=>b.lifetime-a.lifetime).slice(0,80);
       return res.status(200).json({customers:rows.map(c=>({name:c.name,phone:c.phone,visits:c.visits,points:c.points,code:c.code,last_visit:c.last_visit}))});
     }
