@@ -1,13 +1,11 @@
-// Cliente Appwrite exclusivamente del servidor Vercel.
-// Nunca importar este archivo desde scripts del navegador.
-const APPWRITE_ENDPOINT = (process.env.APPWRITE_ENDPOINT || "").replace(/\\/$/, "");
-const APPWRITE_PROJECT_ID = process.env.APPWRITE_PROJECT_ID || "";
+// Cliente Appwrite exclusivamente do servidor Vercel. Nunca importar no navegador.
+const APPWRITE_ENDPOINT = (process.env.APPWRITE_ENDPOINT || "").replace(/\/$/, "");
+const APPWRITE_PROJECT_ID = process.env.APPWRITE_PROJECT_ID || process.env.APPWRITE_PROJECT || "";
 const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY || "";
 
 function appwriteReady() {
   return Boolean(APPWRITE_ENDPOINT && APPWRITE_PROJECT_ID && APPWRITE_API_KEY);
 }
-
 async function appwriteRequest(path, { method = "GET", body, headers = {} } = {}) {
   if (!appwriteReady()) {
     const error = new Error("Appwrite server environment is not configured");
@@ -33,5 +31,4 @@ async function appwriteRequest(path, { method = "GET", body, headers = {} } = {}
   }
   return data;
 }
-
-module.exports = { appwriteReady, appwriteRequest };
+module.exports = { APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, appwriteReady, appwriteRequest };
