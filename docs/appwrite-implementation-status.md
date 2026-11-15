@@ -21,15 +21,15 @@ Proyecto Vercel: `laruedita-club`
 
 Vercel compiló correctamente la rama en el deployment:
 `dpl_ExXR8oaWgH9rVqcPk9fiidmi8U5J`
-Commit: `b6bd1f516ca1bfce13af571e5ed934d691a80a3c`
-Estado observado: `READY`.
+Commit `b6bd1f516ca1bfce13af571e5ed934d691a80a3c`: `READY`.
+Commit `6c470934c79c8bea3890126932475fe3e77bcfe4`: `READY`.
 
 El build confirma que Vercel acepta la estructura y el código Node.js. Todavía no prueba la conexión con Appwrite ni las operaciones contra una base real.
 
 ## Pendiente antes de activar Appwrite
 
 1. Aprovisionar las colecciones en el proyecto Appwrite correcto.
-2. Confirmar variables de entorno para el deployment de validación: `APPWRITE_ENDPOINT`, `APPWRITE_PROJECT` (o `APPWRITE_PROJECT_ID`), `APPWRITE_API_KEY`, `APPWRITE_DATABASE_ID` y `APPWRITE_SETUP_TOKEN`.
+2. Configurar variables de entorno para el deployment de validación: `APPWRITE_ENDPOINT`, `APPWRITE_PROJECT` (o `APPWRITE_PROJECT_ID`), `APPWRITE_API_KEY`, `APPWRITE_DATABASE_ID` y `APPWRITE_SETUP_TOKEN`. En la inspección de Vercel, las tres variables Appwrite existentes estaban limitadas a Production; todavía no aparecían `APPWRITE_DATABASE_ID` ni `APPWRITE_SETUP_TOKEN`.
 3. Migrar los documentos del Supabase preservando los UUID como IDs de documentos, hashes bcrypt, tokens, relaciones y saldos.
 4. Probar registro, acceso de caja/panel, visitas, bonos, canjes, entrega, exportaciones, automatizaciones y WhatsApp.
 5. Cambiar `js/config.js` para apuntar a `/api/fid` únicamente después de que las pruebas estén aprobadas.
