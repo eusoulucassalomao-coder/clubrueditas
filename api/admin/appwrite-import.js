@@ -26,6 +26,9 @@ module.exports = async function handler(req, res) {
   });
 
   try {
+    const identity = await pool.query(
+      "SELECT current_database() AS database, current_user AS db_user, current_schema() AS schema, current_setting('search_path') AS search_path"
+    );
     const result = {};
     for (const table of tables) {
       const { rows } = await pool.query('SELECT * FROM public."' + table + '"');
@@ -62,7 +65,17 @@ module.exports = async function handler(req, res) {
       }
       result[table] = { sourceRows: rows.length, inserted, alreadyPresent: skipped };
     }
-    return res.status(200).json({ ok: true, database: databaseId, collections: result });
+    return res.status(200).json({
+      ok: true,
+      source: {
+        database: identity.rows[0].database,
+        user: identity.rows[0].db_user,
+        schema: identity.rows[0].schema,
+        searchPath: identity.rows[0].search_path
+      },
+      database: databaseId,
+      collections: result
+    });
   } catch (error) {
     console.error("temporary-appwrite-import", error);
     return res.status(500).json({ error: "migration_failed", code: error.code || "unknown" });
