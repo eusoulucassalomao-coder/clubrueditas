@@ -20,9 +20,8 @@ async function ensureAttribute(base, kind, attr) {
   catch (e) {
     if (e.status !== 404) throw e;
     let body;
-    if (kind === "string") body = { key, size: sizeOrRequired, required: requiredOrDefault, ...(defaultValue === undefined ? {} : { default: defaultValue }) };
-    else if (kind === "integer" || kind === "float") body = { key, required: sizeOrRequired, ...(requiredOrDefault === undefined ? {} : { default: requiredOrDefault }) };
-    else body = { key, required: sizeOrRequired, ...(requiredOrDefault === undefined ? {} : { default: requiredOrDefault }) };
+    if (kind === "string") body = { key, size: sizeOrRequired, required: requiredOrDefault };
+    else body = { key, required: sizeOrRequired };
     try { return await appwriteRequest(createPath, { method: "POST", body }); }
     catch (createError) { if (createError.status === 409) return appwriteRequest(getPath); throw createError; }
   }
