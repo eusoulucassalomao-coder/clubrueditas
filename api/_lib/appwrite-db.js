@@ -32,6 +32,8 @@ function queryEqual(field, value) {
 function querySearch(field, value) {
   return { method: "search", attribute: field, values: [value] };
 }
+function queryOrderDesc(field) { return { method: "orderDesc", attribute: field }; }
+function queryOrderAsc(field) { return { method: "orderAsc", attribute: field }; }
 function queryLimit(limit = 25, offset = 0) {
   return [
     { method: "limit", values: [limit] },
@@ -70,5 +72,5 @@ async function deleteDocument(name, id) {
 
 module.exports = {
   DATABASE_ID, COLLECTIONS, databaseReady, collection, queryEqual, querySearch,
-  queryLimit, listDocuments, getDocument, createDocument, updateDocument, deleteDocument,
+  queryOrderDesc, queryOrderAsc, queryLimit, listDocuments, getDocument, createDocument, updateDocument, deleteDocument,
 };
