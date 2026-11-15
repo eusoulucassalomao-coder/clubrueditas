@@ -65,6 +65,35 @@ async function updateDocument(name, id, data) {
     body: { data },
   });
 }
+async function commitOperations(operations) {
+  if (!Array.isArray(operations) || !operations.length) return null;
+  const tx = await appwriteRequest("/databases/transactions", { method: "POST", body: { ttl: 300 } });
+  try {
+    await appwriteRequest("/databases/transactions/" + encodeURIComponent(tx.$id) + "/operations", {
+      method: "POST", body: { operations },
+    });
+    return await appwriteRequest("/databases/transactions/" + encodeURIComponent(tx.$id), {
+      method: "PATCH", body: { commit: true },
+    });
+  } catch (error) {
+    await appwriteRequest("/databases/transactions/" + encodeURIComponent(tx.$id), {
+      method: "PATCH", body: { rollback: true },
+    }).catch(() => {});
+    throw error;
+  }
+}
+function transactionCreate(name, id, data) {
+  const c = collection(name);
+  return { action: "create", databaseId: c.databaseId, collectionId: c.collectionId, documentId: id, data };
+}
+function transactionUpdate(name, id, data) {
+  const c = collection(name);
+  return { action: "update", databaseId: c.databaseId, collectionId: c.collectionId, documentId: id, data };
+}
+function transactionDelete(name, id) {
+  const c = collection(name);
+  return { action: "delete", databaseId: c.databaseId, collectionId: c.collectionId, documentId: id };
+}
 async function deleteDocument(name, id) {
   const { databaseId, collectionId } = collection(name);
   return appwriteRequest(`/databases/${encodeURIComponent(databaseId)}/collections/${encodeURIComponent(collectionId)}/documents/${encodeURIComponent(id)}`, { method: "DELETE" });
@@ -72,5 +101,5 @@ async function deleteDocument(name, id) {
 
 module.exports = {
   DATABASE_ID, COLLECTIONS, databaseReady, collection, queryEqual, querySearch,
-  queryOrderDesc, queryOrderAsc, queryLimit, listDocuments, getDocument, createDocument, updateDocument, deleteDocument,
+  queryOrderDesc, queryOrderAsc, queryLimit, listDocuments, getDocument, createDocument, updateDocument, deleteDocument,\n  commitOperations, transactionCreate, transactionUpdate, transactionDelete,
 };
