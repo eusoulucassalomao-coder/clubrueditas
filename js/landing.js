@@ -288,8 +288,43 @@
     }catch(e){ if(e.code === "token") setToken(""); return false; }
   }
 
+
+  // ---------- consentimiento de cookies ----------
+  const COOKIE_KEY = "clubruedita_cookie_consent_v1";
+  const cookieBanner = $("cookieBanner"), cookiePanel = $("cookiePanel");
+  const cookieAnalytics = $("cookieAnalytics"), cookieMarketing = $("cookieMarketing");
+  function readCookieConsent(){
+    try { return JSON.parse(localStorage.getItem(COOKIE_KEY) || "null"); } catch (_) { return null; }
+  }
+  function saveCookieConsent(analytics, marketing){
+    const consent = { necessary:true, analytics:!!analytics, marketing:!!marketing, updatedAt:new Date().toISOString() };
+    try { localStorage.setItem(COOKIE_KEY, JSON.stringify(consent)); } catch (_) {}
+    cookieBanner.hidden = true; cookiePanel.hidden = true;
+    cookieAnalytics.checked = consent.analytics; cookieMarketing.checked = consent.marketing;
+  }
+  function openCookieSettings(){
+    const saved = readCookieConsent();
+    cookieAnalytics.checked = !!saved?.analytics;
+    cookieMarketing.checked = !!saved?.marketing;
+    cookiePanel.hidden = false;
+  }
+  function initCookieConsent(){
+    const saved = readCookieConsent();
+    if(saved){ cookieAnalytics.checked=!!saved.analytics; cookieMarketing.checked=!!saved.marketing; }
+    else cookieBanner.hidden = false;
+    $("cookieAccept").onclick = () => saveCookieConsent(true,true);
+    $("cookieReject").onclick = () => saveCookieConsent(false,false);
+    $("cookieCustomize").onclick = openCookieSettings;
+    $("cookiePreferences").onclick = openCookieSettings;
+    $("cookiePanelClose").onclick = () => { cookiePanel.hidden = true; };
+    $("cookieSave").onclick = () => saveCookieConsent(cookieAnalytics.checked,cookieMarketing.checked);
+    $("cookiePanelAccept").onclick = () => saveCookieConsent(true,true);
+    cookiePanel.addEventListener("click", e => { if(e.target===cookiePanel) cookiePanel.hidden=true; });
+  }
+
   // ---------- arranque ----------
   (async function(){
+    initCookieConsent();
     CF = await F.init(); paint();
     const q = new URLSearchParams(location.search);
     // Cada visitante comienza por la bienvenida; nunca recuperamos automáticamente una cuenta anterior.
