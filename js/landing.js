@@ -120,8 +120,8 @@
     showOptions([["Ya soy del club", startLookup], ["Quiero unirme", startJoin], ["Tengo una duda", startFaq]]); chatForm.hidden = true;
   }
   function startFaq(){
-    flow = null; chatForm.hidden = true;
-    addMessage("Claro. Elegí el tema y te doy la información:");
+    flow = { type: "assistant", step: "question" };
+    ask("Claro. Podés escribir tu duda con tus propias palabras. Te voy a responder sobre el Club Ruedita, sus puntos, premios, invitaciones y beneficios.", "Escribí tu consulta");
     showOptions([
       ["¿Cuánto cuesta?", () => answerFaq("price")],
       ["¿Cómo sumo puntos?", () => answerFaq("earn")],
@@ -130,6 +130,37 @@
       ["¿Qué hacen con mis datos?", () => answerFaq("privacy")],
       ["Volver al inicio", welcome]
     ]);
+  }
+  async function askAssistant(question){
+    const context = {
+      club: CF.club, earn: CF.earn, multipliers: CF.multipliers, bonus: CF.bonus,
+      rewards: (CF.rewards || []).map(r => ({ name:r.name, points:r.pts, note:r.note || "" })),
+      inactiveDays: CF.inactiveDays
+    };
+    addMessage("Estoy revisando tu consulta…");
+    try{
+      const response = await fetch("/api/assistant", {
+        method:"POST", headers:{"content-type":"application/json"},
+        body:JSON.stringify({ question, context })
+      });
+      const data = await response.json().catch(() => ({}));
+      if(!response.ok) throw new Error(data.message || "No pude responder ahora.");
+      addMessage(data.answer || "No encontré una respuesta para esa consulta.");
+    }catch(error){
+      const q = question.toLowerCase();
+      let answer = "";
+      if(/punto|sum(ar|o)|acumul/.test(q)) answer = rulesText(CF).earn + rulesText(CF).extra + " También hay bonificaciones por cumpleaños, reseñas e invitaciones, según las reglas vigentes del Club.";
+      else if(/premio|canje|cambiar|retir/.test(q)) answer = "Podés consultar los premios y sus puntos en la sección “Premios”. Si ya sos socio, ingresá con tu código para ver tu saldo y los canjes disponibles.";
+      else if(/costo|precio|gratis|pagar/.test(q)) answer = "La inscripción al Club Ruedita es gratuita.";
+      else if(/venc|caduc/.test(q)) answer = "Los puntos tienen un plazo de vigencia definido por las reglas del Club. Si querés, puedo ayudarte a consultar tu saldo.";
+      else if(/dato|privacidad|whatsapp|mensaje|promo/.test(q)) answer = "Tus datos se utilizan para administrar tu membresía. Los mensajes promocionales por WhatsApp son opcionales y requieren tu autorización. Podés solicitar dejar de recibirlos.";
+      else answer = "No tengo información suficiente para responder eso con seguridad. Puedo ayudarte con inscripción, puntos, premios, invitaciones, cumpleaños y comunicaciones del Club.";
+      addMessage(answer);
+      if(error.message) addMessage("El asistente automático no está disponible temporalmente; te doy la información básica del Club.");
+    }
+    flow = { type:"assistant", step:"question" };
+    chatForm.hidden = false; chatInput.type = "text"; chatInput.placeholder = "Escribí otra consulta"; chatInput.value = "";
+    showOptions([["Consultar mis puntos", startLookup], ["Volver al inicio", welcome]]);
   }
   function answerFaq(topic){
     const answers = {
@@ -146,7 +177,7 @@
     const inviteCode = new URLSearchParams(location.search).get("ref") || "";
     flow = { type: "join", step: "name", data: { ref: inviteCode } };
     if(inviteCode){
-      ask("¡Qué bueno! Un amigo te invitó a formar parte del Club Ruedita. Para continuar con tu invitación, ¿cuál es tu nombre?", "Tu nombre");
+      ask("¡Hola! Llegaste por la invitación de un amigo para sumarte al Club Ruedita. Para continuar con tu invitación, ¿cuál es tu nombre?", "Escribí tu nombre");
     } else {
       ask("¡Qué bueno! ¿Cuál es tu nombre?", "Tu nombre");
     }
@@ -230,6 +261,7 @@
     const v = value.trim(); if(!v || !flow) return;
     addMessage(v, "user"); chatForm.hidden = true; showOptions([]);
     if(flow.type === "lookup"){ await submitLookup(v); return; }
+    if(flow.type === "assistant"){ await askAssistant(v); return; }
     flow.value = v;
     if(flow.step === "ref" && flow.data.ref && !v) flow.value = flow.data.ref;
     nextJoin();
