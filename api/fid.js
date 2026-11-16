@@ -294,11 +294,12 @@ module.exports = async function handler(req,res) {
     }
     if(action==="me"){
       const c=await customerByToken(r,body.token);
-      const [history,redemptions]=await Promise.all([
+      const [history,redemptions,review]=await Promise.all([
         many("ledger",[queryEqual("customer_id",c.$id),queryOrderDesc("created_at")],8),
         many("redemptions",[queryEqual("customer_id",c.$id),queryOrderDesc("created_at")],10),
+        one("ledger",[queryEqual("customer_id",c.$id),queryEqual("type","reseña")]),
       ]);
-      return res.status(200).json({customer:{...publicCustomer(c),confirmed:!!c.wa_confirmed_at},history:history.map(x=>({points:x.points,type:x.type,note:x.note,created_at:x.created_at})),redemptions:redemptions.map(x=>({name:x.name,points:x.points,code:x.code,status:x.status,created_at:x.created_at}))});
+      return res.status(200).json({customer:{...publicCustomer(c),confirmed:!!c.wa_confirmed_at},reviewDone:!!review,history:history.map(x=>({points:x.points,type:x.type,note:x.note,created_at:x.created_at})),redemptions:redemptions.map(x=>({name:x.name,points:x.points,code:x.code,status:x.status,created_at:x.created_at}))});
     }
     if(action==="submit_review"){
       const c=await customerByCode(r,body.code);
