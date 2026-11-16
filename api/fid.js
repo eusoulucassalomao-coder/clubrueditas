@@ -64,6 +64,9 @@ async function registerCustomer(r, input) {
   const name = String(input.name || "").trim(), phone = digits(input.phone);
   if (name.length < 2 || name.length > 80) throw Object.assign(new Error("Escribí tu nombre"), { code: "name" });
   if (phone.length < 8 || phone.length > 15) throw Object.assign(new Error("Revisá tu número de celular con código de área"), { code: "phone" });
+  const birthday = String(input.birthday || "");
+  const birthdayDate = new Date(birthday + "T00:00:00Z");
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(birthday) || !Number.isFinite(birthdayDate.getTime()) || birthdayDate.toISOString().slice(0,10) !== birthday) throw Object.assign(new Error("Ingresá tu fecha de nacimiento"), { code: "birthday" });
   if (!input.consent) throw Object.assign(new Error("Necesitamos tu autorización para gestionar tu membresía y tus puntos"), { code: "consent" });
   const phoneKey = phone.slice(-8);
   if (await one("customers", [queryEqual("restaurant_id", r.$id), queryEqual("phone_key", phoneKey)])) {
@@ -77,7 +80,7 @@ async function registerCustomer(r, input) {
   const welcome = Math.max(0, Number(r.config?.bonus?.welcome) || 0);
   const id = crypto.randomUUID(), now = isoNow();
   const customer = {
-    restaurant_id: r.$id, name, phone, phone_key: phoneKey, birthday: input.birthday || null,
+    restaurant_id: r.$id, name, phone, phone_key: phoneKey, birthday,
     code: await uniqueCode(r, name), referred_by: referredBy, points: welcome, lifetime: welcome,
     visits: 0, last_visit: null, consent: true, consent_at: now, opted_out: input.waConsent === true ? false : true,
     access_token: crypto.randomBytes(18).toString("hex"), created_at: now, wa_confirmed_at: input.waConsent === true ? now : null,
@@ -236,7 +239,7 @@ async function addBonus(r, customer, type) {
   const now=isoNow();
   await commitOperations([
     transactionUpdate("customers",customer.$id,{points:customer.points+points,lifetime:customer.lifetime+points}),
-    transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.$id,customer_id:customer.$id,points,type:type==="birthday"?"cumpleaños":"reseña",note:type==="birthday"?"Regalo de cumpleaños":"Reseña en Google",created_at:now}),
+    transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.$id,customer_id:customer.$id,points,type:type==="birthday"?"cumpleaños":"reseña",note:type==="birthday"?"Regalo de cumpleaños":"Opinión sobre el Club",created_at:now}),
   ]);
   return {customer:{...publicCustomer({...customer,points:customer.points+points,lifetime:customer.lifetime+points}),id:customer.$id},pts:points};
 }
@@ -297,6 +300,23 @@ module.exports = async function handler(req,res) {
       ]);
       return res.status(200).json({customer:{...publicCustomer(c),confirmed:!!c.wa_confirmed_at},history:history.map(x=>({points:x.points,type:x.type,note:x.note,created_at:x.created_at})),redemptions:redemptions.map(x=>({name:x.name,points:x.points,code:x.code,status:x.status,created_at:x.created_at}))});
     }
+    if(action==="submit_review"){
+      const c=await customerByCode(r,body.code);
+      const stars=Number(body.stars),comment=String(body.comment||"").trim().slice(0,2000);
+      if(!Number.isInteger(stars)||stars<1||stars>5) throw Object.assign(new Error("Elegí una puntuación de 1 a 5 estrellas"),{code:"review-stars"});
+      if(comment.length<3) throw Object.assign(new Error("Escribí un comentario de al menos 3 caracteres"),{code:"review-comment"});
+      const previous=await many("ledger",[queryEqual("customer_id",c.$id),queryEqual("type","reseña")],5);
+      if(previous.length) throw Object.assign(new Error("Este código ya recibió los puntos por una opinión"),{code:"review-used"});
+      const points=Math.max(0,Number(r.config?.bonus?.review)||0);
+      if(!points) throw Object.assign(new Error("La recompensa por opinión no está configurada"),{code:"review-disabled"});
+      const now=isoNow(),meta=JSON.stringify({stars,comment,improvement:String(body.improvement||"").trim().slice(0,2000),customerName:c.name,customerCode:c.code});
+      await commitOperations([
+        transactionUpdate("customers",c.$id,{points:c.points+points,lifetime:c.lifetime+points}),
+        transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.$id,customer_id:c.$id,points,type:"reseña",note:"Opinión sobre el Club",created_at:now}),
+        transactionCreate("message_log",crypto.randomUUID(),{restaurant_id:r.$id,customer_id:c.$id,kind:"satisfaction_review",meta,created_at:now})
+      ]);
+      return res.status(200).json({ok:true,points,total:c.points+points});
+    }
     if(action==="lookup_code"){
       const c=await customerByCode(r,body.code);
       const redemptions=await many("redemptions",[queryEqual("customer_id",c.$id),queryOrderDesc("created_at")],10);
@@ -340,7 +360,7 @@ module.exports = async function handler(req,res) {
 
     const token=bearer(req);
     const cashier=["search","visit","bonus","find_code","deliver","recent"].includes(action);
-    const owner=["stats","customers","export_customers","export_visits","redemptions","save_config","wa_status","wa_connect","wa_logout"].includes(action);
+    const owner=["stats","customers","export_customers","export_visits","redemptions","reviews","save_config","wa_status","wa_connect","wa_logout"].includes(action);
     if(cashier||owner){
       const roles=owner?["panel"]:["caja","panel"];
       if(!verifyToken(slug,token,roles)) return res.status(401).json({error:"unauthorized",message:"La sesión venció. Entrá de nuevo."});
@@ -415,6 +435,10 @@ module.exports = async function handler(req,res) {
     if(action==="export_visits"){
       const rows=await many("visits",[queryEqual("restaurant_id",r.$id),queryOrderDesc("created_at")],5000);
       return res.status(200).json({visits:await Promise.all(rows.map(async v=>({ts:v.created_at,name:(await getDocument("customers",v.customer_id).catch(()=>null))?.name||"",amount:v.amount,pts:v.points,mult:v.multiplier})))});
+    }
+    if(action==="reviews"){
+      const rows=(await many("message_log",[queryEqual("restaurant_id",r.$id),queryOrderDesc("created_at")],5000)).filter(x=>x.kind==="satisfaction_review").slice(0,200);
+      return res.status(200).json({reviews:rows.map(x=>{let m={};try{m=JSON.parse(x.meta||"{}");}catch(_){}return {customer:m.customerName||"—",code:m.customerCode||"",stars:Number(m.stars)||0,comment:String(m.comment||""),improvement:String(m.improvement||""),created_at:x.created_at};})});
     }
     if(action==="redemptions"){
       const rows=await many("redemptions",[queryEqual("restaurant_id",r.$id),queryOrderDesc("created_at")],60);
