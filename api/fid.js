@@ -59,7 +59,7 @@ async function registerCustomer(r, input) {
   if (phone.length < 8 || phone.length > 15) throw Object.assign(new Error("Revisá tu número de celular con código de área"), { code: "phone" });
   const birthday = String(input.birthday || "").trim();
   const birthdayDate = new Date(birthday + "T00:00:00Z");
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(birthday) || !Number.isFinite(birthdayDate.getTime()) || birthdayDate.toISOString().slice(0, 10) !== birthday || birthday > isoNow().slice(0, 10)) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthday) || !Number.isFinite(birthdayDate.getTime()) || birthdayDate.toISOString().slice(0, 10) !== birthday || birthday > isoNow().slice(0, 10)) {
     throw Object.assign(new Error("Ingresá tu fecha de nacimiento para recibir tu saludo y beneficio de cumpleaños"), { code: "birthday" });
   }
   if (!input.consent || input.waConsent !== true) throw Object.assign(new Error("Para unirte al club necesitás aceptar las comunicaciones y el uso de tus datos informados en el alta"), { code: "consent" });
