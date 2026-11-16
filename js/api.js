@@ -34,6 +34,7 @@
     register: d => call(Object.assign({ action: "register" }, d)),
     me: token => call({ action: "me", token }),
     claim: (token, reward) => call({ action: "claim", token, reward }),
+    claimByCode: (code, reward) => call({ action: "claim_by_code", code, reward }),
     login: phone => call({ action: "login", phone }),
     lookupCode: code => call({ action: "lookup_code", code }),
     // acesso interno

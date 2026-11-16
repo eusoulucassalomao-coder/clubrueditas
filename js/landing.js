@@ -82,7 +82,7 @@
       ${opts.history ? `<div class="hist"><h4>Últimos movimientos</h4>${(d.history || []).slice(0, 5).map(l => `<div><span>${esc(l.note || l.type)}</span><b class="${l.points < 0 ? "neg" : ""}">${l.points > 0 ? "+" : ""}${fmt(l.points)}</b></div>`).join("") || "<div><span>Todavía no hay movimientos</span><b></b></div>"}</div>` : ""}`;
   }
 
-  function wire(box){
+  function wire(box, memberCode){
     box.querySelectorAll("[data-copy]").forEach(b => b.onclick = () => {
       const t = b.dataset.copy;
       (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { b.textContent = "¡Copiado!"; }, () => { prompt("Copiá tu link:", t); });
@@ -90,9 +90,9 @@
     box.querySelectorAll("[data-claim]").forEach(b => b.onclick = async () => {
       b.disabled = true;
       try{
-        const r = (await F.claim(getToken(), b.dataset.claim)).redemption;
+        const r = (await (memberCode ? F.claimByCode(memberCode, b.dataset.claim) : F.claim(getToken(), b.dataset.claim))).redemption;
         modal(`<h3>¡Premio listo!</h3><p class="hint">${esc(r.name)}</p><div class="bigcode">${esc(r.code)}</div><p class="hint">Mostrá este código en caja para retirarlo. Lo guardamos en “Mis puntos”.</p><button class="btn full" type="button" id="okClaim">Entendido</button>`);
-        $("okClaim").onclick = () => { $("modal").hidden = true; showMine(); };
+        $("okClaim").onclick = () => { $("modal").hidden = true; if(memberCode) submitLookup(memberCode); else showMine(); };
       }catch(e){ alert(e.message); b.disabled = false; }
     });
   }
@@ -240,25 +240,20 @@
     }catch(e){addMessage(e.message||T("noAnswer"));showOptions([[T("retry"),startJoin],[T("home"),welcome]]);chatForm.hidden=true;}
   }
   async function submitLookup(code){
+    const memberCode=code.trim().toUpperCase();
     addMessage(LANG==="en"?"Looking up your points…":"Estoy buscando tu saldo…");showOptions([]);chatForm.hidden=true;
     try{
-      const d=await F.lookupCode(code.trim().toUpperCase());messages.replaceChildren();addMessage(T("lookupHello")(d.customer.name,fmt(d.customer.points)));
+      const d=await F.lookupCode(memberCode);
+      messages.replaceChildren();
+      addMessage(T("lookupHello")(d.customer.name,fmt(d.customer.points)));
       if(d.customer.code)addMessage(T("memberCode")+d.customer.code);
-      const token=getToken();
-      if(token){
-        try{
-          const mine=await F.me(token);
-          if(mine.customer.code===d.customer.code){addMessage(memberCard(mine,{history:true}),"bot",true);wire(messages);}
-          else addMessage(LANG==="en"?"To redeem rewards, open the Club on the same browser where you registered. Your member code alone cannot authorize point spending.":"Para canjear premios, abrí el Club en el mismo navegador donde hiciste tu inscripción. El código de socio por sí solo no autoriza gastar puntos.");
-        }catch(_){
-          setToken("");
-          addMessage(LANG==="en"?"To redeem rewards, open the Club on the same browser where you registered. Your member code alone cannot authorize point spending.":"Para canjear premios, abrí el Club en el mismo navegador donde hiciste tu inscripción. El código de socio por sí solo no autoriza gastar puntos.");
-        }
-      }else{
-        addMessage(LANG==="en"?"To redeem rewards, open the Club on the same browser where you registered. Your member code alone cannot authorize point spending.":"Para canjear premios, abrí el Club en el mismo navegador donde hiciste tu inscripción. El código de socio por sí solo no autoriza gastar puntos.");
-      }
+      addMessage(memberCard(d,{history:false}),"bot",true);
+      wire(messages,d.customer.code);
       showOptions([[T("otherCode"),startLookup],[T("home"),welcome]]);
-    }catch(e){addMessage(e.code==="customer-not-found"?T("notFound"):(e.message||T("notFound")));showOptions([[T("retryCode"),startLookup],[T("home"),welcome]]);}
+    }catch(e){
+      addMessage(e.code==="customer-not-found"?T("notFound"):(e.message||T("notFound")));
+      showOptions([[T("retryCode"),startLookup],[T("home"),welcome]]);
+    }
     flow=null;
   }
   function submitAnswer(value){
