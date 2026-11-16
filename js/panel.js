@@ -69,7 +69,7 @@
   async function drawClients(){
     try{
       const list = (await run(() => F.customers(tok, $("cq").value))).customers;
-      $("clients").innerHTML = list.map(c => `<tr><td>${esc(c.name)}</td><td>${esc(c.phone)}</td><td>${c.visits}</td><td>${fmt(c.points)}</td><td>${esc(c.code)}</td></tr>`).join("") || `<tr><td colspan="5"><small>Sin clientes.</small></td></tr>`;
+      $("clients").innerHTML = list.map(c => `<tr><td>${esc(c.name)}</td><td>${esc(c.phone)}</td><td>${c.marketingConsent ? "Sí" : "No"}</td><td>${c.visits}</td><td>${fmt(c.points)}</td><td>${esc(c.code)}</td></tr>`).join("") || `<tr><td colspan="6"><small>Sin clientes.</small></td></tr>`;
     }catch(e){}
   }
   $("cq").addEventListener("input", () => { clearTimeout(cqTimer); cqTimer = setTimeout(drawClients, 300); });
@@ -157,8 +157,8 @@
   $("expC").onclick = async () => {
     try{
       const r = (await run(() => F.exportCustomers(tok))).customers;
-      csv([["Nombre", "WhatsApp", "Cumpleaños", "Código", "Visitas", "Puntos", "Puntos históricos", "Última visita", "Alta", "Acepta mensajes"]]
-        .concat(r.map(c => [c.name, c.phone, c.birthday, c.code, c.visits, c.points, c.lifetime, dshort(c.last_visit), dshort(c.created_at), c.consent && !c.opted_out ? "Sí" : "No"])), "clientes.csv");
+      csv([["Nombre", "WhatsApp", "Cumpleaños", "Código", "Visitas", "Puntos", "Puntos históricos", "Última visita", "Alta", "Permite mensajes WhatsApp", "Fecha de autorización"]]
+        .concat(r.map(c => [c.name, c.phone, c.birthday, c.code, c.visits, c.points, c.lifetime, dshort(c.last_visit), dshort(c.created_at), c.marketingConsent ? "Sí" : "No", dshort(c.wa_confirmed_at)])), "clientes.csv");
     }catch(e){ alert(e.message); }
   };
   $("expV").onclick = async () => {
