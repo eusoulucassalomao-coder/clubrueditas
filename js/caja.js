@@ -102,7 +102,7 @@
   $("newForm").addEventListener("submit", async e => {
     e.preventDefault(); const f = e.target, m = $("nMsg"); m.className = "msg err"; m.textContent = "";
     try{
-      const r = await run(() => F.newCustomer(tok, { name: f.name.value, phone: f.phone.value, birthday: f.birthday.value, consent: f.consent.checked }));
+      const r = await run(() => F.newCustomer(tok, { name: f.name.value, phone: f.phone.value, birthday: f.birthday.value, consent: true, waConsent: false }));
       f.reset(); m.className = "msg ok"; m.textContent = `✓ ${r.customer.name} ya está en el club (código ${r.customer.code}).`;
     }catch(err){ m.textContent = err.message; }
   });
