@@ -37,6 +37,7 @@
     claimByCode: (code, reward) => call({ action: "claim_by_code", code, reward }),
     login: phone => call({ action: "login", phone }),
     lookupCode: code => call({ action: "lookup_code", code }),
+    submitReview: data => call(Object.assign({ action: "submit_review" }, data)),
     // acesso interno
     async auth(role, email, password){
       if(role === "caja") return F.authCaja(email, password);
@@ -73,6 +74,7 @@
     exportCustomers: t => call({ action: "export_customers" }, t),
     exportVisits: t => call({ action: "export_visits" }, t),
     redemptions: t => call({ action: "redemptions" }, t),
+    reviews: t => call({ action: "reviews" }, t),
     async saveConfig(t, config){ const j = await call({ action: "save_config", config }, t); remote = j.config; return j; }
   };
   window.Fid = F;
