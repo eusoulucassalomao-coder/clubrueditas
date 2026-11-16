@@ -42,6 +42,13 @@ async function customerById(r, id) {
   if (c.restaurant_id !== r.$id) throw Object.assign(new Error("Cliente no encontrado"), { status: 404, code: "customer" });
   return c;
 }
+async function customerByCode(r, value) {
+  const code = String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 20);
+  if (code.length < 3) throw Object.assign(new Error("Ingresá tu código de socio"), { status: 400, code: "customer-not-found" });
+  const c = await one("customers", [queryEqual("restaurant_id", r.$id), queryEqual("code", code)]);
+  if (!c) throw Object.assign(new Error("No encontramos ese código. Revisalo e intentá de nuevo."), { status: 404, code: "customer-not-found" });
+  return c;
+}
 function makeCustomerCode(name) {
   const base = String(name).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z]/g, "").toUpperCase().slice(0, 3).padEnd(3, "X");
   return base + String(100 + crypto.randomInt(0, 900));
@@ -291,10 +298,12 @@ module.exports = async function handler(req,res) {
       return res.status(200).json({customer:{...publicCustomer(c),confirmed:!!c.wa_confirmed_at},history:history.map(x=>({points:x.points,type:x.type,note:x.note,created_at:x.created_at})),redemptions:redemptions.map(x=>({name:x.name,points:x.points,code:x.code,status:x.status,created_at:x.created_at}))});
     }
     if(action==="lookup_code"){
-      const code=String(body.code||"").trim().toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,20);
-      const c=code.length>=3?await one("customers",[queryEqual("restaurant_id",r.$id),queryEqual("code",code)]):null;
-      if(!c) return res.status(404).json({error:"customer-not-found",message:"No encontramos ese código. Revisalo e intentá de nuevo."});
-      return res.status(200).json({customer:{name:c.name,code:c.code,points:c.points}});
+      const c=await customerByCode(r,body.code);
+      const redemptions=await many("redemptions",[queryEqual("customer_id",c.$id),queryOrderDesc("created_at")],10);
+      return res.status(200).json({
+        customer:{name:c.name,code:c.code,points:c.points},
+        redemptions:redemptions.map(x=>({name:x.name,points:x.points,code:x.code,status:x.status,created_at:x.created_at}))
+      });
     }
     if(action==="login") return res.status(200).json({ok:true,channel:false});
     if(action==="auth"){
@@ -375,8 +384,9 @@ module.exports = async function handler(req,res) {
       const rows=await Promise.all(visits.map(async v=>({amount:v.amount,pts:v.points,ts:v.created_at,name:(await getDocument("customers",v.customer_id).catch(()=>null))?.name||"—"})));
       return res.status(200).json({visits:rows});
     }
-    if(action==="claim"){
-      const c=await customerByToken(r,body.token),reward=(r.config?.rewards||[]).find(x=>x.id===String(body.reward||""));
+    if(action==="claim"||action==="claim_by_code"){
+      const c=action==="claim_by_code"?await customerByCode(r,body.code):await customerByToken(r,body.token);
+      const reward=(r.config?.rewards||[]).find(x=>x.id===String(body.reward||""));
       if(!reward) throw Object.assign(new Error("Premio no disponible"),{code:"reward"});
       if(c.points<Number(reward.pts)) throw Object.assign(new Error(`Te faltan ${Number(reward.pts)-c.points} puntos`),{code:"points"});
       let code;
