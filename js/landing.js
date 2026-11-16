@@ -79,7 +79,7 @@
       ${pend.length ? `<div class="mrewards"><h4>Premios para retirar</h4>${pend.map(r => `<div class="mr"><span>${esc(r.name)}<small>Mostrá este código en caja</small></span><b class="code" style="margin:0">${esc(r.code)}</b></div>`).join("")}</div>` : ""}
       <div class="mrewards"><h4>Canjear premios</h4>${sorted.map(w => `
         <div class="mr"><span>${esc(w.name)}<small>${fmt(w.pts)} puntos</small></span><button type="button" data-claim="${esc(w.id)}" ${c.points >= w.pts ? "" : "disabled"}>Canjear</button></div>`).join("")}</div>
-      <p class="hint" style="margin-top:14px"><a href="resena.html?code=${encodeURIComponent(c.code)}">Dejá tu opinión y ganá ${fmt(cf.bonus.review)} puntos</a></p>
+      ${!d.reviewDone ? '<p class="hint" style="margin-top:14px"><a href="resena.html?code=' + encodeURIComponent(c.code) + '">Dejá tu opinión y ganá ' + fmt(cf.bonus.review) + ' puntos</a></p>' : '<p class="hint" style="margin-top:14px">✓ Ya compartiste tu opinión. ¡Gracias!</p>'}
       ${opts.history ? `<div class="hist"><h4>Últimos movimientos</h4>${(d.history || []).slice(0, 5).map(l => `<div><span>${esc(l.note || l.type)}</span><b class="${l.points < 0 ? "neg" : ""}">${l.points > 0 ? "+" : ""}${fmt(l.points)}</b></div>`).join("") || "<div><span>Todavía no hay movimientos</span><b></b></div>"}</div>` : ""}`;
   }
 
