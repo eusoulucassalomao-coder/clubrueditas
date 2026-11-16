@@ -17,7 +17,7 @@
     <nav class="nav-links" aria-label="Secciones">
       <a href="#como">Cómo funciona</a><a href="#premios">Premios</a><a href="#invita">Invitá</a><a href="#puntos">Mis puntos</a>
     </nav>
-    <button class="nav-assistant-btn" id="chatOpenTop" type="button">🤖 Asistente</button>
+    <div class="nav-tools"><button class="lang-toggle" id="langToggle" type="button" aria-label="Change language">English</button><button class="nav-assistant-btn" id="chatOpenTop" type="button">🤖 Asistente</button></div>
   </div>
 </header>
 
@@ -127,15 +127,38 @@
       <a id="lnkMenu" target="_blank" rel="noopener">Ver la carta</a>
       <a id="lnkDelivery" target="_blank" rel="noopener">Pedir delivery</a>
       <a id="lnkMaps" target="_blank" rel="noopener">Cómo llegar</a>
+      <a href="/privacidad.html">Privacidad</a>
+      <a href="/cookies.html">Cookies</a>
+      <button class="cookie-settings-link" id="cookiePreferences" type="button">Preferencias de cookies</button>
     </div>
   </div>
   <p class="copy">© <span id="yr"></span> <span id="copyName"></span> · Programa de fidelidad por MK Conecta</p>
 </footer>
 
+<section class="cookie-banner" id="cookieBanner" aria-label="Preferencias de privacidad" hidden>
+  <div><b>Tu privacidad importa</b><p>Usamos cookies necesarias para que el Club funcione. Con tu permiso, también podremos usar cookies de análisis y marketing.</p></div>
+  <div class="cookie-actions">
+    <button type="button" class="cookie-btn cookie-secondary" id="cookieReject">Rechazar opcionales</button>
+    <button type="button" class="cookie-btn cookie-secondary" id="cookieCustomize">Personalizar</button>
+    <button type="button" class="cookie-btn cookie-primary" id="cookieAccept">Aceptar todas</button>
+  </div>
+</section>
+<div class="cookie-panel" id="cookiePanel" role="dialog" aria-modal="true" aria-labelledby="cookieTitle" hidden>
+  <div class="cookie-panel-box">
+    <button class="cookie-panel-close" id="cookiePanelClose" type="button" aria-label="Cerrar">×</button>
+    <h2 id="cookieTitle">Preferencias de cookies</h2>
+    <p>Las cookies necesarias siempre están activas porque permiten el funcionamiento básico del sitio. Las demás son opcionales.</p>
+    <label class="cookie-toggle"><span><b>Necesarias</b><small>Seguridad, navegación y funcionamiento del Club.</small></span><input type="checkbox" checked disabled></label>
+    <label class="cookie-toggle"><span><b>Analíticas</b><small>Ayudan a entender cómo se utiliza el sitio. Solo se activarán si se instalan herramientas de análisis y das tu permiso.</small></span><input type="checkbox" id="cookieAnalytics"></label>
+    <label class="cookie-toggle"><span><b>Marketing</b><small>Permiten medir campañas y publicidad. Solo se activarán si se instalan herramientas y das tu permiso.</small></span><input type="checkbox" id="cookieMarketing"></label>
+    <div class="cookie-actions"><button class="cookie-btn cookie-secondary" id="cookieSave">Guardar preferencias</button><button class="cookie-btn cookie-primary" id="cookiePanelAccept">Aceptar todas</button></div>
+    <p class="cookie-small">Podés cambiar tu elección en cualquier momento desde “Preferencias de cookies”.</p>
+  </div>
+</div>
 <div class="modal" id="modal" hidden><div class="modal-box" role="dialog" aria-modal="true"><button class="x" id="modalX" aria-label="Cerrar">&times;</button><div id="modalBody"></div></div></div>
 
 <aside class="club-chat" id="clubChat" aria-label="Asistente virtual del Club Ruedita" hidden>
-  <div class="chat-head"><div class="chat-avatar" aria-hidden="true">🤖</div><div><b>Asistente Club Ruedita</b><small>Alta y consulta de puntos</small></div><button class="chat-close" id="chatClose" type="button" aria-label="Cerrar asistente">&times;</button></div>
+  <div class="chat-head"><div class="chat-avatar" aria-hidden="true">🤖</div><div><b>Asistente Club Ruedita</b><small>Consultas sobre el Club y tus puntos</small></div><button class="chat-lang-toggle" id="chatLangToggle" type="button">English</button><button class="chat-close" id="chatClose" type="button" aria-label="Cerrar asistente">&times;</button></div>
   <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-relevant="additions"></div>
   <div class="chat-options" id="chatOptions"></div>
   <form class="chat-input-row" id="chatForm" hidden><input id="chatInput" aria-label="Sua resposta" autocomplete="off"><button class="btn" type="submit" aria-label="Enviar resposta">Enviar</button></form>

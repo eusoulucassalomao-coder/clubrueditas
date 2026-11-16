@@ -96,153 +96,210 @@
     });
   }
 
-  // ---------- asistente conversacional ----------
+  // ---------- asistente guiado, sin IA/API ----------
   const chat = $("clubChat"), messages = $("chatMessages"), options = $("chatOptions"), chatForm = $("chatForm"), chatInput = $("chatInput");
   let flow = null, greeted = false;
-  function addMessage(text, who = "bot", html = false){
-    const item = document.createElement("div"); item.className = `chat-bubble ${who === "user" ? "user" : "bot"}`;
-    if(html) item.innerHTML = text; else item.textContent = text;
-    messages.append(item); messages.scrollTop = messages.scrollHeight; return item;
+  let LANG = (() => { try { return localStorage.getItem("clubruedita_lang") === "en" ? "en" : "es"; } catch (_) { return "es"; } })();
+  const TXT = {
+    es: {
+      assistant:"Asistente Club Ruedita", subtitle:"Consultas sobre el Club y tus puntos", hello:"¡Hola! Soy el asistente virtual de Club Ruedita. ¿Qué necesitás hacer?",
+      points:"Consultar mis puntos", join:"Inscribirme en el Club", questions:"Tengo otras dudas", faq:"Preguntas frecuentes",
+      code:"Escribí tu código del Club Ruedita y busco tus puntos.", codePlaceholder:"Ej.: ANA123",
+      name:"¡Qué bueno que quieras sumarte! ¿Cuál es tu nombre?", namePlaceholder:"Tu nombre",
+      phone:n=>`Gracias, ${n}. ¿Cuál es tu número de celular?`, phonePlaceholder:"Ej.: 376 4123456",
+      birthday:"¿Cuál es tu fecha de cumpleaños? Es opcional.", skipBirthday:"Prefiero no decir",
+      ref:"¿Tenés el código de un amigo que te invitó? También es opcional.", refPlaceholder:"Código de invitación", noRef:"No tengo código",
+      consent:"Antes de terminar, necesitamos tu autorización para administrar tu membresía. Usaremos tu nombre, celular y, si lo compartiste, tu cumpleaños para identificarte, guardar tus puntos y gestionar tus beneficios.",
+      accept:"Acepto y quiero crear mi cuenta", deny:"No autorizo",
+      denied:"Entendido. Sin esta autorización no podemos crear ni administrar tu membresía. No se guardó ningún registro.",
+      waConsent:"¿Querés recibir por WhatsApp novedades, promociones y beneficios de La Ruedita? Es opcional y no cambia tu membresía. Podés darte de baja cuando quieras.",
+      waYes:"Sí, acepto recibir mensajes", waNo:"No, prefiero no recibir",
+      saving:"Un momento, estoy guardando tu membresía…", registered:n=>`¡Listo, ${n}! Tu inscripción al Club Ruedita quedó completada y guardada.`,
+      welcomePoints:n=>`Tu código de socio es ${n}. Ya recibiste tus puntos de bienvenida.`,
+      waAccepted:"También registramos que aceptaste recibir novedades, promociones y beneficios por WhatsApp. Podés darte de baja cuando quieras.",
+      waDeclined:"Registramos que preferís no recibir mensajes promocionales por WhatsApp. Tu membresía y tus puntos funcionan igual.",
+      thanks:"¡Gracias por sumarte! Guardá tu código de socio para consultar tus puntos cuando quieras.",
+      otherIntro:"Para consultas más detalladas, nuestro equipo puede ayudarte directamente por WhatsApp.",
+      whatsapp:"Contactar por WhatsApp", whatsappText:"Hola, quiero hacer una consulta sobre el Club La Ruedita. ¿Me pueden ayudar?",
+      noAnswer:"No pude completar el registro. Intentá nuevamente.", notFound:"No encontré ese código. Revisalo y probá de nuevo.",
+      lookupHello:(n,p)=>`¡Hola, ${n}! Tenés ${p} puntos.`, memberCode:"Tu código del club: ",
+      retry:"Intentar nuevamente", otherCode:"Consultar otro código", home:"Volver al inicio", anotherQuestion:"Otras dudas",
+      priceQ:"¿Cuánto cuesta?", earnQ:"¿Cómo sumo puntos?", redeemQ:"¿Cómo canjeo premios?", expiryQ:"¿Los puntos vencen?",
+      privacyQ:"¿Qué hacen con mis datos?", priceA:"El Club Ruedita es gratuito. No hay costo de inscripción.",
+      earnA:()=>rulesText(CF).earn+rulesText(CF).extra+" También sumás por traer amigos, en tu cumpleaños y por dejar tu reseña.",
+      redeemA:"Entrá a “Mis puntos”, elegí el premio que quieras canjear y mostrá el código en caja para retirarlo.",
+      expiryA:()=>`Tus puntos vencen después de ${Number(CF.expireMonths || 12)} meses, según las reglas actuales del Club.`,
+      privacyA:"Usamos tus datos para administrar tu membresía y tus puntos. Los mensajes promocionales por WhatsApp son opcionales y requieren tu autorización.",
+      send:"Enviar", input:"Escribí tu respuesta", faqIntro:"Elegí una pregunta frecuente o seleccioná “Otras dudas” para comunicarte con nuestro equipo.",
+      retryCode:"Probar otro código", notSaved:"Tus datos no se guardaron. Intentá de nuevo."
+    },
+    en: {
+      assistant:"La Ruedita Club Assistant", subtitle:"Questions about the Club and your points", hello:"Hello! I'm the La Ruedita Club virtual assistant. What would you like to do?",
+      points:"Check my points", join:"Join the Club", questions:"I have other questions", faq:"Frequently asked questions",
+      code:"Enter your La Ruedita Club code and I'll look up your points.", codePlaceholder:"e.g. ANA123",
+      name:"Great that you want to join! What's your name?", namePlaceholder:"Your name",
+      phone:n=>`Thanks, ${n}. What's your mobile number?`, phonePlaceholder:"e.g. +54 9 376 1234567",
+      birthday:"What's your date of birth? This is optional.", skipBirthday:"I'd rather not say",
+      ref:"Do you have the code of the friend who invited you? This is optional.", refPlaceholder:"Invitation code", noRef:"I don't have a code",
+      consent:"Before finishing, we need your permission to manage your membership. We'll use your name, phone number and, if provided, your birthday to identify your account, record your points and manage your benefits.",
+      accept:"I agree and want to create my account", deny:"I do not agree",
+      denied:"Understood. Without this permission, we can't create or manage your membership. No registration was saved.",
+      waConsent:"Would you like to receive La Ruedita news, promotions and benefits on WhatsApp? This is optional and does not affect your membership. You can unsubscribe at any time.",
+      waYes:"Yes, I agree to receive messages", waNo:"No, I prefer not to",
+      saving:"One moment, we're saving your membership…", registered:n=>`You're all set, ${n}! Your La Ruedita Club registration is complete.`,
+      welcomePoints:n=>`Your member code is ${n}. Your welcome points have been added.`,
+      waAccepted:"We've recorded your consent to receive news, promotions and benefits on WhatsApp. You can unsubscribe at any time.",
+      waDeclined:"We've recorded that you prefer not to receive promotional WhatsApp messages. Your membership and points work the same way.",
+      thanks:"Thanks for joining! Keep your member code to check your points whenever you like.",
+      otherIntro:"For more detailed questions, our team can help you directly on WhatsApp.",
+      whatsapp:"Contact us on WhatsApp", whatsappText:"Hello, I have a question about the La Ruedita Club. Can you help me?",
+      noAnswer:"We couldn't complete your registration. Please try again.", notFound:"We couldn't find that code. Please check it and try again.",
+      lookupHello:(n,p)=>`Hello, ${n}! You have ${p} points.`, memberCode:"Your Club code: ",
+      retry:"Try again", otherCode:"Check another code", home:"Back to the beginning", anotherQuestion:"Other questions",
+      priceQ:"Is it free?", earnQ:"How do I earn points?", redeemQ:"How do I redeem rewards?", expiryQ:"Do points expire?",
+      privacyQ:"How is my data used?", priceA:"Joining the La Ruedita Club is free. There is no registration fee.",
+      earnA:()=>{const r=CF.earn;let x=`You earn ${r.points} point(s) for every $${fmt(r.perAmount)} spent.`;Object.entries(CF.multipliers||{}).forEach(([d,v])=>{if(v>1)x+=` The points multiplier is x${v} on ${["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d]}.`;});return x+" Bonus points may also be available for referrals, birthdays and reviews.";},
+      redeemA:"Open “My points”, choose the reward you want and show the redemption code at the register.",
+      expiryA:()=>`Points expire after ${Number(CF.expireMonths || 12)} months, according to the Club's current rules.`,
+      privacyA:"Your data is used to manage your membership and points. Promotional WhatsApp messages are optional and require your consent.",
+      send:"Send", input:"Type your answer", faqIntro:"Choose a frequently asked question or select “Other questions” to contact our team.",
+      retryCode:"Try another code", notSaved:"Your information was not saved. Please try again."
+    }
+  };
+  const T = key => TXT[LANG][key];
+  function addMessage(text, who="bot", html=false){
+    const item=document.createElement("div"); item.className=`chat-bubble ${who==="user"?"user":"bot"}`;
+    if(html)item.innerHTML=text;else item.textContent=text;
+    messages.append(item);messages.scrollTop=messages.scrollHeight;return item;
   }
   function showOptions(items){
-    options.replaceChildren();
-    items.forEach(([label, fn]) => { const b = document.createElement("button"); b.type = "button"; b.className = "chat-choice"; b.textContent = label; b.onclick = fn; options.append(b); });
-    options.hidden = !items.length;
+    options.replaceChildren();items.forEach(([label,fn])=>{const b=document.createElement("button");b.type="button";b.className="chat-choice";b.textContent=label;b.onclick=fn;options.append(b);});options.hidden=!items.length;
   }
-  function ask(text, placeholder, extra = []){
-    addMessage(text); chatForm.hidden = false; options.hidden = false;
-    chatInput.placeholder = placeholder; chatInput.value = ""; chatInput.type = "text"; chatInput.autocomplete = "off"; chatInput.focus();
-    showOptions(extra);
+  function ask(text,placeholder,extra=[]){
+    addMessage(text);chatForm.hidden=false;chatInput.placeholder=placeholder;chatInput.value="";chatInput.type="text";chatInput.autocomplete="off";chatInput.focus();showOptions(extra);
   }
   function welcome(){
-    flow = null; messages.replaceChildren(); greeted = true;
-    addMessage(`¡Hola! ¿Cómo estás? Soy el asistente virtual de ${CF.club}. Para ayudarte mejor, contame: ¿ya sos parte del club o querés conocerlo y sumarte?`);
-    showOptions([["Ya soy del club", startLookup], ["Quiero unirme", startJoin], ["Tengo una duda", startFaq]]); chatForm.hidden = true;
+    flow=null;messages.replaceChildren();greeted=true;addMessage(T("hello"));
+    chatForm.hidden=true;
+    showOptions([[T("points"),startLookup],[T("join"),startJoin],[T("questions"),startFaq]]);
+  }
+  function openWhatsApp(){
+    const text=encodeURIComponent(T("whatsappText"));
+    const url=`https://wa.me/${String(CF.whatsapp||"").replace(/\D/g,"")}?text=${text}`;
+    addMessage(T("otherIntro"));
+    showOptions([[T("whatsapp"),()=>window.open(url,"_blank","noopener,noreferrer")],[T("home"),welcome]]);
   }
   function startFaq(){
-    flow = null; chatForm.hidden = true;
-    addMessage("Claro. Elegí el tema y te doy la información:");
+    flow={type:"faq"};chatForm.hidden=true;addMessage(T("faqIntro"));
     showOptions([
-      ["¿Cuánto cuesta?", () => answerFaq("price")],
-      ["¿Cómo sumo puntos?", () => answerFaq("earn")],
-      ["¿Cómo canjeo premios?", () => answerFaq("redeem")],
-      ["¿Los puntos vencen?", () => answerFaq("expiry")],
-      ["¿Qué hacen con mis datos?", () => answerFaq("privacy")],
-      ["Volver al inicio", welcome]
+      [T("priceQ"),()=>answerFaq("price")],[T("earnQ"),()=>answerFaq("earn")],
+      [T("redeemQ"),()=>answerFaq("redeem")],[T("expiryQ"),()=>answerFaq("expiry")],
+      [T("privacyQ"),()=>answerFaq("privacy")],[T("anotherQuestion"),openWhatsApp],[T("home"),welcome]
     ]);
   }
   function answerFaq(topic){
-    const answers = {
-      price: "El Club Ruedita es gratuito. No hay costo de inscripción.",
-      earn: rulesText(CF).earn + rulesText(CF).extra + " También sumás por traer amigos, en tu cumpleaños y por dejar tu reseña.",
-      redeem: "Entrá a “Mis puntos”, elegí el premio que quieras canjear y mostrá el código en caja para retirarlo.",
-      expiry: "Tus puntos vencen después de 12 meses sin visitas. Si venís con regularidad, los conservás.",
-      privacy: "Usamos tus datos para administrar tu membresía y tus puntos. Si aceptás recibir mensajes por WhatsApp, también podremos enviarte novedades, promociones y beneficios del club. Podés elegir no recibirlos y cambiar tu decisión más adelante."
-    };
-    addMessage(answers[topic] || "No encontré esa respuesta. Elegí otra consulta o volvé al inicio.");
-    showOptions([["Otra pregunta", startFaq], ["Consultar mis puntos", startLookup], ["Volver al inicio", welcome]]);
+    const answers={price:T("priceA"),earn:T("earnA")(),redeem:T("redeemA"),expiry:T("expiryA")(),privacy:T("privacyA")};
+    addMessage(answers[topic]);showOptions([[T("anotherQuestion"),openWhatsApp],[T("faq"),startFaq],[T("home"),welcome]]);
   }
   function startJoin(){
-    const inviteCode = new URLSearchParams(location.search).get("ref") || "";
-    flow = { type: "join", step: "name", data: { ref: inviteCode } };
-    if(inviteCode){
-      ask("¡Qué bueno! Un amigo te invitó a formar parte del Club Ruedita. Para continuar con tu invitación, ¿cuál es tu nombre?", "Tu nombre");
-    } else {
-      ask("¡Qué bueno! ¿Cuál es tu nombre?", "Tu nombre");
-    }
+    const inviteCode=new URLSearchParams(location.search).get("ref")||"";
+    flow={type:"join",step:"name",data:{ref:inviteCode}};
+    ask(inviteCode?(LANG==="en"?"Hello! A friend invited you to join La Ruedita Club. What's your name?":"¡Hola! Llegaste por la invitación de un amigo para sumarte al Club Ruedita. ¿Cuál es tu nombre?"):T("name"),T("namePlaceholder"));
   }
-  function startLookup(){ flow = { type: "lookup", step: "code" }; ask("Escribí tu código del Club Ruedita y busco tus puntos.", "Ej.: ANA123"); }
+  function startLookup(){flow={type:"lookup",step:"code"};ask(T("code"),T("codePlaceholder"));}
   function nextJoin(){
-    const d = flow.data;
-    if(flow.step === "name") { d.name = flow.value; flow.step = "phone"; ask(`Gracias, ${d.name.split(" ")[0]}. ¿Cuál es tu número de celular?`, "Ej.: 376 4123456"); }
-    else if(flow.step === "phone") { d.phone = flow.value; flow.step = "birthday"; ask("¿Cuál es tu fecha de cumpleaños? Es opcional.", "Podés saltear esta pregunta", [["Prefiero no decir", () => afterBirthday("")]]); chatInput.type = "date"; }
-    else if(flow.step === "birthday") { afterBirthday(flow.value); }
-    else if(flow.step === "ref") { d.ref = flow.value.toUpperCase(); submitJoin(); }
+    const d=flow.data;
+    if(flow.step==="name"){d.name=flow.value;flow.step="phone";ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"));}
+    else if(flow.step==="phone"){d.phone=flow.value;flow.step="birthday";ask(T("birthday"),"YYYY-MM-DD",[[T("skipBirthday"),()=>afterBirthday("")]]);chatInput.type="date";}
+    else if(flow.step==="birthday"){afterBirthday(flow.value);}
+    else if(flow.step==="ref"){d.ref=flow.value.toUpperCase();askConsent();}
   }
-  function afterBirthday(value){ flow.data.birthday = value; if(flow.data.ref){ askConsent(); } else { flow.step = "ref"; askRef(); } }
-  function askRef(){
-    ask("¿Tenés el código de un amigo que te invitó? También es opcional.", "Código de invitación",
-      [["No tengo código", () => { flow.data.ref = ""; askConsent(); }]]);
-  }
+  function afterBirthday(value){flow.data.birthday=value;if(flow.data.ref)askConsent();else{flow.step="ref";ask(T("ref"),T("refPlaceholder"),[[T("noRef"),()=>{flow.data.ref="";askConsent();}]]);}}
   function askConsent(){
-    flow.step = "consent"; chatForm.hidden = true;
-    addMessage("Antes de terminar, necesitamos tu autorización para administrar tu membresía. Usaremos tu nombre, celular y, si lo compartiste, tu cumpleaños para identificarte, guardar tus puntos y gestionar tus beneficios.");
-    showOptions([
-      ["Acepto y quiero crear mi cuenta", () => askWhatsAppConsent()],
-      ["No autorizo", () => {
-        flow = null;
-        addMessage("Entendido. Sin esta autorización no podemos crear ni administrar tu membresía. No se guardó ningún registro.");
-        showOptions([["Volver al inicio", welcome], ["Empezar de nuevo", startJoin]]);
-      }]
-    ]);
+    flow.step="consent";chatForm.hidden=true;addMessage(T("consent"));
+    showOptions([[T("accept"),askWhatsAppConsent],[T("deny"),()=>{flow=null;addMessage(T("denied"));showOptions([[T("home"),welcome],[T("join"),startJoin]]);} ]]);
   }
   function askWhatsAppConsent(){
-    flow.step = "whatsapp"; chatForm.hidden = true;
-    addMessage("¿Querés recibir por WhatsApp novedades, promociones y beneficios de La Ruedita? Es opcional y no cambia tu membresía. Podés darte de baja cuando quieras.");
-    showOptions([
-      ["Sí, acepto recibir mensajes", () => submitJoin(true)],
-      ["No, prefiero no recibir", () => submitJoin(false)]
-    ]);
+    flow.step="whatsapp";chatForm.hidden=true;addMessage(T("waConsent"));
+    showOptions([[T("waYes"),()=>submitJoin(true)],[T("waNo"),()=>submitJoin(false)]]);
   }
   async function submitJoin(waConsent){
-    if(!flow || flow.step !== "whatsapp" || typeof waConsent !== "boolean") return;
-    flow.data.consent = true;
-    flow.data.waConsent = waConsent;
-    showOptions([]); addMessage("Un momento, estoy guardando tu membresía…");
+    if(!flow||flow.step!=="whatsapp"||typeof waConsent!=="boolean")return;
+    flow.data.consent=true;flow.data.waConsent=waConsent;showOptions([]);addMessage(T("saving"));
     try{
-      const r = await F.register(flow.data);
-      setToken(r.token);
-      let d;
-      try { d = await F.me(r.token); }
-      catch {
-        messages.replaceChildren();
-        addMessage(`¡Listo, ${esc(r.customer.name.split(" ")[0])}! Tu inscripción quedó guardada correctamente.`, "bot");
-        addMessage(`Tu código de socio es ${esc(r.customer.code)}. Ya recibiste ${fmt(r.customer.points)} puntos de bienvenida. Podés usar ese código para consultar tu saldo.`, "bot");
-        addMessage(waConsent ? "También registramos que aceptaste recibir novedades, promociones y beneficios por WhatsApp. Podés darte de baja cuando quieras." : "Registramos que preferís no recibir mensajes promocionales por WhatsApp. Tu membresía y tus puntos funcionan igual.", "bot");
-        showOptions([["Consultar mis puntos", () => startLookup()], ["Volver al inicio", welcome]]);
-        chatForm.hidden = true; flow = null; return;
+      const r=await F.register(flow.data);setToken(r.token);let d;
+      try{d=await F.me(r.token);}catch{
+        messages.replaceChildren();addMessage(T("registered")(r.customer.name.split(" ")[0]));
+        addMessage(T("welcomePoints")(r.customer.code));addMessage(waConsent?T("waAccepted"):T("waDeclined"));
+        showOptions([[T("points"),startLookup],[T("home"),welcome]]);chatForm.hidden=true;flow=null;return;
       }
-      messages.replaceChildren();
-      addMessage(`¡Listo, ${esc(d.customer.name.split(" ")[0])}! Tu inscripción al Club Ruedita quedó completada y guardada.`, "bot");
-      addMessage(memberCard(d, { welcome: true }), "bot", true); wire(messages);
-      addMessage(waConsent ? "También registramos que aceptaste recibir novedades, promociones y beneficios por WhatsApp. Podés darte de baja cuando quieras." : "Registramos que preferís no recibir mensajes promocionales por WhatsApp. Tu membresía y tus puntos funcionan igual.", "bot");
-      addMessage("¡Gracias por sumarte! Guardá tu código de socio para consultar tus puntos cuando quieras.", "bot");
-      showOptions([["Consultar mis puntos", () => { startLookup(); }], ["Volver al inicio", welcome]]); chatForm.hidden = true; flow = null;
-    }catch(e){
-      addMessage(e.message || "No pude completar el registro. Tus datos no se guardaron. Intentá de nuevo.");
-      showOptions([["Intentar de nuevo", startJoin], ["Volver al inicio", welcome]]); chatForm.hidden = true;
-    }
+      messages.replaceChildren();addMessage(T("registered")(d.customer.name.split(" ")[0]));
+      addMessage(memberCard(d,{welcome:true}),"bot",true);wire(messages);addMessage(waConsent?T("waAccepted"):T("waDeclined"));addMessage(T("thanks"));
+      showOptions([[T("points"),startLookup],[T("home"),welcome]]);chatForm.hidden=true;flow=null;
+    }catch(e){addMessage(e.message||T("noAnswer"));showOptions([[T("retry"),startJoin],[T("home"),welcome]]);chatForm.hidden=true;}
   }
   async function submitLookup(code){
-    addMessage("Estoy buscando tu saldo…"); showOptions([]); chatForm.hidden = true;
+    addMessage(LANG==="en"?"Looking up your points…":"Estoy buscando tu saldo…");showOptions([]);chatForm.hidden=true;
     try{
-      const d = await F.lookupCode(code.trim().toUpperCase());
-      messages.replaceChildren(); addMessage(`¡Hola, ${esc(d.customer.name)}! Tenés ${fmt(d.customer.points)} puntos.`, "bot");
-      if(d.customer.code) addMessage(`Tu código del club: ${esc(d.customer.code)}`, "bot");
-      showOptions([["Consultar otro código", startLookup], ["Volver al inicio", welcome]]);
-    }catch(e){
-      addMessage(e.code === "bad-action" ? "La consulta por código necesita una actualización del servidor del club antes de quedar activa." : (e.code === "customer-not-found" ? "No encontré ese código. Revisalo y probá de nuevo." : e.message));
-      showOptions([["Tentar novamente", startLookup], ["Volver al inicio", welcome]]);
-    }
-    flow = null;
+      const d=await F.lookupCode(code.trim().toUpperCase());messages.replaceChildren();addMessage(T("lookupHello")(d.customer.name,fmt(d.customer.points)));
+      if(d.customer.code)addMessage(T("memberCode")+d.customer.code);
+      showOptions([[T("otherCode"),startLookup],[T("home"),welcome]]);
+    }catch(e){addMessage(e.code==="customer-not-found"?T("notFound"):(e.message||T("notFound")));showOptions([[T("retryCode"),startLookup],[T("home"),welcome]]);}
+    flow=null;
   }
-  async function submitAnswer(value){
-    const v = value.trim(); if(!v || !flow) return;
-    addMessage(v, "user"); chatForm.hidden = true; showOptions([]);
-    if(flow.type === "lookup"){ await submitLookup(v); return; }
-    flow.value = v;
-    if(flow.step === "ref" && flow.data.ref && !v) flow.value = flow.data.ref;
-    nextJoin();
+  function submitAnswer(value){
+    const v=value.trim();if(!v)return;addMessage(v,"user");chatForm.hidden=true;showOptions([]);
+    if(!flow){welcome();return;}
+    if(flow.type==="lookup"){submitLookup(v);return;}
+    if(flow.type==="join"){flow.value=v;nextJoin();}
   }
-  chatForm.addEventListener("submit", e => { e.preventDefault(); submitAnswer(chatInput.value); });
-  $("chatClose").onclick = () => setChat(false);
-  const openChatButtons = ["clubChatLauncher", "chatOpenTop", "chatOpenAction"];
-  openChatButtons.forEach(id => { const button = $(id); if(button) button.onclick = () => setChat(true); });
-  function setChat(open){
-    chat.hidden = !open;
-    openChatButtons.forEach(id => { const button = $(id); if(button) button.setAttribute("aria-expanded", String(open)); });
-    if(open && !greeted) welcome();
-    if(open) chatInput.focus();
+  chatForm.addEventListener("submit",e=>{e.preventDefault();submitAnswer(chatInput.value);});
+  $("chatClose").onclick=()=>setChat(false);
+  const openChatButtons=["clubChatLauncher","chatOpenTop","chatOpenAction"];
+  openChatButtons.forEach(id=>{const b=$(id);if(b)b.onclick=()=>setChat(true);});
+  function translatePage(){
+    const en=LANG==="en";
+    document.documentElement.lang=LANG;
+    const set=(selector,value)=>{const el=document.querySelector(selector);if(el)el.textContent=value;};
+    set("#chatOpenTop",en?"🤖 Assistant":"🤖 Asistente");
+    set("#chatOpenAction",en?"🤖 Talk to the assistant":"🤖 Hablar con el asistente");
+    set("#navClub",en?"Loyalty Club":"Club de clientes");
+    const pairs=[
+      [".nav-links a:nth-child(1)","How it works","Cómo funciona"],[".nav-links a:nth-child(2)","Rewards","Premios"],[".nav-links a:nth-child(3)","Invite friends","Invitá"],[".nav-links a:nth-child(4)","My points","Mis puntos"],
+      [".hero-copy .eyebrow","Customer club · Free","Club de clientes · Gratis"],[".hero-copy h1","Every visit brings you closer to your next reward","Cada visita te acerca a tu próximo premio"],
+      [".hero-copy .lead","Earn points when you visit, invite friends and redeem gifts. No app needed.","Sumá puntos cuando venís, invitá a tus amigos y canjeá regalos. Sin app, en 30 segundos."],
+      [".hero-cta .btn:first-child","I want points","Quiero mis puntos"],[".hero-cta .btn-ghost","I'm already a member","Ya soy del club"],
+      [".trust li:nth-child(1)","Free","Gratis"],[".trust li:nth-child(2)","No download required","Sin descargar nada"],[".trust li:nth-child(3)","Real rewards","Premios reales"],
+      ["#como .eyebrow","How it works","Cómo funciona"],["#como h2","It's that simple","Así de simple"],["#como .sub","Three steps. That's all.","Tres pasos. Nada más."],
+      ["#como .step:nth-child(1) h3","Sign up","Registrate"],["#como .step:nth-child(1) p","Enter your name and mobile number. Get welcome points.","Dejá tu nombre y número de celular. Ganás puntos de bienvenida."],
+      ["#como .step:nth-child(2) h3","Earn points","Sumá puntos"],["#como .step:nth-child(3) h3","Redeem rewards","Canjeá premios"],["#como .step:nth-child(3) p","Choose your gift and show the code at the register.","Elegí tu regalo y mostrá el código en caja."],
+      ["#premios .eyebrow","Rewards","Premios"],["#premios h2","Rewards worth enjoying","Regalos que se disfrutan"],["#premios .sub","The more you visit, the more you enjoy.","Cuanto más venís, más rico se pone."],
+      ["#invita .eyebrow","Invite & earn","Invitá y ganá"],["#invita h2","Your friend visits. You both win.","Tu amigo come. Ustedes dos ganan."],["#invita .sub","Share your code. When your friend visits for the first time, you both earn points.","Compartí tu código. Cuando tu amigo nos visita por primera vez, puntos para cada uno."],
+      ["#unirme .eyebrow","It's time","Es hora"],["#unirme h2","Join the Club","Unite al club"],["#unirme .sub","It takes less than a minute.","Tarda menos de un minuto."],
+      ["#puntos p","Have questions or want to join? The assistant can help with your points, rewards and membership.","¿Tenés dudas o querés sumarte? El asistente puede ayudarte con tus puntos, tus premios y tu ingreso al Club Ruedita."],
+      ["#faq .eyebrow","Questions","Dudas"],["#faq h2","Frequently asked questions","Preguntas frecuentes"],
+      ["#faq details:nth-of-type(1) summary","Is it free?","¿Cuánto cuesta?"],["#faq details:nth-of-type(1) p","The Club is free.","Nada. El club es gratis."],
+      ["#faq details:nth-of-type(2) summary","Do I need to download an app?","¿Tengo que descargar una app?"],["#faq details:nth-of-type(2) p","No. Everything works on your phone, directly on this website.","No. Todo funciona desde tu celular, directamente en este sitio."],
+      ["#faq details:nth-of-type(4) summary","How do I redeem a reward?","¿Cómo canjeo un premio?"],["#faq details:nth-of-type(4) p","Go to “My points”, choose a reward and show the code at the register.","Entrá a “Mis puntos”, elegí el premio y mostrá el código en caja. Te lo entregamos al momento."],
+      ["#faq details:nth-of-type(5) summary","Do points expire?","¿Los puntos vencen?"],["#faq details:nth-of-type(5) p",`Yes: after ${Number(CF.expireMonths||12)} months, according to the Club's rules.`,"Sí: pasados 12 meses sin visitas. Así no se pierden si venís seguido."],
+      ["#faq details:nth-of-type(6) summary","How is my data used?","¿Qué hacen con mis datos?"],
+      ["#footAddr",CF.address,CF.address],
+      ["#cookiePreferences","Cookie preferences","Preferencias de cookies"]
+    ];
+    pairs.forEach(([sel,english,spanish])=>set(sel,en?english:spanish));
+    const toggle=en?"Español":"English";$("langToggle").textContent=toggle;$("chatLangToggle").textContent=toggle;
+    set(".chat-head b",T("assistant"));set(".chat-head small",T("subtitle"));
+    const close=$("chatClose");if(close)close.setAttribute("aria-label",en?"Close assistant":"Cerrar asistente");
+    const fab=$("clubChatLauncher");if(fab)fab.querySelector("span:nth-child(2)").textContent=en?"Hi! I'm here to help":"¡Hola! Estoy aquí para ayudarte";
+  }
+  function changeLanguage(){
+    LANG=LANG==="es"?"en":"es";try{localStorage.setItem("clubruedita_lang",LANG);}catch(_){}
+    translatePage();welcome();
+  }
+  $("langToggle").onclick=changeLanguage;$("chatLangToggle").onclick=changeLanguage;
+  function setChat(open,skipWelcome=false){
+    chat.hidden=!open;openChatButtons.forEach(id=>{const b=$(id);if(b)b.setAttribute("aria-expanded",String(open));});
+    if(skipWelcome)greeted=true;if(open&&!greeted)welcome();if(open)chatInput.focus();
   }
 
   // ---------- sessão já existente ----------
@@ -256,13 +313,48 @@
     }catch(e){ if(e.code === "token") setToken(""); return false; }
   }
 
+
+  // ---------- consentimiento de cookies ----------
+  const COOKIE_KEY = "clubruedita_cookie_consent_v1";
+  const cookieBanner = $("cookieBanner"), cookiePanel = $("cookiePanel");
+  const cookieAnalytics = $("cookieAnalytics"), cookieMarketing = $("cookieMarketing");
+  function readCookieConsent(){
+    try { return JSON.parse(localStorage.getItem(COOKIE_KEY) || "null"); } catch (_) { return null; }
+  }
+  function saveCookieConsent(analytics, marketing){
+    const consent = { necessary:true, analytics:!!analytics, marketing:!!marketing, updatedAt:new Date().toISOString() };
+    try { localStorage.setItem(COOKIE_KEY, JSON.stringify(consent)); } catch (_) {}
+    cookieBanner.hidden = true; cookiePanel.hidden = true;
+    cookieAnalytics.checked = consent.analytics; cookieMarketing.checked = consent.marketing;
+  }
+  function openCookieSettings(){
+    const saved = readCookieConsent();
+    cookieAnalytics.checked = !!saved?.analytics;
+    cookieMarketing.checked = !!saved?.marketing;
+    cookiePanel.hidden = false;
+  }
+  function initCookieConsent(){
+    const saved = readCookieConsent();
+    if(saved){ cookieAnalytics.checked=!!saved.analytics; cookieMarketing.checked=!!saved.marketing; }
+    else cookieBanner.hidden = false;
+    $("cookieAccept").onclick = () => saveCookieConsent(true,true);
+    $("cookieReject").onclick = () => saveCookieConsent(false,false);
+    $("cookieCustomize").onclick = openCookieSettings;
+    $("cookiePreferences").onclick = openCookieSettings;
+    $("cookiePanelClose").onclick = () => { cookiePanel.hidden = true; };
+    $("cookieSave").onclick = () => saveCookieConsent(cookieAnalytics.checked,cookieMarketing.checked);
+    $("cookiePanelAccept").onclick = () => saveCookieConsent(true,true);
+    cookiePanel.addEventListener("click", e => { if(e.target===cookiePanel) cookiePanel.hidden=true; });
+  }
+
   // ---------- arranque ----------
   (async function(){
-    CF = await F.init(); paint();
+    initCookieConsent();
+    CF = await F.init(); paint(); translatePage();
     const q = new URLSearchParams(location.search);
     // Cada visitante comienza por la bienvenida; nunca recuperamos automáticamente una cuenta anterior.
     const ref = q.get("ref");
-    setChat(true);
-    if(ref){ startJoin(); }
+    if(ref){ setChat(true, true); startJoin(); }
+    else { setChat(true); }
   })();
 })();
