@@ -319,9 +319,13 @@ module.exports = async function handler(req,res) {
     }
     if(action==="lookup_code"){
       const c=await customerByCode(r,body.code);
-      const redemptions=await many("redemptions",[queryEqual("customer_id",c.$id),queryOrderDesc("created_at")],10);
+      const [redemptions,review]=await Promise.all([
+        many("redemptions",[queryEqual("customer_id",c.$id),queryOrderDesc("created_at")],10),
+        one("ledger",[queryEqual("customer_id",c.$id),queryEqual("type","reseña")])
+      ]);
       return res.status(200).json({
         customer:{name:c.name,code:c.code,points:c.points},
+        reviewDone:!!review,
         redemptions:redemptions.map(x=>({name:x.name,points:x.points,code:x.code,status:x.status,created_at:x.created_at}))
       });
     }
@@ -359,7 +363,7 @@ module.exports = async function handler(req,res) {
     }
 
     const token=bearer(req);
-    const cashier=["search","visit","bonus","find_code","deliver","recent"].includes(action);
+    const cashier=["search","visit","bonus","find_code","recent"].includes(action);
     const owner=["stats","customers","export_customers","export_visits","redemptions","reviews","save_config","wa_status","wa_connect","wa_logout"].includes(action);
     if(cashier||owner){
       const roles=owner?["panel"]:["caja","panel"];
@@ -385,19 +389,11 @@ module.exports = async function handler(req,res) {
       const code=String(body.code||"").trim().toUpperCase();
       const red=await one("redemptions",[queryEqual("restaurant_id",r.$id),queryEqual("code",code)]);
       if(!red) throw Object.assign(new Error("Código de canje no encontrado. Ingresá el código del premio que empieza con P y que el cliente ve en “Mis puntos”; no el código de socio."),{status:404,code:"redemption-not-found"});
-      const c=await customerById(r,red.customer_id);
-      return res.status(200).json({status:red.status,name:red.name,customer:c.name,pts:red.points,code:red.code});
-    }
-    if(action==="deliver"){
-      const code=String(body.code||"").trim().toUpperCase();
-      const red=await one("redemptions",[queryEqual("restaurant_id",r.$id),queryEqual("code",code)]);
-      if(!red) throw Object.assign(new Error("Código de canje no encontrado. Ingresá el código del premio que empieza con P y que el cliente ve en “Mis puntos”; no el código de socio."),{status:404,code:"redemption-not-found"});
-      if(red.status==="canjeado") throw Object.assign(new Error("Este premio ya fue entregado"),{code:"code"});
-      if(red.status!=="pendiente") throw Object.assign(new Error("Código no válido"),{code:"code"});
+      if(red.status!=="pendiente") throw Object.assign(new Error("Este código ya fue validado y no se puede volver a utilizar."),{code:"code"});
       const now=isoNow();
       await commitOperations([transactionUpdate("redemptions",red.$id,{status:"canjeado",used_at:now})]);
       const c=await customerById(r,red.customer_id);
-      return res.status(200).json({code:red.code,name:red.name,pts:red.points,status:"canjeado",customer:c.name});
+      return res.status(200).json({status:"canjeado",validatedNow:true,name:red.name,customer:c.name,pts:red.points,code:red.code});
     }
     if(action==="recent"){
       const visits=await many("visits",[queryEqual("restaurant_id",r.$id),queryOrderDesc("created_at")],8);
