@@ -137,7 +137,7 @@
       earn: rulesText(CF).earn + rulesText(CF).extra + " También sumás por traer amigos, en tu cumpleaños y por dejar tu reseña.",
       redeem: "Entrá a “Mis puntos”, elegí el premio que quieras canjear y mostrá el código en caja para retirarlo.",
       expiry: "Tus puntos vencen después de 12 meses sin visitas. Si venís con regularidad, los conservás.",
-      privacy: "Usamos tus datos para administrar tu membresía, identificar tu cuenta y registrar tus puntos y beneficios. No los usamos para enviarte mensajes por WhatsApp y podés pedir que los eliminemos cuando quieras."
+      privacy: "Usamos tus datos para administrar tu membresía y tus puntos. Si aceptás recibir mensajes por WhatsApp, también podremos enviarte novedades, promociones y beneficios del club. Podés elegir no recibirlos y cambiar tu decisión más adelante."
     };
     addMessage(answers[topic] || "No encontré esa respuesta. Elegí otra consulta o volvé al inicio.");
     showOptions([["Otra pregunta", startFaq], ["Consultar mis puntos", startLookup], ["Volver al inicio", welcome]]);
@@ -161,9 +161,9 @@
   }
   function askConsent(){
     flow.step = "consent"; chatForm.hidden = true;
-    addMessage("Antes de terminar, necesitamos tu autorización para administrar tu membresía. Usaremos tu nombre, celular y, si lo compartiste, tu cumpleaños para identificarte, guardar tus puntos y gestionar tus beneficios. No usaremos estos datos para enviarte mensajes por WhatsApp.");
+    addMessage("Antes de terminar, necesitamos tu autorización para administrar tu membresía. Usaremos tu nombre, celular y, si lo compartiste, tu cumpleaños para identificarte, guardar tus puntos y gestionar tus beneficios.");
     showOptions([
-      ["Acepto y quiero crear mi cuenta", () => submitJoin(true)],
+      ["Acepto y quiero crear mi cuenta", () => askWhatsAppConsent()],
       ["No autorizo", () => {
         flow = null;
         addMessage("Entendido. Sin esta autorización no podemos crear ni administrar tu membresía. No se guardó ningún registro.");
@@ -171,9 +171,18 @@
       }]
     ]);
   }
-  async function submitJoin(consent){
-    if(!flow || flow.step !== "consent" || consent !== true) return;
+  function askWhatsAppConsent(){
+    flow.step = "whatsapp"; chatForm.hidden = true;
+    addMessage("¿Querés recibir por WhatsApp novedades, promociones y beneficios de La Ruedita? Es opcional y no cambia tu membresía. Podés darte de baja cuando quieras.");
+    showOptions([
+      ["Sí, acepto recibir mensajes", () => submitJoin(true)],
+      ["No, prefiero no recibir", () => submitJoin(false)]
+    ]);
+  }
+  async function submitJoin(waConsent){
+    if(!flow || flow.step !== "whatsapp" || typeof waConsent !== "boolean") return;
     flow.data.consent = true;
+    flow.data.waConsent = waConsent;
     showOptions([]); addMessage("Un momento, estoy guardando tu membresía…");
     try{
       const r = await F.register(flow.data);
