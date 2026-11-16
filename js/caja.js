@@ -86,13 +86,11 @@
     if(!code) return;
     try{
       const r = await run(() => F.findCode(tok, code));
-      if(r.status === "canjeado"){ m.textContent = "Este premio ya fue entregado"; m.className = "msg err"; return; }
-      if(r.status !== "pendiente"){ m.textContent = "Código no válido"; m.className = "msg err"; return; }
-      box.innerHTML = `<div class="rcpt"><b>${esc(r.name)}</b><br>Para ${esc(r.customer || "—")} · ${fmt(r.pts)} puntos<br><button class="btn full" id="doDeliver" type="button" style="margin-top:12px">Entregar premio</button></div>`;
-      $("doDeliver").onclick = async () => {
-        try{ await run(() => F.deliver(tok, r.code)); box.innerHTML = ""; m.textContent = `✓ Premio entregado: ${r.name}`; m.className = "msg ok"; $("code").value = ""; }
-        catch(e){ m.textContent = e.message; m.className = "msg err"; }
-      };
+      if(!r.validatedNow){ m.textContent = "Este código ya fue validado. No se puede volver a utilizar."; m.className = "msg err"; return; }
+      box.innerHTML = `<div class="rcpt"><b>${esc(r.name)}</b><br>Para ${esc(r.customer || "—")} · ${fmt(r.pts)} puntos<br><p class="msg ok" style="margin-top:12px">✓ Código válido y consumido. Podés entregar la recompensa.</p></div>`;
+      m.textContent = "Recompensa confirmada. Entregá el producto al cliente.";
+      m.className = "msg ok";
+      $("code").value = "";
     }catch(e){ m.textContent = e.message; m.className = "msg err"; }
   }
   $("doCode").onclick = lookCode;
