@@ -161,7 +161,7 @@
       price: "El Club Ruedita es gratuito. No hay costo de inscripción.",
       earn: rulesText(CF).earn + rulesText(CF).extra + " También sumás por traer amigos, en tu cumpleaños y por dejar tu reseña.",
       redeem: "Entrá a “Mis puntos”, elegí el premio que quieras canjear y mostrá el código en caja para retirarlo.",
-      expiry: "Tus puntos vencen después de 12 meses sin visitas. Si venís con regularidad, los conservás.",
+      expiry: `Tus puntos vencen después de ${Number(CF.expireMonths || 12)} meses sin visitas, según las reglas actuales del Club.`,
       privacy: "Usamos tus datos para administrar tu membresía y tus puntos. Si aceptás recibir mensajes por WhatsApp, también podremos enviarte novedades, promociones y beneficios del club. Podés elegir no recibirlos y cambiar tu decisión más adelante."
     };
     addMessage(answers[topic] || "No encontré esa respuesta. Elegí otra consulta o volvé al inicio.");
