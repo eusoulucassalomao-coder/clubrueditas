@@ -161,7 +161,7 @@
     }
     flow = { type:"assistant", step:"question" };
     chatForm.hidden = false; chatInput.type = "text"; chatInput.placeholder = "Escribí otra consulta"; chatInput.value = "";
-    showOptions([["Otra duda", () => { flow = { type:"assistant", step:"question" }; addMessage("Claro. ¿Qué otra duda tenés sobre el Club Ruedita?"); chatInput.placeholder = "Escribí otra consulta"; chatInput.focus(); }], ["Consultar mis puntos", startLookup], ["Volver al inicio", welcome]]);
+    showOptions([["Otra duda", () => { flow = { type:"assistant", step:"question" }; showOptions([]); addMessage("Claro. ¿Qué otra duda tenés sobre el Club Ruedita?"); chatInput.placeholder = "Escribí otra consulta"; chatInput.focus(); }], ["Consultar mis puntos", startLookup], ["Volver al inicio", welcome]]);
   }
   function answerFaq(topic){
     const answers = {
