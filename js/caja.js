@@ -15,7 +15,7 @@
     CF = await F.init();
     $("gate").hidden = true; $("app").hidden = false;
     $("logo").src = CF.logo; $("club").textContent = CF.name;
-    $("bBirth").textContent = `Cumpleaños +${fmt(CF.bonus.birthday)}`; $("bReview").textContent = `Reseña +${fmt(CF.bonus.review)}`;
+    $("bBirth").textContent = `Cumpleaños +${fmt(CF.bonus.birthday)}`;
     recent();
   }
   $("loginForm").addEventListener("submit", async e => {
@@ -72,7 +72,7 @@
     }catch(e){ m.textContent = e.message; m.className = "msg err"; }
     btn.disabled = false;
   };
-  [["bBirth", "birthday"], ["bReview", "review"]].forEach(([id, type]) => $(id).onclick = async () => {
+  [["bBirth", "birthday"]].forEach(([id, type]) => $(id).onclick = async () => {
     try{
       const r = await run(() => F.bonus(tok, sel.id, type));
       showCust(r.customer); $("vMsg").textContent = `✓ +${fmt(r.pts)} puntos para ${r.customer.name}.`; $("vMsg").className = "msg ok"; recent();
@@ -86,13 +86,11 @@
     if(!code) return;
     try{
       const r = await run(() => F.findCode(tok, code));
-      if(r.status === "canjeado"){ m.textContent = "Este premio ya fue entregado"; m.className = "msg err"; return; }
-      if(r.status !== "pendiente"){ m.textContent = "Código no válido"; m.className = "msg err"; return; }
-      box.innerHTML = `<div class="rcpt"><b>${esc(r.name)}</b><br>Para ${esc(r.customer || "—")} · ${fmt(r.pts)} puntos<br><button class="btn full" id="doDeliver" type="button" style="margin-top:12px">Entregar premio</button></div>`;
-      $("doDeliver").onclick = async () => {
-        try{ await run(() => F.deliver(tok, r.code)); box.innerHTML = ""; m.textContent = `✓ Premio entregado: ${r.name}`; m.className = "msg ok"; $("code").value = ""; }
-        catch(e){ m.textContent = e.message; m.className = "msg err"; }
-      };
+      if(!r.validatedNow){ m.textContent = "Este código ya fue validado. No se puede volver a utilizar."; m.className = "msg err"; return; }
+      box.innerHTML = `<div class="rcpt"><b>${esc(r.name)}</b><br>Para ${esc(r.customer || "—")} · ${fmt(r.pts)} puntos<br><p class="msg ok" style="margin-top:12px">✓ Código válido y consumido. Podés entregar la recompensa.</p></div>`;
+      m.textContent = "Recompensa confirmada. Entregá el producto al cliente.";
+      m.className = "msg ok";
+      $("code").value = "";
     }catch(e){ m.textContent = e.message; m.className = "msg err"; }
   }
   $("doCode").onclick = lookCode;
@@ -102,7 +100,7 @@
   $("newForm").addEventListener("submit", async e => {
     e.preventDefault(); const f = e.target, m = $("nMsg"); m.className = "msg err"; m.textContent = "";
     try{
-      const r = await run(() => F.newCustomer(tok, { name: f.name.value, phone: f.phone.value, birthday: f.birthday.value, consent: f.consent.checked }));
+      const r = await run(() => F.newCustomer(tok, { name: f.name.value, phone: f.phone.value, birthday: f.birthday.value, consent: true, waConsent: false }));
       f.reset(); m.className = "msg ok"; m.textContent = `✓ ${r.customer.name} ya está en el club (código ${r.customer.code}).`;
     }catch(err){ m.textContent = err.message; }
   });

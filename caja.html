@@ -41,25 +41,24 @@
         <div class="prev" id="prev" hidden></div>
         <p class="msg" id="vMsg" role="status"></p>
         <button class="btn full" id="doVisit" type="button">Registrar visita</button>
-        <div class="row2" style="margin-top:10px"><button class="btn ghost sm" id="bBirth" type="button"></button><button class="btn ghost sm" id="bReview" type="button"></button></div>
+        <div class="row2" style="margin-top:10px"><button class="btn ghost sm" id="bBirth" type="button"></button></div>
       </div>
     </section>
 
     <section id="p-canje" class="card" hidden>
-      <h2>Entregar premio</h2><p class="sub">Pedile el código del premio generado en “Mis puntos” (empieza con P, por ejemplo P48213). No ingreses el código de socio.</p>
+      <h2>Entregar premio</h2><p class="sub">Ingresá el código P que muestra el cliente en “Mis puntos”. Al verificarlo, el sistema lo consume automáticamente y confirma qué premio tenés que entregar.</p>
       <input id="code" autocomplete="off" placeholder="Código (ej.: P48213)" autocapitalize="characters" aria-label="Código de premio">
       <p class="msg" id="cMsg" role="status"></p>
       <div id="cBox"></div>
-      <button class="btn full" id="doCode" type="button">Buscar código</button>
+      <button class="btn full" id="doCode" type="button">Verificar código</button>
     </section>
 
     <section id="p-nuevo" class="card" hidden>
       <h2>Cliente nuevo</h2><p class="sub">Alta rápida en el local.</p>
-      <form id="newForm" novalidate>
+      <form id="newForm">
         <label>Nombre<input name="name" autocomplete="off" required></label>
         <label>WhatsApp<input name="phone" type="tel" inputmode="tel" autocomplete="off" required></label>
-        <label>Cumpleaños (opcional)<input name="birthday" type="date"></label>
-        <label style="display:flex;gap:10px;align-items:flex-start;font-weight:400;color:var(--muted)"><input type="checkbox" name="consent" style="width:20px;height:20px;margin-top:2px"><span>El cliente aceptó recibir mensajes por WhatsApp.</span></label>
+        <label>Fecha de nacimiento<input name="birthday" type="date" required></label>
         <p class="msg" id="nMsg" role="alert"></p>
         <button class="btn full" type="submit">Dar de alta</button>
       </form>
