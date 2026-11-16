@@ -437,7 +437,7 @@ module.exports = async function handler(req,res) {
       return res.status(200).json({visits:await Promise.all(rows.map(async v=>({ts:v.created_at,name:(await getDocument("customers",v.customer_id).catch(()=>null))?.name||"",amount:v.amount,pts:v.points,mult:v.multiplier})))});
     }
     if(action==="reviews"){
-      const rows=(await many("message_log",[queryEqual("restaurant_id",r.$id),queryOrderDesc("created_at")],5000)).filter(x=>x.kind==="satisfaction_review").slice(0,200);
+      const rows=(await many("message_log",[queryEqual("restaurant_id",r.$id)],5000)).filter(x=>x.kind==="satisfaction_review").sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,200);
       return res.status(200).json({reviews:rows.map(x=>{let m={};try{m=JSON.parse(x.meta||"{}");}catch(_){}return {customer:m.customerName||"—",code:m.customerCode||"",stars:Number(m.stars)||0,comment:String(m.comment||""),improvement:String(m.improvement||""),created_at:x.created_at};})});
     }
     if(action==="redemptions"){
