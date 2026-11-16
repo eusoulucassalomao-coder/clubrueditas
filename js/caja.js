@@ -68,6 +68,9 @@
       const r = await run(() => F.visit(tok, sel.id, n));
       let t = `✓ ${r.customer.name} suma ${fmt(r.pts)} puntos. Total: ${fmt(r.customer.points)}.`;
       if(r.bonuses.length) t += ` Bono de invitación: +${fmt(r.bonuses[0].pts)} para cada uno.`;
+      if(r.campaignEvent === "sent") t += " Aviso enviado al sistema de WhatsApp.";
+      else if(r.campaignEvent === "not_configured") t += " Aviso: falta configurar la conexión con n8n.";
+      else if(r.campaignEvent === "failed") t += " La visita quedó registrada, pero n8n no respondió.";
       showCust(r.customer); m.textContent = t; m.className = "msg ok"; recent();
     }catch(e){ m.textContent = e.message; m.className = "msg err"; }
     btn.disabled = false;
