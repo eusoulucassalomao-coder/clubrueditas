@@ -242,3 +242,11 @@ details p{margin:0 0 16px;font-size:14px;color:var(--muted)}
 .cookie-small{font-size:11px!important}
 .cookie-settings-link{border:0;background:none;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;padding:0}
 @media(max-width:700px){.cookie-banner{align-items:stretch;flex-direction:column;bottom:8px;left:8px;right:8px;padding:16px}.cookie-actions{display:grid;grid-template-columns:1fr 1fr}.cookie-actions .cookie-primary{grid-column:1/-1}}
+
+/* Language controls */
+.nav-tools{display:flex;align-items:center;gap:8px}
+.lang-toggle,.chat-lang-toggle{border:1px solid rgba(233,196,106,.55);border-radius:999px;background:transparent;color:var(--cream);padding:8px 13px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.chat-lang-toggle{margin-left:auto;margin-right:8px;white-space:nowrap}
+.chat-head{display:flex;align-items:center;gap:10px}
+.chat-head>div:nth-child(2){min-width:0}
+@media(max-width:420px){.nav-in{gap:8px}.nav-tools{gap:5px}.lang-toggle{padding:7px 9px;font-size:11px}.nav-assistant-btn{font-size:12px;padding:8px 10px}}
