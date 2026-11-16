@@ -66,7 +66,7 @@ async function registerCustomer(r, input) {
   if (phone.length < 8 || phone.length > 15) throw Object.assign(new Error("Revisá tu número de celular con código de área"), { code: "phone" });
   const birthday = String(input.birthday || "");
   const birthdayDate = new Date(birthday + "T00:00:00Z");
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(birthday) || !Number.isFinite(birthdayDate.getTime()) || birthdayDate.toISOString().slice(0,10) !== birthday) throw Object.assign(new Error("Ingresá tu fecha de nacimiento"), { code: "birthday" });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthday) || !Number.isFinite(birthdayDate.getTime()) || birthdayDate.toISOString().slice(0,10) !== birthday) throw Object.assign(new Error("Ingresá tu fecha de nacimiento"), { code: "birthday" });
   if (!input.consent) throw Object.assign(new Error("Necesitamos tu autorización para gestionar tu membresía y tus puntos"), { code: "consent" });
   const phoneKey = phone.slice(-8);
   if (await one("customers", [queryEqual("restaurant_id", r.$id), queryEqual("phone_key", phoneKey)])) {
