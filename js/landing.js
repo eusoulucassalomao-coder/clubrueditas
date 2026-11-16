@@ -38,7 +38,7 @@
       <div class="rw-body"><h3>${esc(w.name)}</h3><p>${esc(w.note || "")}</p><button class="btn btn-ghost" type="button" data-open-redeem>Canjear</button></div></article>`).join("");
     $("rewards").querySelectorAll("[data-open-redeem]").forEach(b => b.onclick = () => { setChat(true); startLookup(); });
 
-    const ex = [[`+${fmt(cf.bonus.welcome)}`, "al registrarte"], [`+${fmt(cf.bonus.birthday)}`, "en tu cumpleaños"], [`+${fmt(cf.bonus.review)}`, "por tu reseña en Google"]];
+    const ex = [[`+${fmt(cf.bonus.welcome)}`, "al registrarte"], [`+${fmt(cf.bonus.birthday)}`, "en tu cumpleaños"], [`+${fmt(cf.bonus.review)}`, "por compartir tu opinión"]];
     r.groups.forEach(g => ex.push([`x${g.v}`, `puntos los ${g.names}`]));
     $("extras").innerHTML = ex.map(([b, t]) => `<div class="ex"><b>${esc(b)}</b><span>${esc(t)}</span></div>`).join("");
     observe();
@@ -79,6 +79,7 @@
       ${pend.length ? `<div class="mrewards"><h4>Premios para retirar</h4>${pend.map(r => `<div class="mr"><span>${esc(r.name)}<small>Mostrá este código en caja</small></span><b class="code" style="margin:0">${esc(r.code)}</b></div>`).join("")}</div>` : ""}
       <div class="mrewards"><h4>Canjear premios</h4>${sorted.map(w => `
         <div class="mr"><span>${esc(w.name)}<small>${fmt(w.pts)} puntos</small></span><button type="button" data-claim="${esc(w.id)}" ${c.points >= w.pts ? "" : "disabled"}>Canjear</button></div>`).join("")}</div>
+      <p class="hint" style="margin-top:14px"><a href="resena.html?code=${encodeURIComponent(c.code)}">Dejá tu opinión y ganá ${fmt(cf.bonus.review)} puntos</a></p>
       ${opts.history ? `<div class="hist"><h4>Últimos movimientos</h4>${(d.history || []).slice(0, 5).map(l => `<div><span>${esc(l.note || l.type)}</span><b class="${l.points < 0 ? "neg" : ""}">${l.points > 0 ? "+" : ""}${fmt(l.points)}</b></div>`).join("") || "<div><span>Todavía no hay movimientos</span><b></b></div>"}</div>` : ""}`;
   }
 
@@ -211,31 +212,27 @@
   function nextJoin(){
     const d=flow.data;
     if(flow.step==="name"){d.name=flow.value;flow.step="phone";ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"));}
-    else if(flow.step==="phone"){d.phone=flow.value;flow.step="birthday";ask(T("birthday"),"YYYY-MM-DD",[[T("skipBirthday"),()=>afterBirthday("")]]);chatInput.type="date";}
-    else if(flow.step==="birthday"){afterBirthday(flow.value);}
+    else if(flow.step==="phone"){d.phone=flow.value;flow.step="birthday";ask(T("birthday"),"YYYY-MM-DD");chatInput.type="date";chatInput.required=true;}
+    else if(flow.step==="birthday"){if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(flow.value)){addMessage(T("birthday"));return;}chatInput.required=false;afterBirthday(flow.value);}
     else if(flow.step==="ref"){d.ref=flow.value.toUpperCase();askConsent();}
   }
   function afterBirthday(value){flow.data.birthday=value;if(flow.data.ref)askConsent();else{flow.step="ref";ask(T("ref"),T("refPlaceholder"),[[T("noRef"),()=>{flow.data.ref="";askConsent();}]]);}}
   function askConsent(){
     flow.step="consent";chatForm.hidden=true;addMessage(T("consent"));
-    showOptions([[T("accept"),askWhatsAppConsent],[T("deny"),()=>{flow=null;addMessage(T("denied"));showOptions([[T("home"),welcome],[T("join"),startJoin]]);} ]]);
+    showOptions([[T("accept"),()=>submitJoin()],[T("deny"),()=>{flow=null;addMessage(T("denied"));showOptions([[T("home"),welcome],[T("join"),startJoin]]);} ]]);
   }
-  function askWhatsAppConsent(){
-    flow.step="whatsapp";chatForm.hidden=true;addMessage(T("waConsent"));
-    showOptions([[T("waYes"),()=>submitJoin(true)],[T("waNo"),()=>submitJoin(false)]]);
-  }
-  async function submitJoin(waConsent){
-    if(!flow||flow.step!=="whatsapp"||typeof waConsent!=="boolean")return;
-    flow.data.consent=true;flow.data.waConsent=waConsent;showOptions([]);addMessage(T("saving"));
+  async function submitJoin(){
+    if(!flow||flow.step!=="consent")return;
+    flow.data.consent=true;flow.data.waConsent=false;showOptions([]);addMessage(T("saving"));
     try{
       const r=await F.register(flow.data);setToken(r.token);let d;
       try{d=await F.me(r.token);}catch{
         messages.replaceChildren();addMessage(T("registered")(r.customer.name.split(" ")[0]));
-        addMessage(T("welcomePoints")(r.customer.code));addMessage(waConsent?T("waAccepted"):T("waDeclined"));
+        addMessage(T("welcomePoints")(r.customer.code));
         showOptions([[T("points"),startLookup],[T("home"),welcome]]);chatForm.hidden=true;flow=null;return;
       }
       messages.replaceChildren();addMessage(T("registered")(d.customer.name.split(" ")[0]));
-      addMessage(memberCard(d,{welcome:true}),"bot",true);wire(messages);addMessage(waConsent?T("waAccepted"):T("waDeclined"));addMessage(T("thanks"));
+      addMessage(memberCard(d,{welcome:true}),"bot",true);wire(messages);addMessage(T("thanks"));
       showOptions([[T("points"),startLookup],[T("home"),welcome]]);chatForm.hidden=true;flow=null;
     }catch(e){addMessage(e.message||T("noAnswer"));showOptions([[T("retry"),startJoin],[T("home"),welcome]]);chatForm.hidden=true;}
   }
