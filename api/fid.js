@@ -355,14 +355,14 @@ module.exports = async function handler(req,res) {
     if(action==="find_code"){
       const code=String(body.code||"").trim().toUpperCase();
       const red=await one("redemptions",[queryEqual("restaurant_id",r.$id),queryEqual("code",code)]);
-      if(!red) throw Object.assign(new Error("Código no encontrado"),{code:"code"});
+      if(!red) throw Object.assign(new Error("Código de canje no encontrado. Ingresá el código del premio que empieza con P y que el cliente ve en “Mis puntos”; no el código de socio."),{status:404,code:"redemption-not-found"});
       const c=await customerById(r,red.customer_id);
       return res.status(200).json({status:red.status,name:red.name,customer:c.name,pts:red.points,code:red.code});
     }
     if(action==="deliver"){
       const code=String(body.code||"").trim().toUpperCase();
       const red=await one("redemptions",[queryEqual("restaurant_id",r.$id),queryEqual("code",code)]);
-      if(!red) throw Object.assign(new Error("Código no encontrado"),{code:"code"});
+      if(!red) throw Object.assign(new Error("Código de canje no encontrado. Ingresá el código del premio que empieza con P y que el cliente ve en “Mis puntos”; no el código de socio."),{status:404,code:"redemption-not-found"});
       if(red.status==="canjeado") throw Object.assign(new Error("Este premio ya fue entregado"),{code:"code"});
       if(red.status!=="pendiente") throw Object.assign(new Error("Código no válido"),{code:"code"});
       const now=isoNow();
