@@ -137,7 +137,7 @@
       earn: rulesText(CF).earn + rulesText(CF).extra + " También sumás por traer amigos, en tu cumpleaños y por dejar tu reseña.",
       redeem: "Entrá a “Mis puntos”, elegí el premio que quieras canjear y mostrá el código en caja para retirarlo.",
       expiry: "Tus puntos vencen después de 12 meses sin visitas. Si venís con regularidad, los conservás.",
-      privacy: "Usamos tus datos para administrar tu membresía, identificar tu cuenta y registrar tus puntos y beneficios. No los usamos para enviarte mensajes por WhatsApp y podés pedir que los eliminemos cuando quieras."
+      privacy: "Usamos tu nombre, celular y fecha de nacimiento para administrar tu membresía, tus puntos y tu beneficio de cumpleaños. Al unirte, aceptás recibir por WhatsApp comunicaciones del club. Podés dejar de recibirlas respondiendo BAJA."
     };
     addMessage(answers[topic] || "No encontré esa respuesta. Elegí otra consulta o volvé al inicio.");
     showOptions([["Otra pregunta", startFaq], ["Consultar mis puntos", startLookup], ["Volver al inicio", welcome]]);
@@ -150,7 +150,7 @@
   function nextJoin(){
     const d = flow.data;
     if(flow.step === "name") { d.name = flow.value; flow.step = "phone"; ask(`Gracias, ${d.name.split(" ")[0]}. ¿Cuál es tu número de celular?`, "Ej.: 376 4123456"); }
-    else if(flow.step === "phone") { d.phone = flow.value; flow.step = "birthday"; ask("¿Cuál es tu fecha de cumpleaños? Es opcional.", "Podés saltear esta pregunta", [["Prefiero no decir", () => afterBirthday("")]]); chatInput.type = "date"; }
+    else if(flow.step === "phone") { d.phone = flow.value; flow.step = "birthday"; ask("¿Cuál es tu fecha de nacimiento? La usamos para saludarte en tu día y acreditar tu beneficio de cumpleaños.", "Elegí tu fecha de nacimiento"); chatInput.type = "date"; }
     else if(flow.step === "birthday") { afterBirthday(flow.value); }
     else if(flow.step === "ref") { d.ref = flow.value.toUpperCase(); submitJoin(); }
   }
@@ -161,19 +161,15 @@
   }
   function askConsent(){
     flow.step = "consent"; chatForm.hidden = true;
-    addMessage("Antes de terminar, necesitamos tu autorización para administrar tu membresía. Usaremos tu nombre, celular y, si lo compartiste, tu cumpleaños para identificarte, guardar tus puntos y gestionar tus beneficios. No usaremos estos datos para enviarte mensajes por WhatsApp.");
+    addMessage("Al unirte al Club Ruedita, aceptás recibir por WhatsApp comunicaciones sobre tu membresía, puntos, beneficios, cumpleaños y encuestas después de tus visitas. También usaremos tu nombre, celular y fecha de nacimiento para administrar tu cuenta y acreditar tu beneficio de cumpleaños. Si no querés recibir estas comunicaciones, no completes la inscripción. Después podrás dejar de recibir mensajes respondiendo BAJA.");
     showOptions([
-      ["Acepto y quiero crear mi cuenta", () => submitJoin(true)],
-      ["No autorizo", () => {
-        flow = null;
-        addMessage("Entendido. Sin esta autorización no podemos crear ni administrar tu membresía. No se guardó ningún registro.");
-        showOptions([["Volver al inicio", welcome], ["Empezar de nuevo", startJoin]]);
-      }]
+      ["Aceptar y crear mi cuenta", () => submitJoin(true)]
     ]);
   }
   async function submitJoin(consent){
     if(!flow || flow.step !== "consent" || consent !== true) return;
     flow.data.consent = true;
+    flow.data.waConsent = true;
     showOptions([]); addMessage("Un momento, estoy guardando tu membresía…");
     try{
       const r = await F.register(flow.data);
