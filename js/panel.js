@@ -63,7 +63,7 @@
       return `<tr><td>${esc(c.name)}</td><td>${dshort(c.last_visit)} <small style="color:var(--muted)">(${daysAgo(c.last_visit)} d)</small></td><td>${fmt(c.points)}</td><td><a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/${F.digits(c.phone)}?text=${encodeURIComponent(msg)}">Escribir</a></td></tr>`;
     }).join("") || `<tr><td colspan="4"><small>Nada por recuperar.</small></td></tr>`;
 
-    drawClients(); drawReds(); drawCfg(); waCheck();
+    drawClients(); drawReds(); drawReviews(); drawCfg(); waCheck();
   }
 
   async function drawClients(){
@@ -79,6 +79,13 @@
       const r = (await run(() => F.redemptions(tok))).redemptions;
       $("reds").innerHTML = r.map(x => `<tr><td>${esc(x.name)}</td><td>${esc(x.customer)}</td><td>${esc(x.code)}</td><td>${x.status === "canjeado" ? "Entregado " + dshort(x.usedAt) : "<b style='color:#b07d00'>Pendiente</b>"}</td></tr>`).join("") || `<tr><td colspan="4"><small>Todavía no hay canjes.</small></td></tr>`;
     }catch(e){}
+  }
+
+  async function drawReviews(){
+    try{
+      const rows=(await run(()=>F.reviews(tok))).reviews;
+      $("reviews").innerHTML=rows.map(x=>`<tr><td>${dshort(x.created_at)}</td><td>${esc(x.customer)}<br><small>${esc(x.code)}</small></td><td>${"★".repeat(Math.max(0,Math.min(5,x.stars)))}</td><td>${esc(x.comment)}</td><td>${esc(x.improvement||"—")}</td></tr>`).join("")||`<tr><td colspan="5"><small>Todavía no hay opiniones.</small></td></tr>`;
+    }catch(e){ $("reviews").innerHTML=`<tr><td colspan="5"><small>No se pudieron cargar las opiniones.</small></td></tr>`; }
   }
 
   // ---- WhatsApp del local (QR) ----
