@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tu opinión · Club Ruedita</title>
+<link rel="icon" href="assets/logo.webp">
+<link rel="stylesheet" href="css/app.css">
+<style>
+.review-wrap{max-width:650px;margin:50px auto;padding:28px;background:#fff;border-radius:18px;color:#18251d}
+.review-wrap h1{font-size:28px;margin:0 0 8px}.review-wrap p{color:#59645d;line-height:1.5}
+.review-wrap label{display:block;font-weight:600;margin:18px 0 8px}
+.review-wrap input,.review-wrap textarea{width:100%;padding:13px;border:1px solid #ccd4ce;border-radius:9px;font:inherit}
+.review-wrap textarea{min-height:110px;resize:vertical}
+.stars{display:flex;gap:10px;flex-direction:row-reverse;justify-content:flex-end;margin:10px 0}
+.stars input{position:absolute;opacity:0;width:1px;height:1px}
+.stars label{font-size:38px;color:#c7c7c7;cursor:pointer;margin:0}
+.stars label:hover,.stars label:hover~label,.stars input:checked~label{color:#e5a900}
+.review-note{font-size:13px}.review-status{margin-top:16px;font-weight:600}
+#done{display:none}.review-wrap .btn{display:inline-block;margin-top:14px;text-decoration:none}
+</style>
+</head>
+<body class="light">
+<main class="review-wrap">
+  <img src="assets/logo.webp" alt="La Ruedita" style="width:72px;height:72px;object-fit:contain">
+  <p class="eyebrow">CLUB RUEDITA</p>
+  <h1>¿Cómo fue tu experiencia?</h1>
+  <p>Tu opinión nos ayuda a mejorar. Al completar esta encuesta recibís los puntos del Club, sin importar la puntuación que elijas.</p>
+  <p id="reward" class="review-note">Recompensa: 100 puntos por participar.</p>
+  <form id="reviewForm">
+    <label for="memberCode">Tu código de socio</label>
+    <input id="memberCode" name="code" autocomplete="off" required placeholder="Ej.: LUC215">
+    <label>Elegí tu puntuación</label>
+    <div class="stars" role="radiogroup" aria-label="Puntuación de 1 a 5 estrellas">
+      <input id="s5" type="radio" name="stars" value="5"><label for="s5" title="5 estrellas">★</label>
+      <input id="s4" type="radio" name="stars" value="4"><label for="s4" title="4 estrellas">★</label>
+      <input id="s3" type="radio" name="stars" value="3"><label for="s3" title="3 estrellas">★</label>
+      <input id="s2" type="radio" name="stars" value="2"><label for="s2" title="2 estrellas">★</label>
+      <input id="s1" type="radio" name="stars" value="1"><label for="s1" title="1 estrella">★</label>
+    </div>
+    <label for="comment">Contanos cómo fue tu experiencia</label>
+    <textarea id="comment" name="comment" minlength="3" maxlength="2000" required placeholder="Escribí tu opinión..."></textarea>
+    <label for="improvement">¿Qué podríamos mejorar? (opcional)</label>
+    <textarea id="improvement" name="improvement" maxlength="2000" placeholder="Si querés, dejá una sugerencia o reclamo."></textarea>
+    <p id="status" class="review-status" role="status"></p>
+    <button class="btn full" id="sendReview" type="submit">Enviar opinión y recibir puntos</button>
+  </form>
+  <section id="done">
+    <h2>¡Gracias por compartir tu opinión!</h2>
+    <p id="earned"></p>
+    <p>Si también querés compartir tu experiencia públicamente, podés dejar una reseña en Google. Esta opción está disponible para todos los clientes.</p>
+    <a class="btn full" id="googleReview" href="#" target="_blank" rel="noopener">Compartir opinión en Google</a>
+    <a href="/" class="btn ghost full">Volver al Club</a>
+  </section>
+</main>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/review.js"></script>
+</body>
+</html>
