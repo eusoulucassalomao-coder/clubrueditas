@@ -35,7 +35,8 @@
 
     $("rewards").innerHTML = cf.rewards.slice().sort((a, b) => a.pts - b.pts).map(w => `
       <article class="rw rv"><div class="rw-img"><img src="${esc(w.img)}" alt="${esc(w.name)}" loading="lazy"><span class="rw-pts">${fmt(w.pts)} pts</span></div>
-      <div class="rw-body"><h3>${esc(w.name)}</h3><p>${esc(w.note || "")}</p></div></article>`).join("");
+      <div class="rw-body"><h3>${esc(w.name)}</h3><p>${esc(w.note || "")}</p><button class="btn btn-ghost" type="button" data-open-redeem>Canjear</button></div></article>`).join("");
+    $("rewards").querySelectorAll("[data-open-redeem]").forEach(b => b.onclick = () => { setChat(true); startLookup(); });
 
     const ex = [[`+${fmt(cf.bonus.welcome)}`, "al registrarte"], [`+${fmt(cf.bonus.birthday)}`, "en tu cumpleaños"], [`+${fmt(cf.bonus.review)}`, "por tu reseña en Google"]];
     r.groups.forEach(g => ex.push([`x${g.v}`, `puntos los ${g.names}`]));
@@ -243,6 +244,19 @@
     try{
       const d=await F.lookupCode(code.trim().toUpperCase());messages.replaceChildren();addMessage(T("lookupHello")(d.customer.name,fmt(d.customer.points)));
       if(d.customer.code)addMessage(T("memberCode")+d.customer.code);
+      const token=getToken();
+      if(token){
+        try{
+          const mine=await F.me(token);
+          if(mine.customer.code===d.customer.code){addMessage(memberCard(mine,{history:true}),"bot",true);wire(messages);}
+          else addMessage(LANG==="en"?"To redeem rewards, open the Club on the same browser where you registered. Your member code alone cannot authorize point spending.":"Para canjear premios, abrí el Club en el mismo navegador donde hiciste tu inscripción. El código de socio por sí solo no autoriza gastar puntos.");
+        }catch(_){
+          setToken("");
+          addMessage(LANG==="en"?"To redeem rewards, open the Club on the same browser where you registered. Your member code alone cannot authorize point spending.":"Para canjear premios, abrí el Club en el mismo navegador donde hiciste tu inscripción. El código de socio por sí solo no autoriza gastar puntos.");
+        }
+      }else{
+        addMessage(LANG==="en"?"To redeem rewards, open the Club on the same browser where you registered. Your member code alone cannot authorize point spending.":"Para canjear premios, abrí el Club en el mismo navegador donde hiciste tu inscripción. El código de socio por sí solo no autoriza gastar puntos.");
+      }
       showOptions([[T("otherCode"),startLookup],[T("home"),welcome]]);
     }catch(e){addMessage(e.code==="customer-not-found"?T("notFound"):(e.message||T("notFound")));showOptions([[T("retryCode"),startLookup],[T("home"),welcome]]);}
     flow=null;
