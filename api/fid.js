@@ -57,7 +57,12 @@ async function registerCustomer(r, input) {
   const name = String(input.name || "").trim(), phone = digits(input.phone);
   if (name.length < 2 || name.length > 80) throw Object.assign(new Error("Escribí tu nombre"), { code: "name" });
   if (phone.length < 8 || phone.length > 15) throw Object.assign(new Error("Revisá tu número de celular con código de área"), { code: "phone" });
-  if (!input.consent) throw Object.assign(new Error("Necesitamos tu autorización para gestionar tu membresía y tus puntos"), { code: "consent" });
+  const birthday = String(input.birthday || "").trim();
+  const birthdayDate = new Date(birthday + "T00:00:00Z");
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(birthday) || !Number.isFinite(birthdayDate.getTime()) || birthdayDate.toISOString().slice(0, 10) !== birthday || birthday > isoNow().slice(0, 10)) {
+    throw Object.assign(new Error("Ingresá tu fecha de nacimiento para recibir tu saludo y beneficio de cumpleaños"), { code: "birthday" });
+  }
+  if (!input.consent || input.waConsent !== true) throw Object.assign(new Error("Para unirte al club necesitás aceptar las comunicaciones y el uso de tus datos informados en el alta"), { code: "consent" });
   const phoneKey = phone.slice(-8);
   if (await one("customers", [queryEqual("restaurant_id", r.$id), queryEqual("phone_key", phoneKey)])) {
     throw Object.assign(new Error("Este número de celular ya está registrado"), { code: "exists" });
@@ -70,10 +75,10 @@ async function registerCustomer(r, input) {
   const welcome = Math.max(0, Number(r.config?.bonus?.welcome) || 0);
   const id = crypto.randomUUID(), now = isoNow();
   const customer = {
-    restaurant_id: r.$id, name, phone, phone_key: phoneKey, birthday: input.birthday || null,
+    restaurant_id: r.$id, name, phone, phone_key: phoneKey, birthday,
     code: await uniqueCode(r, name), referred_by: referredBy, points: welcome, lifetime: welcome,
     visits: 0, last_visit: null, consent: true, consent_at: now, opted_out: false,
-    access_token: crypto.randomBytes(18).toString("hex"), created_at: now, wa_confirmed_at: null,
+    access_token: crypto.randomBytes(18).toString("hex"), created_at: now, wa_confirmed_at: now,
   };
   const operations = [transactionCreate("customers", id, customer)];
   if (welcome > 0) operations.push(transactionCreate("ledger", crypto.randomUUID(), {
@@ -190,6 +195,37 @@ async function waCall(r, action) {
     return {state:String(j.state||"unknown").slice(0,20),qr,pairingCode:String(j.pairingCode||"").slice(0,20)};
   } catch (_) { return {state:"unavailable"}; }
 }
+async function notifyVisitWebhook(r, customer, visitId, visit) {
+  const url = process.env.N8N_VISIT_WEBHOOK_URL || "";
+  const apiKey = process.env.N8N_VISIT_WEBHOOK_API_KEY || "";
+  if (!url || !apiKey) return { state: "not_configured" };
+  const payload = {
+    event: "visit.registered",
+    visitId,
+    restaurantSlug: r.slug,
+    customerId: customer.$id,
+    customerName: customer.name,
+    phone: customer.phone,
+    consentWhatsApp: Boolean(customer.wa_confirmed_at && !customer.opted_out),
+    surveyUrl: String(r.config?.surveyUrl || process.env.CLUB_SURVEY_URL || ""),
+    visitAt: visit.created_at,
+    amount: visit.amount,
+    points: visit.points,
+  };
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", apikey: apiKey },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000),
+    });
+    return { state: response.ok ? "sent" : "failed", status: response.status };
+  } catch (error) {
+    console.error("visit-webhook", error);
+    return { state: "failed" };
+  }
+}
+
 async function addVisit(r, customer, amount) {
   const value=Number(amount);
   if(!Number.isFinite(value)||value<=0||value>100000000) throw Object.assign(new Error("Ingresá el valor de la cuenta"),{code:"amount"});
@@ -197,9 +233,10 @@ async function addVisit(r, customer, amount) {
   const mult=Number(r.config?.multipliers?.[dow]||1), per=Math.max(1,Number(r.config?.earn?.perAmount)||100);
   const points=Math.floor(Math.floor(value/per)*(Number(r.config?.earn?.points)||1)*mult);
   const updated={...customer,points:customer.points+points,lifetime:customer.lifetime+points,visits:customer.visits+1,last_visit:now.toISOString()};
+  const visitId = crypto.randomUUID();
   const ops=[
     transactionUpdate("customers",customer.$id,{points:updated.points,lifetime:updated.lifetime,visits:updated.visits,last_visit:updated.last_visit}),
-    transactionCreate("visits",crypto.randomUUID(),{restaurant_id:r.$id,customer_id:customer.$id,amount:value,points,multiplier:mult,staff:"caja",created_at:updated.last_visit}),
+    transactionCreate("visits",visitId,{restaurant_id:r.$id,customer_id:customer.$id,amount:value,points,multiplier:mult,staff:"caja",created_at:updated.last_visit}),
     transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.$id,customer_id:customer.$id,points,type:"visita",note:`Cuenta $${value.toLocaleString("es-AR")}${mult>1?` (x${mult})`:""}`,created_at:updated.last_visit}),
   ];
   const bonuses=[];
@@ -216,7 +253,10 @@ async function addVisit(r, customer, amount) {
     }
   }
   await commitOperations(ops);
-  return {customer:{...publicCustomer(updated),id:customer.$id},pts:points,mult,bonuses};
+  const campaignEvent = await notifyVisitWebhook(r, customer, visitId, {
+    created_at: updated.last_visit, amount: value, points,
+  });
+  return {customer:{...publicCustomer(updated),id:customer.$id},pts:points,mult,bonuses,campaignEvent:campaignEvent.state};
 }
 async function addBonus(r, customer, type) {
   if(!["birthday","review"].includes(type)) throw Object.assign(new Error("Bono no disponible"),{code:"bonus"});
