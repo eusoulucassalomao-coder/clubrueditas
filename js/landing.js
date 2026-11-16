@@ -143,8 +143,13 @@
     showOptions([["Otra pregunta", startFaq], ["Consultar mis puntos", startLookup], ["Volver al inicio", welcome]]);
   }
   function startJoin(){
-    flow = { type: "join", step: "name", data: { ref: new URLSearchParams(location.search).get("ref") || "" } };
-    ask("¡Qué bueno! ¿Cuál es tu nombre?", "Tu nombre");
+    const inviteCode = new URLSearchParams(location.search).get("ref") || "";
+    flow = { type: "join", step: "name", data: { ref: inviteCode } };
+    if(inviteCode){
+      ask("¡Qué bueno! Un amigo te invitó a formar parte del Club Ruedita. Para continuar con tu invitación, ¿cuál es tu nombre?", "Tu nombre");
+    } else {
+      ask("¡Qué bueno! ¿Cuál es tu nombre?", "Tu nombre");
+    }
   }
   function startLookup(){ flow = { type: "lookup", step: "code" }; ask("Escribí tu código del Club Ruedita y busco tus puntos.", "Ej.: ANA123"); }
   function nextJoin(){
