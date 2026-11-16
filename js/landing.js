@@ -152,7 +152,7 @@
     if(flow.step === "name") { d.name = flow.value; flow.step = "phone"; ask(`Gracias, ${d.name.split(" ")[0]}. ¿Cuál es tu número de celular?`, "Ej.: 376 4123456"); }
     else if(flow.step === "phone") { d.phone = flow.value; flow.step = "birthday"; ask("¿Cuál es tu fecha de nacimiento? La usamos para saludarte en tu día y acreditar tu beneficio de cumpleaños.", "Elegí tu fecha de nacimiento"); chatInput.type = "date"; }
     else if(flow.step === "birthday") { afterBirthday(flow.value); }
-    else if(flow.step === "ref") { d.ref = flow.value.toUpperCase(); submitJoin(); }
+    else if(flow.step === "ref") { d.ref = flow.value.toUpperCase(); askConsent(); }
   }
   function afterBirthday(value){ flow.data.birthday = value; if(flow.data.ref){ askConsent(); } else { flow.step = "ref"; askRef(); } }
   function askRef(){
