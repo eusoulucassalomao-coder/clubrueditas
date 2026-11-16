@@ -15,7 +15,7 @@
     CF = await F.init();
     $("gate").hidden = true; $("app").hidden = false;
     $("logo").src = CF.logo; $("club").textContent = CF.name;
-    $("bBirth").textContent = `Cumpleaños +${fmt(CF.bonus.birthday)}`; $("bReview").textContent = `Reseña +${fmt(CF.bonus.review)}`;
+    $("bBirth").textContent = `Cumpleaños +${fmt(CF.bonus.birthday)}`;
     recent();
   }
   $("loginForm").addEventListener("submit", async e => {
@@ -72,7 +72,7 @@
     }catch(e){ m.textContent = e.message; m.className = "msg err"; }
     btn.disabled = false;
   };
-  [["bBirth", "birthday"], ["bReview", "review"]].forEach(([id, type]) => $(id).onclick = async () => {
+  [["bBirth", "birthday"]].forEach(([id, type]) => $(id).onclick = async () => {
     try{
       const r = await run(() => F.bonus(tok, sel.id, type));
       showCust(r.customer); $("vMsg").textContent = `✓ +${fmt(r.pts)} puntos para ${r.customer.name}.`; $("vMsg").className = "msg ok"; recent();
