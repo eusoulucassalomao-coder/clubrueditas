@@ -133,16 +133,11 @@
     ]);
   }
   async function askAssistant(question){
-    const context = {
-      club: CF.club, earn: CF.earn, multipliers: CF.multipliers, bonus: CF.bonus,
-      rewards: (CF.rewards || []).map(r => ({ name:r.name, points:r.pts, note:r.note || "" })),
-      inactiveDays: CF.inactiveDays
-    };
     addMessage("Estoy revisando tu consulta…");
     try{
       const response = await fetch("/api/assistant", {
         method:"POST", headers:{"content-type":"application/json"},
-        body:JSON.stringify({ question, context })
+        body:JSON.stringify({ question, slug:F.slug })
       });
       const data = await response.json().catch(() => ({}));
       if(!response.ok) throw new Error(data.message || "No pude responder ahora.");
@@ -150,14 +145,12 @@
     }catch(error){
       const q = question.toLowerCase();
       let answer = "";
-      if(/punto|sum(ar|o)|acumul/.test(q)) answer = rulesText(CF).earn + rulesText(CF).extra + " También hay bonificaciones por cumpleaños, reseñas e invitaciones, según las reglas vigentes del Club.";
+      if(/punto|sum(ar|o)|acumul/.test(q)) answer = rulesText(CF).earn + rulesText(CF).extra + " También hay bonificaciones según las reglas vigentes del Club.";
       else if(/premio|canje|cambiar|retir/.test(q)) answer = "Podés consultar los premios y sus puntos en la sección “Premios”. Si ya sos socio, ingresá con tu código para ver tu saldo y los canjes disponibles.";
       else if(/costo|precio|gratis|pagar/.test(q)) answer = "La inscripción al Club Ruedita es gratuita.";
-      else if(/venc|caduc/.test(q)) answer = "Los puntos tienen un plazo de vigencia definido por las reglas del Club. Si querés, puedo ayudarte a consultar tu saldo.";
-      else if(/dato|privacidad|whatsapp|mensaje|promo/.test(q)) answer = "Tus datos se utilizan para administrar tu membresía. Los mensajes promocionales por WhatsApp son opcionales y requieren tu autorización. Podés solicitar dejar de recibirlos.";
+      else if(/dato|privacidad|whatsapp|mensaje|promo/.test(q)) answer = "Tus datos se utilizan para administrar tu membresía. Los mensajes promocionales son opcionales y requieren tu autorización. Podés solicitar dejar de recibirlos.";
       else answer = "No tengo información suficiente para responder eso con seguridad. Puedo ayudarte con inscripción, puntos, premios, invitaciones, cumpleaños y comunicaciones del Club.";
       addMessage(answer);
-      if(error.message) addMessage("El asistente automático no está disponible temporalmente; te doy la información básica del Club.");
     }
     flow = { type:"assistant", step:"question" };
     chatForm.hidden = false; chatInput.type = "text"; chatInput.placeholder = "Escribí otra consulta"; chatInput.value = "";
