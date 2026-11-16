@@ -17,7 +17,7 @@
     <nav class="nav-links" aria-label="Secciones">
       <a href="#como">Cómo funciona</a><a href="#premios">Premios</a><a href="#invita">Invitá</a><a href="#puntos">Mis puntos</a>
     </nav>
-    <button class="nav-assistant-btn" id="chatOpenTop" type="button">🤖 Asistente</button>
+    <div class="nav-tools"><button class="lang-toggle" id="langToggle" type="button" aria-label="Change language">English</button><button class="nav-assistant-btn" id="chatOpenTop" type="button">🤖 Asistente</button></div>
   </div>
 </header>
 
@@ -158,7 +158,7 @@
 <div class="modal" id="modal" hidden><div class="modal-box" role="dialog" aria-modal="true"><button class="x" id="modalX" aria-label="Cerrar">&times;</button><div id="modalBody"></div></div></div>
 
 <aside class="club-chat" id="clubChat" aria-label="Asistente virtual del Club Ruedita" hidden>
-  <div class="chat-head"><div class="chat-avatar" aria-hidden="true">🤖</div><div><b>Asistente Club Ruedita</b><small>Consultas sobre el Club y tus puntos</small></div><button class="chat-close" id="chatClose" type="button" aria-label="Cerrar asistente">&times;</button></div>
+  <div class="chat-head"><div class="chat-avatar" aria-hidden="true">🤖</div><div><b>Asistente Club Ruedita</b><small>Consultas sobre el Club y tus puntos</small></div><button class="chat-lang-toggle" id="chatLangToggle" type="button">English</button><button class="chat-close" id="chatClose" type="button" aria-label="Cerrar asistente">&times;</button></div>
   <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-relevant="additions"></div>
   <div class="chat-options" id="chatOptions"></div>
   <form class="chat-input-row" id="chatForm" hidden><input id="chatInput" aria-label="Sua resposta" autocomplete="off"><button class="btn" type="submit" aria-label="Enviar resposta">Enviar</button></form>
