@@ -16,7 +16,7 @@ const publicCustomer = c => ({
   id: c.$id, name: c.name, phone: c.phone, code: c.code, birthday: c.birthday || null,
   points: c.points, lifetime: c.lifetime, visits: c.visits,
   lastVisit: c.last_visit || null, createdAt: c.created_at,
-  optedOut: !!c.opted_out, confirmed: !!c.wa_confirmed_at,
+  optedOut: !!c.opted_out, confirmed: !!c.wa_confirmed_at, marketingConsent: !!c.wa_confirmed_at && !c.opted_out,
 });
 async function many(collection, queries = [], limit = 100) {
   const result = await listDocuments(collection, [...queries, ...queryLimit(limit)]);
@@ -72,8 +72,8 @@ async function registerCustomer(r, input) {
   const customer = {
     restaurant_id: r.$id, name, phone, phone_key: phoneKey, birthday: input.birthday || null,
     code: await uniqueCode(r, name), referred_by: referredBy, points: welcome, lifetime: welcome,
-    visits: 0, last_visit: null, consent: true, consent_at: now, opted_out: false,
-    access_token: crypto.randomBytes(18).toString("hex"), created_at: now, wa_confirmed_at: null,
+    visits: 0, last_visit: null, consent: true, consent_at: now, opted_out: input.waConsent === true ? false : true,
+    access_token: crypto.randomBytes(18).toString("hex"), created_at: now, wa_confirmed_at: input.waConsent === true ? now : null,
   };
   const operations = [transactionCreate("customers", id, customer)];
   if (welcome > 0) operations.push(transactionCreate("ledger", crypto.randomUUID(), {
@@ -150,7 +150,7 @@ async function statsFor(r) {
   const today = localParts(now, tz), dayStart = new Date(now.getTime() - 30 * 86400000);
   const recentVisits = visits.filter(v => new Date(v.created_at) >= dayStart);
   const inactiveDays = Number(r.config?.inactiveDays || 30);
-  const inactive = customers.filter(c => c.visits >= 1 && c.last_visit && now - new Date(c.last_visit) > inactiveDays * 86400000)
+  const inactive = customers.filter(c => c.wa_confirmed_at && !c.opted_out && c.visits >= 1 && c.last_visit && now - new Date(c.last_visit) > inactiveDays * 86400000)
     .sort((a,b) => new Date(a.last_visit) - new Date(b.last_visit)).slice(0,100)
     .map(c => ({ id:c.$id, name:c.name, phone:c.phone, points:c.points, last_visit:c.last_visit }));
   const dayMap = new Map();
@@ -396,11 +396,11 @@ module.exports = async function handler(req,res) {
       const all=await many("customers",[queryEqual("restaurant_id",r.$id)],5000);
       const rows=all.filter(c=>!q||c.name.toLowerCase().includes(q)||(d.length>=4&&c.phone.includes(d))||c.code.toLowerCase()===q)
         .sort((a,b)=>b.lifetime-a.lifetime).slice(0,80);
-      return res.status(200).json({customers:rows.map(c=>({name:c.name,phone:c.phone,visits:c.visits,points:c.points,code:c.code,last_visit:c.last_visit}))});
+      return res.status(200).json({customers:rows.map(c=>({name:c.name,phone:c.phone,visits:c.visits,points:c.points,code:c.code,last_visit:c.last_visit,marketingConsent:!!c.wa_confirmed_at&&!c.opted_out}))});
     }
     if(action==="export_customers"){
       const rows=await many("customers",[queryEqual("restaurant_id",r.$id)],5000);
-      return res.status(200).json({customers:rows.map(c=>({name:c.name,phone:c.phone,birthday:c.birthday,code:c.code,visits:c.visits,points:c.points,lifetime:c.lifetime,last_visit:c.last_visit,created_at:c.created_at,consent:c.consent,opted_out:c.opted_out,wa_confirmed_at:c.wa_confirmed_at}))});
+      return res.status(200).json({customers:rows.map(c=>({name:c.name,phone:c.phone,birthday:c.birthday,code:c.code,visits:c.visits,points:c.points,lifetime:c.lifetime,last_visit:c.last_visit,created_at:c.created_at,consent:c.consent,opted_out:c.opted_out,wa_confirmed_at:c.wa_confirmed_at,marketingConsent:!!c.wa_confirmed_at&&!c.opted_out}))});
     }
     if(action==="export_visits"){
       const rows=await many("visits",[queryEqual("restaurant_id",r.$id),queryOrderDesc("created_at")],5000);
