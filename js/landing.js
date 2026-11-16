@@ -109,7 +109,7 @@
       code:"Escribí tu código del Club Ruedita y busco tus puntos.", codePlaceholder:"Ej.: ANA123",
       name:"¡Qué bueno que quieras sumarte! ¿Cuál es tu nombre?", namePlaceholder:"Tu nombre",
       phone:n=>`Gracias, ${n}. ¿Cuál es tu número de celular?`, phonePlaceholder:"Ej.: 376 4123456",
-      birthday:"¿Cuál es tu fecha de cumpleaños? Es opcional.", skipBirthday:"Prefiero no decir",
+      birthday:"¿Cuál es tu fecha de cumpleaños?", skipBirthday:"Prefiero no decir",
       ref:"¿Tenés el código de un amigo que te invitó? También es opcional.", refPlaceholder:"Código de invitación", noRef:"No tengo código",
       consent:"Antes de terminar, necesitamos tu autorización para administrar tu membresía. Usaremos tu nombre, celular y, si lo compartiste, tu cumpleaños para identificarte, guardar tus puntos y gestionar tus beneficios.",
       accept:"Acepto y quiero crear mi cuenta", deny:"No autorizo",
@@ -213,7 +213,7 @@
     const d=flow.data;
     if(flow.step==="name"){d.name=flow.value;flow.step="phone";ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"));}
     else if(flow.step==="phone"){d.phone=flow.value;flow.step="birthday";ask(T("birthday"),"YYYY-MM-DD");chatInput.type="date";chatInput.required=true;}
-    else if(flow.step==="birthday"){if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(flow.value)){addMessage(T("birthday"));return;}chatInput.required=false;afterBirthday(flow.value);}
+    else if(flow.step==="birthday"){if(!/^\d{4}-\d{2}-\d{2}$/.test(flow.value)){addMessage(T("birthday"));return;}chatInput.required=false;afterBirthday(flow.value);}
     else if(flow.step==="ref"){d.ref=flow.value.toUpperCase();askConsent();}
   }
   function afterBirthday(value){flow.data.birthday=value;if(flow.data.ref)askConsent();else{flow.step="ref";ask(T("ref"),T("refPlaceholder"),[[T("noRef"),()=>{flow.data.ref="";askConsent();}]]);}}
