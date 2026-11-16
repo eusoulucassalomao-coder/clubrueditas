@@ -193,12 +193,14 @@
         messages.replaceChildren();
         addMessage(`¡Listo, ${esc(r.customer.name.split(" ")[0])}! Tu inscripción quedó guardada correctamente.`, "bot");
         addMessage(`Tu código de socio es ${esc(r.customer.code)}. Ya recibiste ${fmt(r.customer.points)} puntos de bienvenida. Podés usar ese código para consultar tu saldo.`, "bot");
+        addMessage(waConsent ? "También registramos que aceptaste recibir novedades, promociones y beneficios por WhatsApp. Podés darte de baja cuando quieras." : "Registramos que preferís no recibir mensajes promocionales por WhatsApp. Tu membresía y tus puntos funcionan igual.", "bot");
         showOptions([["Consultar mis puntos", () => startLookup()], ["Volver al inicio", welcome]]);
         chatForm.hidden = true; flow = null; return;
       }
       messages.replaceChildren();
       addMessage(`¡Listo, ${esc(d.customer.name.split(" ")[0])}! Tu inscripción al Club Ruedita quedó completada y guardada.`, "bot");
       addMessage(memberCard(d, { welcome: true }), "bot", true); wire(messages);
+      addMessage(waConsent ? "También registramos que aceptaste recibir novedades, promociones y beneficios por WhatsApp. Podés darte de baja cuando quieras." : "Registramos que preferís no recibir mensajes promocionales por WhatsApp. Tu membresía y tus puntos funcionan igual.", "bot");
       addMessage("¡Gracias por sumarte! Guardá tu código de socio para consultar tus puntos cuando quieras.", "bot");
       showOptions([["Consultar mis puntos", () => { startLookup(); }], ["Volver al inicio", welcome]]); chatForm.hidden = true; flow = null;
     }catch(e){
