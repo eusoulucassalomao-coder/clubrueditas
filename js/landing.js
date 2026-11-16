@@ -116,8 +116,9 @@
   }
   function welcome(){
     flow = null; messages.replaceChildren(); greeted = true;
-    addMessage(`¡Hola! ¿Cómo estás? Soy el asistente virtual de ${CF.club}. Para ayudarte mejor, contame: ¿ya sos parte del club o querés conocerlo y sumarte?`);
-    showOptions([["Ya soy del club", startLookup], ["Quiero unirme", startJoin], ["Tengo una duda", startFaq]]); chatForm.hidden = true;
+    addMessage(`¡Hola! Soy el asistente virtual de ${CF.club}. Podés escribir tu consulta o elegir una de estas opciones.`);
+    chatForm.hidden = false; chatInput.type = "text"; chatInput.placeholder = "Escribí tu pregunta sobre el Club"; chatInput.value = ""; chatInput.autocomplete = "off";
+    showOptions([["Consultar mis puntos", startLookup], ["Quiero unirme", startJoin], ["Preguntas frecuentes", startFaq]]);
   }
   function startFaq(){
     flow = { type: "assistant", step: "question" };
@@ -160,7 +161,7 @@
     }
     flow = { type:"assistant", step:"question" };
     chatForm.hidden = false; chatInput.type = "text"; chatInput.placeholder = "Escribí otra consulta"; chatInput.value = "";
-    showOptions([["Consultar mis puntos", startLookup], ["Volver al inicio", welcome]]);
+    showOptions([["Otra duda", () => { flow = { type:"assistant", step:"question" }; addMessage("Claro. ¿Qué otra duda tenés sobre el Club Ruedita?"); chatInput.placeholder = "Escribí otra consulta"; chatInput.focus(); }], ["Consultar mis puntos", startLookup], ["Volver al inicio", welcome]]);
   }
   function answerFaq(topic){
     const answers = {
@@ -258,8 +259,9 @@
     flow = null;
   }
   async function submitAnswer(value){
-    const v = value.trim(); if(!v || !flow) return;
+    const v = value.trim(); if(!v) return;
     addMessage(v, "user"); chatForm.hidden = true; showOptions([]);
+    if(!flow){ flow = { type:"assistant", step:"question" }; await askAssistant(v); return; }
     if(flow.type === "lookup"){ await submitLookup(v); return; }
     if(flow.type === "assistant"){ await askAssistant(v); return; }
     flow.value = v;
@@ -270,9 +272,10 @@
   $("chatClose").onclick = () => setChat(false);
   const openChatButtons = ["clubChatLauncher", "chatOpenTop", "chatOpenAction"];
   openChatButtons.forEach(id => { const button = $(id); if(button) button.onclick = () => setChat(true); });
-  function setChat(open){
+  function setChat(open, skipWelcome = false){
     chat.hidden = !open;
     openChatButtons.forEach(id => { const button = $(id); if(button) button.setAttribute("aria-expanded", String(open)); });
+    if(skipWelcome) greeted = true;
     if(open && !greeted) welcome();
     if(open) chatInput.focus();
   }
@@ -329,7 +332,7 @@
     const q = new URLSearchParams(location.search);
     // Cada visitante comienza por la bienvenida; nunca recuperamos automáticamente una cuenta anterior.
     const ref = q.get("ref");
-    setChat(true);
-    if(ref){ startJoin(); }
+    if(ref){ setChat(true, true); startJoin(); }
+    else { setChat(true); }
   })();
 })();
