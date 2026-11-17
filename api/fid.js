@@ -245,6 +245,53 @@ async function notifyVisitWebhook(r, customer, visitId, surveyToken, visit) {
   }
 }
 
+async function notifySurveyWebhook(r, surveyToken, rating, comment, result) {
+  const visitWebhookUrl = process.env.N8N_VISIT_WEBHOOK_URL || "";
+  const apiKey = process.env.N8N_VISIT_WEBHOOK_API_KEY || "";
+  if (!visitWebhookUrl || !apiKey) return { state: "not_configured" };
+
+  const url = visitWebhookUrl.replace(
+    /\/webhook\/la-ruedita\/visit-review-campaign\/?$/,
+    "/webhook/la-ruedita/survey-response"
+  );
+  if (url === visitWebhookUrl) return { state: "invalid_webhook_config" };
+
+  try {
+    const survey = await one("surveys", [
+      queryEqual("restaurant_id", r.id),
+      queryEqual("token", surveyToken)
+    ]);
+    if (!survey) return { state: "survey_not_found" };
+
+    const customer = await getDocument("customers", survey.customer_id);
+    if (!customer?.phone || !customer.wa_confirmed_at || customer.opted_out) {
+      return { state: "not_eligible" };
+    }
+
+    const payload = {
+      event: "survey.submitted",
+      restaurantSlug: r.slug,
+      customerId: customer.id,
+      customerName: customer.name,
+      phone: customer.phone,
+      rating,
+      comment,
+      reviewUrl: result.reviewUrl || ""
+    };
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", apikey: apiKey },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000)
+    });
+    return { state: response.ok ? "sent" : "failed", status: response.status };
+  } catch (error) {
+    console.error("survey-webhook", error);
+    return { state: "failed" };
+  }
+}
+
 async function addVisit(r, customer, amount) {
   const value = Number(amount);
   if (!Number.isFinite(value) || value <= 0 || value > 100000000) {
@@ -500,7 +547,8 @@ module.exports = async function handler(req,res) {
       const result=await rpc("fid_submit_survey",{
         p_slug:r.slug,p_token:token,p_rating:rating,p_comment:comment
       });
-      return res.status(200).json(result);
+      const notification = await notifySurveyWebhook(r, token, rating, comment, result);
+      return res.status(200).json({ ...result, notification: notification.state });
     }
 
     return res.status(400).json({error:"bad-action"});
