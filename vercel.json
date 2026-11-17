@@ -1,6 +1,6 @@
 {
   "cleanUrls": false,
-  "rewrites": [{ "source": "/caja", "destination": "/caja.html" }, { "source": "/panel", "destination": "/panel.html" }, { "source": "/survey", "destination": "/survey.html" }],
+  "rewrites": [{ "source": "/caja", "destination": "/caja.html" }, { "source": "/panel", "destination": "/panel.html" }, { "source": "/survey", "destination": "/survey.html" }, { "source": "/surveys", "destination": "/survey.html" }],
   "headers": [
     {
       "source": "/(.*)",
@@ -11,6 +11,6 @@
         { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'self' https://kwgrsliviyjweluvrkow.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" }
       ]
     },
-    { "source": "/(caja|panel|survey)(.html)?", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] }
+    { "source": "/(caja|panel|survey|surveys)(.html)?", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] }
   ]
 }
