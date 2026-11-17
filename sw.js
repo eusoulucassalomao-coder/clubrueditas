@@ -1,4 +1,4 @@
-const CACHE_NAME = "club-ruedita-v5";
+const CACHE_NAME = "club-ruedita-v6";
 const APP_SHELL = [
   "/",
   "/index.html",
