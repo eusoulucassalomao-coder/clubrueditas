@@ -107,6 +107,9 @@
       preferredCountries: ["ar", "br", "us", "gb", "es"],
       separateDialCode: true,
       nationalMode: true,
+      // Renderiza a lista fora do painel do chat, que usa overflow:hidden.
+      // Isso impede que a lista de países fique cortada ou invisível.
+      dropdownContainer: document.body,
       autoPlaceholder: "polite",
       loadUtils: () => import("https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js")
     });
