@@ -9,6 +9,7 @@ const COLLECTIONS = {
   ledger: process.env.APPWRITE_COLLECTION_LEDGER || "ledger",
   redemptions: process.env.APPWRITE_COLLECTION_REDEMPTIONS || "redemptions",
   message_log: process.env.APPWRITE_COLLECTION_MESSAGE_LOG || "message_log",
+  surveys: process.env.APPWRITE_COLLECTION_SURVEYS || "surveys",
 };
 
 function databaseReady() {
