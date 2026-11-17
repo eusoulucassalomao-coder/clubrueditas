@@ -8,9 +8,18 @@ CREATE UNIQUE INDEX IF NOT EXISTS surveys_visit_id_unique_idx
   ON public.surveys (visit_id)
   WHERE visit_id IS NOT NULL;
 
-ALTER TABLE public.surveys
-  ADD CONSTRAINT surveys_visit_id_fkey
-  FOREIGN KEY (visit_id) REFERENCES public.visits(id) ON DELETE CASCADE;
+DO $migration$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'surveys_visit_id_fkey'
+      AND conrelid = 'public.surveys'::regclass
+  ) THEN
+    ALTER TABLE public.surveys
+      ADD CONSTRAINT surveys_visit_id_fkey
+      FOREIGN KEY (visit_id) REFERENCES public.visits(id) ON DELETE CASCADE;
+  END IF;
+END
+$migration$;
 
 CREATE OR REPLACE FUNCTION public.fid_submit_survey(
   p_slug text, p_token text, p_rating integer, p_comment text
