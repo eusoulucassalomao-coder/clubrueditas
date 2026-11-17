@@ -318,15 +318,36 @@
     if(skipWelcome)greeted=true;if(open&&!greeted)welcome();if(open)chatInput.focus();
   }
 
-  // ---------- instalación PWA ----------
+  // ---------- instalação PWA ---------- 
   let deferredInstallPrompt=null;
-  const installBanner=$("pwaInstallBanner");
+  const installOverlay=$("appWelcomeOverlay");
+  const installNowBtn=$("installNowBtn");
+  const continueOnWebBtn=$("continueOnWebBtn");
+  const installNote=$("appInstallNote");
   function isStandalone(){return window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;}
-  function installHelp(){const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);addMessage(ios?"Para instalar: tocá en Compartir en Safari y elegí “Agregar a pantalla de inicio”.":"Para instalar: abrí el menú del navegador y elegí “Instalar aplicación” o “Agregar a pantalla de inicio”.");showOptions([[LANG==="en"?"Continue here":"Continuar por aquí",showMainOptions],[LANG==="en"?"Back":"Volver",welcome]]);}
-  async function installClubApp(){if(deferredInstallPrompt){deferredInstallPrompt.prompt();const choice=await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;if(choice&&choice.outcome==="accepted"){if(installBanner)installBanner.hidden=true;addMessage("La instalación de la aplicación comenzó.");showMainOptions();return;}}installHelp();}
-  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;if(installBanner&&!isStandalone())installBanner.hidden=false;});
-  window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;if(installBanner)installBanner.hidden=true;});
-  if(installBanner){$("pwaInstallBtn").addEventListener("click",installClubApp);$("pwaInstallClose").addEventListener("click",()=>installBanner.hidden=true);if(!isStandalone())setTimeout(()=>{if(!deferredInstallPrompt)installBanner.hidden=false;},900);}
+  function closeInstallWelcome(){if(installOverlay)installOverlay.hidden=true;}
+  function showInstallInstructions(){
+    const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    installNote.textContent=ios?"Para instalar: toque em Compartilhar no Safari e escolha “Adicionar à Tela de Início”.":"Para instalar: abra o menu do navegador e escolha “Instalar aplicativo” ou “Adicionar à tela inicial”.";
+    installNowBtn.textContent="Entendi";
+    installNowBtn.onclick=closeInstallWelcome;
+    continueOnWebBtn.hidden=true;
+  }
+  async function installClubApp(){
+    if(deferredInstallPrompt){
+      deferredInstallPrompt.prompt();
+      const choice=await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt=null;
+      if(choice&&choice.outcome==="accepted"){closeInstallWelcome();return;}
+    }
+    showInstallInstructions();
+  }
+  if(!isStandalone()){
+    installNowBtn.addEventListener("click",installClubApp);
+    continueOnWebBtn.addEventListener("click",closeInstallWelcome);
+  }else if(installOverlay){installOverlay.hidden=true;}
+  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;});
+  window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;closeInstallWelcome();});
   if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(err=>console.warn("PWA service worker:",err)));}
   // ---------- sessão já existente ----------
   async function showMine(){
