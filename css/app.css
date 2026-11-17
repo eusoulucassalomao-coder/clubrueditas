@@ -267,3 +267,23 @@ details p{margin:0 0 16px;font-size:14px;color:var(--muted)}
 @keyframes pwaBannerIn{from{opacity:0;transform:translateY(-9px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:600px){.pwa-install-banner{margin:8px 10px 0;padding:12px 12px;align-items:center;gap:8px}.pwa-install-copy b{font-size:15px}.pwa-install-banner p{font-size:11px;max-width:225px}.pwa-install-actions{gap:4px}.pwa-install-actions button:first-child{padding:10px 13px;font-size:12px}}
 @media(prefers-reduced-motion:reduce){.pwa-install-banner,.pwa-install-actions button:first-child{animation:none}}
+
+/* Tela inicial de instalação do Club La Ruedita */
+.app-welcome-overlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:20px;background:rgba(12,19,13,.58);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.app-welcome-overlay[hidden]{display:none}
+.app-welcome-card{width:min(430px,100%);padding:30px 26px 24px;border:1px solid rgba(116,126,78,.3);border-radius:25px;background:linear-gradient(145deg,#fff9e9,#eee5cd);color:#35402b;text-align:center;box-shadow:0 25px 90px rgba(0,0,0,.38);animation:welcomePop .45s cubic-bezier(.2,.8,.2,1) both}
+.app-welcome-logo{width:82px;height:82px;object-fit:contain;border-radius:50%;margin:0 auto 10px;box-shadow:0 5px 18px rgba(62,69,40,.14)}
+.app-welcome-eyebrow{margin:0 0 9px;font-size:10px;font-weight:800;letter-spacing:2px;color:#788052}
+.app-welcome-card h2{margin:0 auto 10px;max-width:340px;font-family:var(--serif);font-size:27px;line-height:1.12;color:#505b37}
+.app-welcome-text{margin:0 auto 21px;max-width:330px;font-size:14px;line-height:1.55;color:#62694d}
+.app-welcome-install,.app-welcome-continue{display:block;width:100%;border-radius:999px;padding:14px 18px;font:700 14px var(--sans);cursor:pointer}
+.app-welcome-install{border:0;background:#737c4d;color:#fff9e9;box-shadow:0 0 0 0 rgba(115,124,77,.42);animation:welcomePulse 1.8s ease-out infinite}
+.app-welcome-continue{margin-top:10px;border:1px solid rgba(92,102,60,.35);background:transparent;color:#596342}
+.app-welcome-note{margin:14px 0 0;font-size:11px;color:#7a7d65;line-height:1.45}
+.app-welcome-continue[hidden]{display:none}
+.cookie-banner{z-index:10010}
+.cookie-panel{z-index:10020}
+@keyframes welcomePop{from{opacity:0;transform:translateY(15px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes welcomePulse{0%{box-shadow:0 0 0 0 rgba(115,124,77,.42)}70%{box-shadow:0 0 0 10px rgba(115,124,77,0)}100%{box-shadow:0 0 0 0 rgba(115,124,77,0)}}
+@media(max-width:420px){.app-welcome-card{padding:25px 20px 21px}.app-welcome-card h2{font-size:24px}.app-welcome-logo{width:74px;height:74px}}
+@media(prefers-reduced-motion:reduce){.app-welcome-card,.app-welcome-install{animation:none}}
