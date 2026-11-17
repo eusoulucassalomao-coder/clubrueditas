@@ -71,7 +71,13 @@
       if(r.campaignEvent === "sent") t += " Aviso enviado al sistema de WhatsApp.";
       else if(r.campaignEvent === "not_configured") t += " Aviso: falta configurar la conexión con n8n.";
       else if(r.campaignEvent === "failed") t += " La visita quedó registrada, pero n8n no respondió.";
-      showCust(r.customer); m.textContent = t; m.className = "msg ok"; recent();
+      showCust(r.customer);
+      if(r.surveyUrl){
+        m.innerHTML = `${esc(t)} <a href="${esc(r.surveyUrl)}" target="_blank" rel="noopener">Abrir encuesta</a>`;
+      }else{
+        m.textContent = t;
+      }
+      m.className = "msg ok"; recent();
     }catch(e){ m.textContent = e.message; m.className = "msg err"; }
     btn.disabled = false;
   };
