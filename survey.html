@@ -5,219 +5,74 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Encuesta La Ruedita Club</title>
   <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 20px;
-    }
-    .survey-card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 28px;
-    }
-    .survey-card h3 {
-      margin: 0 0 8px;
-      color: #333;
-      font-size: 22px;
-      text-align: center;
-    }
-    .survey-card p {
-      margin: 8px 0 20px;
-      color: #666;
-      text-align: center;
-      font-size: 14px;
-    }
-    .stars {
-      display: flex;
-      justify-content: center;
-      gap: 4px;
-      margin-bottom: 20px;
-    }
-    .star {
-      font-size: 2rem;
-      cursor: pointer;
-      color: #ddd;
-      transition: color 0.2s;
-      user-select: none;
-    }
-    .star.selected, .star.hovered {
-      color: #ffc107 !important;
-    }
-    .star:empty {
-      visibility: hidden;
-    }
-    .textarea-row {
-      margin-bottom: 20px;
-    }
-    .textarea-row label {
-      display: block;
-      margin-bottom: 6px;
-      color: #555;
-      font-size: 14px;
-    }
-    .textarea-row textarea {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
-      resize: vertical;
-      font-family: inherit;
-    }
-    .textarea-row textarea:focus {
-      outline: none;
-      border-color: #007bff;
-      box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-    }
-    .btn-submit {
-      width: 100%;
-      padding: 12px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-submit:hover:not(:disabled) {
-      background: #0056b3;
-    }
-    .btn-submit:disabled {
-      background: #6c757d;
-      cursor: not-allowed;
-    }
-    .alert {
-      padding: 12px 16px;
-      border-radius: 6px;
-      margin-bottom: 16px;
-      font-size: 14px;
-    }
-    .alert-success {
-      background: #d1e7dd;
-      color: #0f5132;
-    }
-    .alert-danger {
-      background: #f8d7da;
-      color: #842029;
-    }
+    body{font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:20px}
+    .card{background:white;border-radius:12px;max-width:400px;margin:0 auto;padding:24px;box-shadow:0 2px 10px rgba(0,0,0,.1)}
+    h2{margin:0 0 8px;text-align:center;color:#333}
+    p{margin:8px 0 20px;color:#666;text-align:center;font-size:14px}
+    .stars{display:flex;justify-content:center;gap:8px;margin-bottom:24px}
+    .star{font-size:2rem;cursor:pointer;color:#ddd}
+    .star.selected,.star.hovered{color:#ffc107!important}
+    textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;resize:vertical;font-family:inherit;font-size:14px}
+    .btn{width:100%;padding:12px;background:#007bff;color:white;border:none;border-radius:6px;font-size:16px;cursor:pointer}
+    .btn:hover:not(:disabled){background:#0056b3}
+    .btn:disabled{background:#6c757d;cursor:not-allowed}
+    .alert{padding:12px 16px;border-radius:6px;margin-top:16px;font-size:14px}
+    .success{background:#d1e7dd;color:#0f5132}
+    .danger{background:#f8d7da;color:#842029}
+    .hidden{display:none}
   </style>
 </head>
 <body>
-  <div class="survey-card">
-    <h3>¿Cómo fue tu experiencia?</h3>
+  <div class="card">
+    <h2>¿Cómo fue tu experiencia?</h2>
     <p>La Ruedita Club agradece tu opinión</p>
-
-    <form id="surveyForm">
-      <input type="hidden" id="token" name="token">
-      <input type="hidden" id="rating" name="rating" required>
-
+    <form id="f">
+      <input type="hidden" id="t" name="token">
+      <input type="hidden" id="r" name="rating" required>
       <div class="stars">
-        <span class="star" data-value="1">&#9733;</span>
-        <span class="star" data-value="2">&#9733;</span>
-        <span class="star" data-value="3">&#9733;</span>
-        <span class="star" data-value="4">&#9733;</span>
-        <span class="star" data-value="5">&#9733;</span>
+        <span class="star" data-v="1">&#9733;</span>
+        <span class="star" data-v="2">&#9733;</span>
+        <span class="star" data-v="3">&#9733;</span>
+        <span class="star" data-v="4">&#9733;</span>
+        <span class="star" data-v="5">&#9733;</span>
       </div>
-
-      <div class="textarea-row">
-        <label for="comment">Comentario opcional:</label>
-        <textarea id="comment" name="comment" rows="3" placeholder="Cuéntanos qué mejoraríamos..."></textarea>
-      </div>
-
-      <button type="submit" class="btn-submit" id="submitBtn" disabled>Enviar encuesta</button>
-
-      <div id="result" class="alert alert-success d-none"></div>
-      <div id="error" class="alert alert-danger d-none"></div>
+      <label>Comentario:</label>
+      <textarea id="c" name="comment" placeholder="Opcional"></textarea>
+      <button type="submit" class="btn" id="b" disabled>Enviar</button>
+      <div id="s" class="alert success hidden"></div>
+      <div id="e" class="alert danger hidden"></div>
     </form>
   </div>
-
   <script>
-    var token = new URLSearchParams(location.search).get('t');
-    if (token) {
-      document.getElementById('token').value = token;
+    var url=new URLSearchParams(location.search);
+    if(url.has('t'))document.getElementById('t').value=url.get('t');
+    var stars=document.querySelectorAll('.star'),rating=document.getElementById('r'),btn=document.getElementById('b');
+    function set(n){
+      stars.forEach(function(s,i){s.classList.toggle('selected',i<n)});
     }
-
-    var stars = document.querySelectorAll('.star');
-    var ratingInput = document.getElementById('rating');
-
-    function setStars(rating) {
-      stars.forEach(function(star, i) {
-        star.classList.toggle('selected', i < rating);
-      });
-    }
-
-    stars.forEach(function(star) {
-      star.addEventListener('click', function() {
-        var value = parseInt(this.getAttribute('data-value'));
-        ratingInput.value = value;
-        stars.forEach(function(s) { s.classList.remove('hovered'); });
-        setStars(value);
-        document.getElementById('submitBtn').disabled = false;
-      });
-
-      star.addEventListener('mouseenter', function() {
-        var value = parseInt(this.getAttribute('data-value'));
-        stars.forEach(function(s, i) {
-          s.classList.toggle('hovered', i < value);
-        });
-      });
-
-      star.addEventListener('mouseleave', function() {
-        stars.forEach(function(s) { s.classList.remove('hovered'); });
-        setStars(parseInt(ratingInput.value) || 0);
-      });
+    stars.forEach(function(s){
+      s.onclick=function(){
+        var v=parseInt(s.getAttribute('data-v'));
+        rating.value=v;set(v);
+        btn.disabled=!1;
+      };
+      s.onmouseover=function(){var v=parseInt(s.getAttribute('data-v'));set(v);};
+      s.onmouseleave=function(){set(parseInt(rating.value)||0);};
     });
-
-    document.getElementById('surveyForm').addEventListener('submit', function(e) {
+    document.getElementById('f').onsubmit=function(e){
       e.preventDefault();
-      var btn = document.getElementById('submitBtn');
-      var result = document.getElementById('result');
-      var error = document.getElementById('error');
-      var rating = document.getElementById('rating').value;
-      var comment = document.getElementById('comment').value.trim();
-
-      btn.disabled = true;
-      btn.textContent = 'Enviando...';
-      result.classList.add('d-none');
-      error.classList.add('d-none');
-
-      fetch('/api/fid', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          action: 'submit_survey',
-          token: token,
-          rating: parseInt(rating),
-          comment: comment
+      btn.disabled=true;btn.textContent='Enviando...';
+      document.getElementById('s').classList.add('hidden');
+      document.getElementById('e').classList.add('hidden');
+      fetch('/api/fid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submit_survey',token:document.getElementById('t').value,rating:parseInt(rating.value),comment:document.getElementById('c').value.trim()})})
+        .then(function(r){return r.json().then(function(d){return {o:r.ok,d:d})})})
+        .then(function(r){
+          if(r.o){document.getElementById('s').classList.remove('hidden');document.getElementById('s').textContent=r.d.message||'Gracias';document.getElementById('f').innerHTML='';}
+          else{document.getElementById('e').classList.remove('hidden');document.getElementById('e').textContent=r.d.message||'Error';}
         })
-      })
-      .then(function(res) { return res.json().then(function(data) { return {ok: res.ok, data: data}; }); })
-      .then(function(response) {
-        if (response.ok) {
-          result.classList.remove('d-none');
-          result.textContent = response.data.message || '¡Gracias por tu opinión!';
-          document.getElementById('surveyForm').innerHTML = '';
-        } else {
-          error.classList.remove('d-none');
-          error.textContent = response.data.message || 'Error al enviar. Intenta de nuevo.';
-        }
-      })
-      .catch(function(e) {
-        error.classList.remove('d-none');
-        error.textContent = 'Error de conexión. Intenta de nuevo.';
-      })
-      .finally(function() {
-        btn.disabled = false;
-        btn.textContent = 'Enviar encuesta';
-      });
-    });
+        .catch(function(){document.getElementById('e').classList.remove('hidden');document.getElementById('e').textContent='Error de conexión';})
+        .finally(function(){btn.disabled=!1;btn.textContent='Enviar';});
+    };
   </script>
 </body>
 </html>
