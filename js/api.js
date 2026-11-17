@@ -13,7 +13,7 @@
     catch(e){ throw Object.assign(new Error("Sin conexión. Probá de nuevo."), { code: "network" }); }
     let j = {}; try{ j = await r.json(); }catch(e){}
     if(!r.ok){
-      const msg = j.message || ({ "bad-secret": "Incorrecto", unauthorized: "La sesión venció. Entrá de nuevo.", forbidden: "No tenés permiso." })[j.error] || "No se pudo completar. Probá de nuevo.";
+      const msg = j.message || ({ "bad-secret": "Incorrecto", unauthorized: "La sesión venció. Entrá de nuevo.", forbidden: "No tenés permiso.", role_not_authorized: "Esta cuenta no tiene permiso para este panel.", invalid_credentials: "Correo o contraseña incorrectos." })[j.error] || "No se pudo completar. Probá de nuevo.";
       throw Object.assign(new Error(msg), { code: j.error || "server", status: r.status });
     }
     return j;
@@ -39,22 +39,16 @@
     lookupCode: code => call({ action: "lookup_code", code }),
     // acesso interno
     async auth(role, email, password){
-      if(role === "caja") return F.authCaja(email, password);
-      if(role !== "panel") throw new Error("Tipo de acesso não suportado.");
-      let response;
-      try{ response = await fetch("/api/auth/login", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({ email:String(email || "").trim(), password }) }); }
-      catch(e){ throw Object.assign(new Error("Sin conexión. Probá de nuevo."), { code:"network" }); }
-      const data = await response.json().catch(()=>({}));
-      if(!response.ok){ const messages={invalid_credentials:"E-mail ou senha incorretos.",role_not_authorized:"Este usuário não tem permissão de administrador.",appwrite_not_configured:"A conexão com Appwrite não está configurada."}; throw Object.assign(new Error(messages[data.error] || "Não foi possível entrar. Tente novamente."), {code:data.error || "login",status:response.status}); }
+      const data = await call({
+        action: "auth",
+        role,
+        email: String(email || "").trim().toLowerCase(),
+        password
+      });
       return data.token;
     },
     async authCaja(email, password){
-      let response;
-      try{ response = await fetch("/api/auth/caja-login", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({ email:String(email || "").trim(), password }) }); }
-      catch(e){ throw Object.assign(new Error("Sin conexión. Probá de nuevo."), { code:"network" }); }
-      const data = await response.json().catch(()=>({}));
-      if(!response.ok){ const messages={invalid_credentials:"E-mail ou senha incorretos.",role_not_authorized:"Este usuário não tem permissão para acessar a Caja.",appwrite_not_configured:"A conexão com Appwrite não está configurada.",caja_login_not_configured:"O acesso da Caja ainda não foi configurado."}; throw Object.assign(new Error(messages[data.error] || "Não foi possível entrar. Tente novamente."), {code:data.error || "login",status:response.status}); }
-      return data.token;
+      return F.auth("caja", email, password);
     },
     // caixa
     search: (t, q) => call({ action: "search", q }, t),

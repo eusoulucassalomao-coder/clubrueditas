@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 
-const secret = () => process.env.FID_TOKEN_SECRET || process.env.APPWRITE_API_KEY || "";
+const secret = () => process.env.FID_TOKEN_SECRET || "";
 const b64 = value => Buffer.from(value).toString("base64url");
 
 function sign(value) {
