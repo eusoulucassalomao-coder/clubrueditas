@@ -54,7 +54,7 @@
       s.onclick=function(){
         var v=parseInt(s.getAttribute('data-v'));
         rating.value=v;set(v);
-        btn.disabled=!1;
+        btn.disabled=false;
       };
       s.onmouseover=function(){var v=parseInt(s.getAttribute('data-v'));set(v);};
       s.onmouseleave=function(){set(parseInt(rating.value)||0);};
@@ -71,7 +71,7 @@
           else{document.getElementById('e').classList.remove('hidden');document.getElementById('e').textContent=r.d.message||'Error';}
         })
         .catch(function(){document.getElementById('e').classList.remove('hidden');document.getElementById('e').textContent='Error de conexión';})
-        .finally(function(){btn.disabled=!1;btn.textContent='Enviar';});
+        .finally(function(){btn.disabled=false;btn.textContent='Enviar';});
     };
   </script>
 </body>
