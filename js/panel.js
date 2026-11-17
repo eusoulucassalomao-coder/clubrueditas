@@ -121,7 +121,7 @@
   function drawCfg(){
     const cf = CF, f = $("cfgForm");
     f.points.value = cf.earn.points; f.perAmount.value = cf.earn.perAmount;
-    ["welcome", "referral", "birthday", "review"].forEach(k => f[k].value = cf.bonus[k]);
+    ["welcome", "referral", "birthday"].forEach(k => f[k].value = cf.bonus[k]);
     f.inactiveDays.value = cf.inactiveDays;
     $("mults").innerHTML = DN.map((n, i) => `<label>${n}<input type="number" min="1" max="10" step="0.5" data-m="${i}" value="${(cf.multipliers || {})[i] || 1}"></label>`).join("");
     rewards = cf.rewards.map(r => Object.assign({}, r)); drawRewards();
@@ -140,7 +140,7 @@
     e.preventDefault(); const f = e.target, m = $("cfgMsg");
     const mult = {}; f.querySelectorAll("[data-m]").forEach(i => { const v = Number(i.value); if(v > 1) mult[i.dataset.m] = v; });
     const o = { earn: { points: Number(f.points.value), perAmount: Number(f.perAmount.value) },
-      bonus: { welcome: Number(f.welcome.value), referral: Number(f.referral.value), birthday: Number(f.birthday.value), review: Number(f.review.value) },
+      bonus: { welcome: Number(f.welcome.value), referral: Number(f.referral.value), birthday: Number(f.birthday.value), review: Number(CF.bonus.review || 0) },
       inactiveDays: Number(f.inactiveDays.value), multipliers: mult, rewards: rewards.filter(r => r.name && r.pts > 0) };
     m.className = "msg"; m.textContent = "Guardando...";
     try{ await run(() => F.saveConfig(tok, o)); CF = F.conf(); m.className = "msg ok"; m.textContent = "✓ Reglas guardadas."; drawCfg(); }
