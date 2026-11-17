@@ -121,6 +121,7 @@
     e.preventDefault(); const f = e.target, m = $("nMsg"); m.className = "msg err"; m.textContent = "";
     try{
       if(!phoneIti){ throw new Error("No se pudo cargar el selector de país. Actualizá la página e intentá nuevamente."); }
+      if(phoneIti.promise) await phoneIti.promise;
       if(!phoneIti.isValidNumber()){ phoneInput.focus(); throw new Error("Revisá el número de WhatsApp y el país seleccionado."); }
       const internationalPhone = phoneIti.getNumber();
       const r = await run(() => F.newCustomer(tok, { name: f.name.value, phone: internationalPhone, birthday: f.birthday.value, consent: true, waConsent: true }));
