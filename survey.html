@@ -64,8 +64,9 @@
       var t=document.getElementById('token').value;
       var r=rating.value;
       var c=document.getElementById('c').value.trim();
-      fetch('/api/fid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submit_survey',token:t,rating:parseInt(r),comment:c})})
-        .then(function(x){return x.json().then(function(d){return {o:x.ok,d:d})})})
+      var data={action:'submit_survey',token:t,rating:parseInt(r),comment:c};
+      fetch('/api/fid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+        .then(function(x){return x.json()})
         .then(function(x){
           if(x.o){success.classList.remove('hidden');success.innerHTML=x.d.message||'Gracias';form.innerHTML='';}
           else{error.classList.remove('hidden');error.innerHTML=x.d.message||'Error';}
