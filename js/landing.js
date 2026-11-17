@@ -473,7 +473,7 @@
   }
 
   if(!isStandalone()){
-    if(readInstallChoice()==="continue")closeInstallWelcome();
+    if(["continue","installed"].includes(readInstallChoice()))closeInstallWelcome();
     else openInstallWelcome();
   }else if(installOverlay){closeInstallWelcome();}
 
