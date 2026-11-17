@@ -216,7 +216,7 @@ async function notifyVisitWebhook(r, customer, visitId, surveyToken, visit) {
   if (!surveyToken || !visitId) return { state: "missing_survey" };
 
   const siteUrl = (r.config?.siteUrl || "https://laruedita-club.vercel.app").replace(/\/$/, "");
-  const surveyUrl = `${siteUrl}/survey.html?t=${surveyToken}`;
+  const surveyUrl = `${siteUrl}/surveys?t=${surveyToken}`;
   const payload = {
     event: "visit.registered",
     visitId,
