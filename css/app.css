@@ -269,21 +269,41 @@ details p{margin:0 0 16px;font-size:14px;color:var(--muted)}
 @media(prefers-reduced-motion:reduce){.pwa-install-banner,.pwa-install-actions button:first-child{animation:none}}
 
 /* Tela inicial de instalação do Club La Ruedita */
-.app-welcome-overlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:20px;background:rgba(12,19,13,.58);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
-.app-welcome-overlay[hidden]{display:none}
-.app-welcome-card{width:min(430px,100%);padding:30px 26px 24px;border:1px solid rgba(116,126,78,.3);border-radius:25px;background:linear-gradient(145deg,#fff9e9,#eee5cd);color:#35402b;text-align:center;box-shadow:0 25px 90px rgba(0,0,0,.38);animation:welcomePop .45s cubic-bezier(.2,.8,.2,1) both}
-.app-welcome-logo{width:82px;height:82px;object-fit:contain;border-radius:50%;margin:0 auto 10px;box-shadow:0 5px 18px rgba(62,69,40,.14)}
-.app-welcome-eyebrow{margin:0 0 9px;font-size:10px;font-weight:800;letter-spacing:2px;color:#788052}
-.app-welcome-card h2{margin:0 auto 10px;max-width:340px;font-family:var(--serif);font-size:27px;line-height:1.12;color:#505b37}
-.app-welcome-text{margin:0 auto 21px;max-width:330px;font-size:14px;line-height:1.55;color:#62694d}
-.app-welcome-install,.app-welcome-continue{display:block;width:100%;border-radius:999px;padding:14px 18px;font:700 14px var(--sans);cursor:pointer}
-.app-welcome-install{border:0;background:#737c4d;color:#fff9e9;box-shadow:0 0 0 0 rgba(115,124,77,.42);animation:welcomePulse 1.8s ease-out infinite}
-.app-welcome-continue{margin-top:10px;border:1px solid rgba(92,102,60,.35);background:transparent;color:#596342}
-.app-welcome-note{margin:14px 0 0;font-size:11px;color:#7a7d65;line-height:1.45}
-.app-welcome-continue[hidden]{display:none}
+.app-welcome-overlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:18px;background:radial-gradient(circle at 50% 12%,rgba(84,99,61,.5),rgba(8,17,11,.88) 65%),rgba(8,17,11,.76);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow-y:auto}
+.app-welcome-overlay[hidden],.app-welcome-guide[hidden],.app-welcome-copy-wrap[hidden]{display:none!important}
+.app-welcome-card{width:min(470px,100%);max-height:calc(100dvh - 36px);overflow-y:auto;padding:30px 28px 25px;border:1px solid rgba(116,126,78,.35);border-radius:28px;background:linear-gradient(155deg,#fffdf5 0%,#f5efde 56%,#eee5cd 100%);color:#35402b;text-align:center;box-shadow:0 28px 100px rgba(0,0,0,.46);animation:welcomePop .42s cubic-bezier(.2,.8,.2,1) both}
+.app-welcome-brand{width:86px;height:86px;margin:0 auto 12px;padding:4px;border:1px solid rgba(116,126,78,.2);border-radius:50%;background:rgba(255,255,255,.66);box-shadow:0 8px 24px rgba(62,69,40,.1)}
+.app-welcome-logo{width:100%;height:100%;object-fit:contain;border-radius:50%}
+.app-welcome-eyebrow{margin:0 0 10px;font-size:10px;font-weight:800;letter-spacing:2.1px;color:#788052}
+.app-welcome-card h2{margin:0 auto 11px;max-width:360px;font-family:var(--serif);font-size:clamp(25px,6vw,30px);line-height:1.12;color:#505b37}
+.app-welcome-text{margin:0 auto 22px;max-width:365px;font-size:14px;line-height:1.6;color:#62694d}
+.app-welcome-options{display:grid;gap:11px}
+.app-welcome-option{display:grid;grid-template-columns:46px minmax(0,1fr) 18px;align-items:center;gap:13px;width:100%;padding:14px 15px;border-radius:17px;text-align:left;cursor:pointer;font-family:var(--sans);transition:transform .18s,box-shadow .18s,border-color .18s}
+.app-welcome-option:hover{transform:translateY(-2px)}
+.app-welcome-option:focus-visible,.app-welcome-guide-continue:focus-visible,.app-welcome-back:focus-visible,.app-welcome-copy:focus-visible{outline:3px solid rgba(201,162,39,.55);outline-offset:3px}
+.app-welcome-install{border:1px solid #737c4d;background:linear-gradient(135deg,#7c8556,#59683f);color:#fffdf3;box-shadow:0 9px 22px rgba(76,91,54,.2)}
+.app-welcome-install:hover{box-shadow:0 13px 26px rgba(76,91,54,.27)}
+.app-welcome-continue{border:1px solid rgba(92,102,60,.25);background:rgba(255,255,255,.48);color:#596342}
+.app-welcome-continue:hover{border-color:rgba(92,102,60,.48);box-shadow:0 8px 20px rgba(62,69,40,.08)}
+.app-welcome-option-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.14)}
+.app-welcome-continue .app-welcome-option-icon{background:rgba(115,124,77,.1)}
+.app-welcome-option-icon svg{width:23px;height:23px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.app-welcome-option-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+.app-welcome-option-copy strong{font-size:14px;font-weight:750;line-height:1.25}
+.app-welcome-option-copy small{font-size:11px;line-height:1.4;opacity:.78}
+.app-welcome-option-arrow{font-size:25px;font-weight:300;line-height:1;opacity:.8}
+.app-welcome-note{margin:16px 0 0;font-size:11px;color:#7a7d65;line-height:1.5}
+.app-welcome-guide-symbol{display:grid;place-items:center;width:54px;height:54px;margin:0 auto 15px;border-radius:17px;background:rgba(115,124,77,.12);color:#667447}
+.app-welcome-guide-symbol svg{width:27px;height:27px;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.app-welcome-steps{display:grid;gap:10px;margin:0 0 18px;padding:0;list-style:none;text-align:left;counter-reset:install-step}
+.app-welcome-steps li{position:relative;min-height:42px;padding:10px 12px 10px 48px;border:1px solid rgba(92,102,60,.13);border-radius:13px;background:rgba(255,255,255,.5);font-size:12px;line-height:1.5;color:#535d40;counter-increment:install-step}
+.app-welcome-steps li:before{content:counter(install-step);position:absolute;left:12px;top:10px;display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#737c4d;color:#fff9e9;font-size:12px;font-weight:800}
+.app-welcome-copy{width:100%;margin:0 0 10px;padding:12px 16px;border:1px solid rgba(92,102,60,.3);border-radius:999px;background:rgba(255,255,255,.65);color:#596342;font:700 13px var(--sans);cursor:pointer}
+.app-welcome-guide-continue{display:block;width:100%;padding:14px 18px;border:0;border-radius:999px;background:#737c4d;color:#fff9e9;font:700 14px var(--sans);cursor:pointer}
+.app-welcome-back{margin-top:10px;padding:7px 16px;border:0;background:transparent;color:#69734e;font:600 12px var(--sans);cursor:pointer}
+.app-welcome-guide .app-welcome-text{margin-bottom:17px}
 .cookie-banner{z-index:10010}
 .cookie-panel{z-index:10020}
 @keyframes welcomePop{from{opacity:0;transform:translateY(15px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes welcomePulse{0%{box-shadow:0 0 0 0 rgba(115,124,77,.42)}70%{box-shadow:0 0 0 10px rgba(115,124,77,0)}100%{box-shadow:0 0 0 0 rgba(115,124,77,0)}}
-@media(max-width:420px){.app-welcome-card{padding:25px 20px 21px}.app-welcome-card h2{font-size:24px}.app-welcome-logo{width:74px;height:74px}}
-@media(prefers-reduced-motion:reduce){.app-welcome-card,.app-welcome-install{animation:none}}
+@media(max-width:420px){.app-welcome-overlay{padding:12px}.app-welcome-card{max-height:calc(100dvh - 24px);padding:25px 19px 21px;border-radius:23px}.app-welcome-brand{width:76px;height:76px}.app-welcome-option{grid-template-columns:42px minmax(0,1fr) 14px;gap:10px;padding:13px 12px}.app-welcome-option-icon{width:40px;height:40px}.app-welcome-option-copy strong{font-size:13px}.app-welcome-option-copy small{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.app-welcome-card,.app-welcome-option{animation:none;transition:none}}
