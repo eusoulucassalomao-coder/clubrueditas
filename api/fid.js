@@ -5,7 +5,7 @@ const {
   commitOperations, transactionCreate, transactionUpdate, transactionDelete,
 } = require("./_lib/supabase-db");
 const { mintToken, verifyToken, bearer, verifyRestaurantSecret } = require("./_lib/fid-auth");
-const { supabase } = require("./_lib/supabase");
+const { supabase, createAuthClient } = require("./_lib/supabase");
 
 const digits = value => String(value || "").replace(/\D/g, "");
 const isoNow = () => new Date().toISOString();
@@ -358,18 +358,36 @@ module.exports = async function handler(req,res) {
     }
     if(action==="login") return res.status(200).json({ok:true,channel:false});
     if(action==="auth"){
-      const role = body.role === "panel" ? "panel" : "caja";
+      const role = body.role === "panel" ? "panel" : body.role === "caja" ? "caja" : "";
       const email = String(body.email || "").trim().toLowerCase();
-      const allowedEmail = String(process.env[role === "panel" ? "APPWRITE_OWNER_EMAIL" : "APPWRITE_CAJA_EMAIL"] || "").trim().toLowerCase();
-      const hash = role === "panel" ? r.panel_pass_hash : r.caja_pin_hash;
-      if (!allowedEmail || email !== allowedEmail) {
-        return res.status(403).json({ error: "role_not_authorized", message: "Usuario no autorizado" });
+      const password = String(body.password || "");
+      if (!role || !email || !password) {
+        return res.status(400).json({ error: "missing_credentials", message: "Ingresá tu correo y contraseña." });
       }
-      if (!(await verifyRestaurantSecret(hash, String(body.secret || "")))) {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        return res.status(401).json({ error: "bad-secret", message: "Incorrecto" });
+
+      const authClient = createAuthClient();
+      const { data: signedIn, error: signInError } = await authClient.auth.signInWithPassword({ email, password });
+      if (signInError || !signedIn?.user) {
+        return res.status(401).json({ error: "invalid_credentials", message: "Correo o contraseña incorrectos." });
       }
-      return res.status(200).json({ token: mintToken(slug, role) });
+
+      const { data: staff, error: staffError } = await supabase
+        .from("staff_access")
+        .select("role, active")
+        .eq("user_id", signedIn.user.id)
+        .eq("restaurant_id", r.id)
+        .eq("active", true)
+        .maybeSingle();
+
+      if (staffError) {
+        console.error("staff-access", staffError.message);
+        return res.status(500).json({ error: "auth_unavailable", message: "No se pudo validar el acceso." });
+      }
+      if (!staff || staff.role !== role) {
+        return res.status(403).json({ error: "role_not_authorized", message: "Esta cuenta no tiene permiso para este panel." });
+      }
+
+      return res.status(200).json({ token: mintToken(slug, role), role });
     }
 
     if(action.startsWith("auto_")){
