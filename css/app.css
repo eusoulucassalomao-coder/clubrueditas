@@ -254,3 +254,16 @@ details p{margin:0 0 16px;font-size:14px;color:var(--muted)}
 
 /* Instalación PWA */
 .pwa-install-banner{position:fixed;z-index:145;left:16px;right:16px;bottom:16px;max-width:720px;margin:auto;padding:16px 18px;border:1px solid rgba(201,162,39,.5);border-radius:18px;background:#102016;color:#f1e7cf;box-shadow:0 18px 55px rgba(0,0,0,.38);display:flex;align-items:center;justify-content:space-between;gap:16px}.pwa-install-banner[hidden]{display:none}.pwa-install-banner p{margin:4px 0 0;font-size:13px;opacity:.82}.pwa-install-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}.pwa-install-actions button:first-child{border:0;border-radius:999px;padding:10px 17px;background:linear-gradient(180deg,#f0d27f,#c9a227);color:#14261a;font:700 13px var(--sans);cursor:pointer}.pwa-install-actions button:last-child{border:0;background:transparent;color:#f1e7cf;font-size:24px;cursor:pointer}@media(max-width:600px){.pwa-install-banner{left:8px;right:8px;bottom:8px;align-items:flex-start}.pwa-install-banner p{max-width:230px}}
+
+/* Aviso de instalación destacado en la parte superior */
+.pwa-install-banner{position:sticky;top:62px;z-index:60;max-width:1080px;margin:10px auto 0;padding:13px 18px;border:1px solid rgba(101,112,65,.45);border-radius:16px;background:linear-gradient(110deg,#f7f0dc,#fffaf0);color:#414a2c;box-shadow:0 8px 24px rgba(34,45,23,.14);display:flex;align-items:center;justify-content:space-between;gap:14px;animation:pwaBannerIn .55s ease-out both}
+.pwa-install-banner[hidden]{display:none}
+.pwa-install-copy b{display:block;font-family:var(--serif);font-size:18px;color:#4c5632}
+.pwa-install-banner p{margin:3px 0 0;font-size:13px;line-height:1.35;color:#62694a}
+.pwa-install-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.pwa-install-actions button:first-child{border:0;border-radius:999px;padding:11px 19px;background:#737c4d;color:#fff9e9;font:700 13px var(--sans);cursor:pointer;box-shadow:0 0 0 0 rgba(115,124,77,.48);animation:pwaPulse 1.9s ease-out infinite}
+.pwa-install-actions button:last-child{border:0;background:transparent;color:#62694a;font-size:24px;line-height:1;cursor:pointer;padding:2px 5px}
+@keyframes pwaPulse{0%{box-shadow:0 0 0 0 rgba(115,124,77,.42)}70%{box-shadow:0 0 0 10px rgba(115,124,77,0)}100%{box-shadow:0 0 0 0 rgba(115,124,77,0)}}
+@keyframes pwaBannerIn{from{opacity:0;transform:translateY(-9px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){.pwa-install-banner{margin:8px 10px 0;padding:12px 12px;align-items:center;gap:8px}.pwa-install-copy b{font-size:15px}.pwa-install-banner p{font-size:11px;max-width:225px}.pwa-install-actions{gap:4px}.pwa-install-actions button:first-child{padding:10px 13px;font-size:12px}}
+@media(prefers-reduced-motion:reduce){.pwa-install-banner,.pwa-install-actions button:first-child{animation:none}}
