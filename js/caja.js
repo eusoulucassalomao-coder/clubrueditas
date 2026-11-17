@@ -68,6 +68,9 @@
       const r = await run(() => F.visit(tok, sel.id, n));
       let t = `✓ ${r.customer.name} suma ${fmt(r.pts)} puntos. Total: ${fmt(r.customer.points)}.`;
       if(r.bonuses.length) t += ` Bono de invitación: +${fmt(r.bonuses[0].pts)} para cada uno.`;
+      if(r.campaignEvent === "sent") t += " Aviso enviado al sistema de WhatsApp.";
+      else if(r.campaignEvent === "not_configured") t += " Aviso: falta configurar la conexión con n8n.";
+      else if(r.campaignEvent === "failed") t += " La visita quedó registrada, pero n8n no respondió.";
       showCust(r.customer); m.textContent = t; m.className = "msg ok"; recent();
     }catch(e){ m.textContent = e.message; m.className = "msg err"; }
     btn.disabled = false;
@@ -102,7 +105,7 @@
   $("newForm").addEventListener("submit", async e => {
     e.preventDefault(); const f = e.target, m = $("nMsg"); m.className = "msg err"; m.textContent = "";
     try{
-      const r = await run(() => F.newCustomer(tok, { name: f.name.value, phone: f.phone.value, birthday: f.birthday.value, consent: f.consent.checked }));
+      const r = await run(() => F.newCustomer(tok, { name: f.name.value, phone: f.phone.value, birthday: f.birthday.value, consent: true, waConsent: true }));
       f.reset(); m.className = "msg ok"; m.textContent = `✓ ${r.customer.name} ya está en el club (código ${r.customer.code}).`;
     }catch(err){ m.textContent = err.message; }
   });
