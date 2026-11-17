@@ -269,7 +269,8 @@ details p{margin:0 0 16px;font-size:14px;color:var(--muted)}
 @media(prefers-reduced-motion:reduce){.pwa-install-banner,.pwa-install-actions button:first-child{animation:none}}
 
 /* Tela inicial de instalação do Club La Ruedita */
-.app-welcome-overlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:18px;background:radial-gradient(circle at 50% 12%,rgba(84,99,61,.5),rgba(8,17,11,.88) 65%),rgba(8,17,11,.76);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow-y:auto}
+.app-welcome-overlay{position:fixed;inset:0;z-index:10030;display:grid;place-items:center;padding:18px;background:radial-gradient(circle at 50% 12%,rgba(84,99,61,.5),rgba(8,17,11,.88) 65%),rgba(8,17,11,.76);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow-y:auto}
+body.app-welcome-open{overflow:hidden}
 .app-welcome-overlay[hidden],.app-welcome-guide[hidden],.app-welcome-copy-wrap[hidden]{display:none!important}
 .app-welcome-card{width:min(470px,100%);max-height:calc(100dvh - 36px);overflow-y:auto;padding:30px 28px 25px;border:1px solid rgba(116,126,78,.35);border-radius:28px;background:linear-gradient(155deg,#fffdf5 0%,#f5efde 56%,#eee5cd 100%);color:#35402b;text-align:center;box-shadow:0 28px 100px rgba(0,0,0,.46);animation:welcomePop .42s cubic-bezier(.2,.8,.2,1) both}
 .app-welcome-brand{width:86px;height:86px;margin:0 auto 12px;padding:4px;border:1px solid rgba(116,126,78,.2);border-radius:50%;background:rgba(255,255,255,.66);box-shadow:0 8px 24px rgba(62,69,40,.1)}
