@@ -326,7 +326,7 @@
   async function installClubApp(){if(deferredInstallPrompt){deferredInstallPrompt.prompt();const choice=await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;if(choice&&choice.outcome==="accepted"){if(installBanner)installBanner.hidden=true;addMessage("La instalación de la aplicación comenzó.");showMainOptions();return;}}installHelp();}
   window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;if(installBanner&&!isStandalone())installBanner.hidden=false;});
   window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;if(installBanner)installBanner.hidden=true;});
-  if(installBanner){$("pwaInstallBtn").addEventListener("click",installClubApp);$("pwaInstallClose").addEventListener("click",()=>installBanner.hidden=true);if(!isStandalone())setTimeout(()=>{if(!deferredInstallPrompt)installBanner.hidden=false;},2500);}
+  if(installBanner){$("pwaInstallBtn").addEventListener("click",installClubApp);$("pwaInstallClose").addEventListener("click",()=>installBanner.hidden=true);if(!isStandalone())setTimeout(()=>{if(!deferredInstallPrompt)installBanner.hidden=false;},900);}
   if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(err=>console.warn("PWA service worker:",err)));}
   // ---------- sessão já existente ----------
   async function showMine(){
