@@ -15,13 +15,49 @@
 
 <div class="app-welcome-overlay" id="appWelcomeOverlay" role="dialog" aria-modal="true" aria-labelledby="appWelcomeTitle">
   <div class="app-welcome-card">
-    <img src="/assets/club-logo.svg" alt="Club La Ruedita" class="app-welcome-logo">
-    <p class="app-welcome-eyebrow">LA RUEDITA · PARRILLA Y GALETERÍA</p>
-    <h2 id="appWelcomeTitle">¡Bienvenido a Club La Ruedita!</h2>
-    <p class="app-welcome-text">Instalá nuestra app para tener tus puntos, premios y promociones siempre a mano.</p>
-    <button type="button" class="app-welcome-install" id="installNowBtn">Instalar aplicación</button>
-    <button type="button" class="app-welcome-continue" id="continueOnWebBtn">Continuar por el sitio web</button>
-    <p class="app-welcome-note" id="appInstallNote">Es gratis y solo te llevará unos segundos.</p>
+    <div class="app-welcome-brand">
+      <img src="/assets/club-logo.svg" alt="Club La Ruedita" class="app-welcome-logo">
+    </div>
+    <p class="app-welcome-eyebrow">CLUB LA RUEDITA · POSADAS</p>
+
+    <section id="appWelcomeChoice">
+      <h2 id="appWelcomeTitle">Tu club, siempre a mano</h2>
+      <p class="app-welcome-text">Elegí cómo querés ingresar. Podés instalar la aplicación para tener tus puntos y beneficios más cerca, o continuar directamente por el sitio.</p>
+
+      <div class="app-welcome-options">
+        <button type="button" class="app-welcome-option app-welcome-install" id="installNowBtn">
+          <span class="app-welcome-option-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M10 18.2h4M12 6v6m-2.5-2.5L12 12l2.5-2.5"/></svg>
+          </span>
+          <span class="app-welcome-option-copy"><strong>Instalar aplicación</strong><small>Accedé más rápido a tus puntos y premios.</small></span>
+          <span class="app-welcome-option-arrow" aria-hidden="true">›</span>
+        </button>
+
+        <button type="button" class="app-welcome-option app-welcome-continue" id="continueOnWebBtn">
+          <span class="app-welcome-option-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M3 12h17m-6-6 6 6-6 6"/></svg>
+          </span>
+          <span class="app-welcome-option-copy"><strong>Continuar por el sitio</strong><small>Entrá ahora sin instalar nada.</small></span>
+          <span class="app-welcome-option-arrow" aria-hidden="true">›</span>
+        </button>
+      </div>
+      <p class="app-welcome-note">La instalación es gratuita y opcional.</p>
+    </section>
+
+    <section class="app-welcome-guide" id="appWelcomeGuide" hidden>
+      <div class="app-welcome-guide-symbol" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 16V3m-5 5 5-5 5 5M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>
+      </div>
+      <h2 id="appWelcomeGuideTitle">Instalá Club La Ruedita</h2>
+      <p class="app-welcome-text" id="appWelcomeGuideText"></p>
+      <ol class="app-welcome-steps" id="appWelcomeSteps"></ol>
+      <div class="app-welcome-copy-wrap" id="appWelcomeCopyWrap" hidden>
+        <button type="button" class="app-welcome-copy" id="copyInstallLinkBtn">Copiar enlace del Club</button>
+      </div>
+      <button type="button" class="app-welcome-guide-continue" id="appWelcomeGuideContinue">Continuar por el sitio</button>
+      <button type="button" class="app-welcome-back" id="appWelcomeBackBtn">Volver</button>
+      <p class="app-welcome-note" id="appInstallNote">Seguí estos pasos para agregar el Club a tu pantalla de inicio.</p>
+    </section>
   </div>
 </div>
 
