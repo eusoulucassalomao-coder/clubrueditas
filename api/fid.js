@@ -16,7 +16,7 @@ const parseConfig = value => {
 async function rpc(name, args) {
   const { data, error } = await supabase.rpc(name, args);
   if (error) {
-    const match = /^E\\|([^|]+)\\|([\\s\\S]*)$/.exec(error.message || "");
+    const match = /^E\|([^|]+)\|([\s\S]*)$/.exec(error.message || "");
     if (match) throw Object.assign(new Error(match[2]), { code: match[1], status: 400 });
     console.error("Supabase RPC", name, error.message);
     throw Object.assign(new Error("No se pudo completar la operación"), { code: "db", status: 500 });
@@ -78,7 +78,7 @@ async function registerCustomer(r, input) {
   if (phone.length < 8 || phone.length > 15) throw Object.assign(new Error("Revisá tu número de celular con código de área"), { code: "phone" });
   const birthday = String(input.birthday || "").trim();
   const birthdayDate = new Date(birthday + "T00:00:00Z");
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(birthday) || !Number.isFinite(birthdayDate.getTime()) ||
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthday) || !Number.isFinite(birthdayDate.getTime()) ||
       birthdayDate.toISOString().slice(0, 10) !== birthday || birthday > isoNow().slice(0, 10)) {
     throw Object.assign(new Error("Ingresá tu fecha de nacimiento para recibir tu saludo y beneficio de cumpleaños"), { code: "birthday" });
   }
@@ -215,7 +215,7 @@ async function notifyVisitWebhook(r, customer, visitId, surveyToken, visit) {
   if (!url || !apiKey) return { state: "not_configured" };
   if (!surveyToken || !visitId) return { state: "missing_survey" };
 
-  const siteUrl = (r.config?.siteUrl || "https://laruedita-club.vercel.app").replace(/\\/$/, "");
+  const siteUrl = (r.config?.siteUrl || "https://laruedita-club.vercel.app").replace(/\/$/, "");
   const surveyUrl = `${siteUrl}/survey.html?t=${surveyToken}`;
   const payload = {
     event: "visit.registered",
