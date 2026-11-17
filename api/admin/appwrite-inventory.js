@@ -11,8 +11,8 @@ module.exports = async function appwriteInventory(req, res) {
   }
 
   const endpoint = (process.env.APPWRITE_ENDPOINT || "")
-    .replace(/\\/+$/, "")
-    .replace(/\\/v1$/i, "");
+    .replace(/\/+$/, "")
+    .replace(/\/v1$/i, "");
   const project = process.env.APPWRITE_PROJECT_ID || process.env.APPWRITE_PROJECT || "";
   const key = process.env.APPWRITE_API_KEY || "";
   const database = process.env.APPWRITE_DATABASE_ID || "clubrueditas";
