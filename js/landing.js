@@ -29,7 +29,7 @@
     if(cf.hero){ $("heroBg").style.backgroundImage = `url(${cf.hero})`; }
     const r = rulesText(cf);
     $("earnTxt").textContent = r.earn + r.extra;
-    $("faqEarn").textContent = r.earn + r.extra + " También sumás por traer amigos, en tu cumpleaños y por dejar tu reseña.";
+    $("faqEarn").textContent = r.earn + r.extra + " También sumás por traer amigos y en tu cumpleaños.";
     document.querySelectorAll(".rp").forEach(e => e.textContent = fmt(cf.bonus.referral));
     $("refPts").textContent = fmt(cf.bonus.referral);
 
@@ -38,7 +38,7 @@
       <div class="rw-body"><h3>${esc(w.name)}</h3><p>${esc(w.note || "")}</p><button class="btn btn-ghost" type="button" data-open-redeem>Canjear</button></div></article>`).join("");
     $("rewards").querySelectorAll("[data-open-redeem]").forEach(b => b.onclick = () => { setChat(true); startLookup(); });
 
-    const ex = [[`+${fmt(cf.bonus.welcome)}`, "al registrarte"], [`+${fmt(cf.bonus.birthday)}`, "en tu cumpleaños"], [`+${fmt(cf.bonus.review)}`, "por tu reseña en Google"]];
+    const ex = [[`+${fmt(cf.bonus.welcome)}`, "al registrarte"], [`+${fmt(cf.bonus.birthday)}`, "en tu cumpleaños"]];
     r.groups.forEach(g => ex.push([`x${g.v}`, `puntos los ${g.names}`]));
     $("extras").innerHTML = ex.map(([b, t]) => `<div class="ex"><b>${esc(b)}</b><span>${esc(t)}</span></div>`).join("");
     observe();
@@ -99,7 +99,18 @@
 
   // ---------- asistente guiado, sin IA/API ----------
   const chat = $("clubChat"), messages = $("chatMessages"), options = $("chatOptions"), chatForm = $("chatForm"), chatInput = $("chatInput");
-  let flow = null, greeted = false;
+  let flow = null, greeted = false, chatPhoneIti = null;
+  function setupChatPhone(){
+    if(chatPhoneIti || !window.intlTelInput) return;
+    chatPhoneIti = window.intlTelInput(chatInput, {
+      initialCountry: "ar",
+      preferredCountries: ["ar", "br", "us", "gb", "es"],
+      separateDialCode: true,
+      nationalMode: true,
+      autoPlaceholder: "polite",
+      loadUtils: () => import("https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js")
+    });
+  }
   let LANG = (() => { try { return localStorage.getItem("clubruedita_lang") === "en" ? "en" : "es"; } catch (_) { return "es"; } })();
   const TXT = {
     es: {
@@ -107,7 +118,7 @@
       points:"Consultar mis puntos", join:"Inscribirme en el Club", questions:"Tengo otras dudas", faq:"Preguntas frecuentes",
       code:"Escribí tu código del Club Ruedita y busco tus puntos.", codePlaceholder:"Ej.: ANA123",
       name:"¡Qué bueno que quieras sumarte! ¿Cuál es tu nombre?", namePlaceholder:"Tu nombre",
-      phone:n=>`Gracias, ${n}. ¿Cuál es tu número de celular?`, phonePlaceholder:"Ej.: 376 4123456",
+      phone:n=>`Gracias, ${n}. Elegí tu país en la bandera y escribí tu número sin el prefijo internacional. Para Brasil, por ejemplo, ingresá el DDD y el número.`, phonePlaceholder:"Número sin código de país", invalidPhone:"Revisá el país y el número de celular e intentá nuevamente.", phoneError:"No se pudo cargar el selector de país. Actualizá la página e intentá nuevamente.",
       birthday:"¿Cuál es tu fecha de nacimiento? La usamos para saludarte en tu día y acreditar tu beneficio de cumpleaños.", skipBirthday:"",
       ref:"¿Tenés el código de un amigo que te invitó? También es opcional.", refPlaceholder:"Código de invitación", noRef:"No tengo código",
       consent:"Al unirte al Club Ruedita, aceptás recibir por WhatsApp comunicaciones sobre tu membresía, puntos, beneficios, cumpleaños y encuestas después de tus visitas. También usaremos tu nombre, celular y fecha de nacimiento para administrar tu cuenta y acreditar tu beneficio de cumpleaños. Si no estás de acuerdo, no completes la inscripción. Podés darte de baja respondiendo BAJA.",
@@ -127,7 +138,7 @@
       retry:"Intentar nuevamente", otherCode:"Consultar otro código", home:"Volver al inicio", anotherQuestion:"Otras dudas",
       priceQ:"¿Cuánto cuesta?", earnQ:"¿Cómo sumo puntos?", redeemQ:"¿Cómo canjeo premios?", expiryQ:"¿Los puntos vencen?",
       privacyQ:"¿Qué hacen con mis datos?", priceA:"El Club Ruedita es gratuito. No hay costo de inscripción.",
-      earnA:()=>rulesText(CF).earn+rulesText(CF).extra+" También sumás por traer amigos, en tu cumpleaños y por dejar tu reseña.",
+      earnA:()=>rulesText(CF).earn+rulesText(CF).extra+" También sumás por traer amigos y en tu cumpleaños.",
       redeemA:"Entrá a “Mis puntos”, elegí el premio que quieras canjear y mostrá el código en caja para retirarlo.",
       expiryA:()=>`Tus puntos vencen después de ${Number(CF.expireMonths || 12)} meses, según las reglas actuales del Club.`,
       privacyA:"Usamos tu nombre, celular y fecha de nacimiento para administrar tu membresía, tus puntos y tu beneficio de cumpleaños. Al unirte, aceptás recibir comunicaciones del club por WhatsApp. Podés darte de baja respondiendo BAJA.",
@@ -139,7 +150,7 @@
       points:"Check my points", join:"Join the Club", questions:"I have other questions", faq:"Frequently asked questions",
       code:"Enter your La Ruedita Club code and I'll look up your points.", codePlaceholder:"e.g. ANA123",
       name:"Great that you want to join! What's your name?", namePlaceholder:"Your name",
-      phone:n=>`Thanks, ${n}. What's your mobile number?`, phonePlaceholder:"e.g. +54 9 376 1234567",
+      phone:n=>`Thanks, ${n}. Choose your country using the flag, then enter your number without the international prefix.`, phonePlaceholder:"Number without country code", invalidPhone:"Check the selected country and mobile number, then try again.", phoneError:"The country selector could not load. Refresh the page and try again.",
       birthday:"What's your date of birth? We use it to greet you and provide your birthday benefit.", skipBirthday:"",
       ref:"Do you have the code of the friend who invited you? This is optional.", refPlaceholder:"Invitation code", noRef:"I don't have a code",
       consent:"By joining La Ruedita Club, you agree to receive WhatsApp messages about your membership, points, benefits, birthday and post-visit surveys. We also use your name, phone number and date of birth to manage your account and birthday benefit. If you do not agree, do not complete registration. Reply BAJA to unsubscribe.",
@@ -159,7 +170,7 @@
       retry:"Try again", otherCode:"Check another code", home:"Back to the beginning", anotherQuestion:"Other questions",
       priceQ:"Is it free?", earnQ:"How do I earn points?", redeemQ:"How do I redeem rewards?", expiryQ:"Do points expire?",
       privacyQ:"How is my data used?", priceA:"Joining the La Ruedita Club is free. There is no registration fee.",
-      earnA:()=>{const r=CF.earn;let x=`You earn ${r.points} point(s) for every $${fmt(r.perAmount)} spent.`;Object.entries(CF.multipliers||{}).forEach(([d,v])=>{if(v>1)x+=` The points multiplier is x${v} on ${["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d]}.`;});return x+" Bonus points may also be available for referrals, birthdays and reviews.";},
+      earnA:()=>{const r=CF.earn;let x=`You earn ${r.points} point(s) for every $${fmt(r.perAmount)} spent.`;Object.entries(CF.multipliers||{}).forEach(([d,v])=>{if(v>1)x+=` The points multiplier is x${v} on ${["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d]}.`;});return x+" Bonus points may also be available for referrals and birthdays.";},
       redeemA:"Open “My points”, choose the reward you want and show the redemption code at the register.",
       expiryA:()=>`Points expire after ${Number(CF.expireMonths || 12)} months, according to the Club's current rules.`,
       privacyA:"We use your name, phone number and date of birth to manage your membership, points and birthday benefit. By joining, you agree to receive Club messages on WhatsApp. Reply BAJA to unsubscribe.",
@@ -176,8 +187,8 @@
   function showOptions(items){
     options.replaceChildren();items.forEach(([label,fn])=>{const b=document.createElement("button");b.type="button";b.className="chat-choice";b.textContent=label;b.onclick=fn;options.append(b);});options.hidden=!items.length;
   }
-  function ask(text,placeholder,extra=[]){
-    addMessage(text);chatForm.hidden=false;chatInput.placeholder=placeholder;chatInput.value="";chatInput.type="text";chatInput.autocomplete="off";chatInput.focus();showOptions(extra);
+  function ask(text,placeholder,extra=[],inputType="text"){
+    addMessage(text);chatForm.hidden=false;chatInput.placeholder=placeholder;chatInput.value="";chatInput.type=inputType;chatInput.autocomplete="off";chatInput.focus();showOptions(extra);
   }
   function welcome(){
     flow=null;messages.replaceChildren();greeted=true;addMessage(T("hello"));
@@ -208,10 +219,17 @@
     ask(inviteCode?(LANG==="en"?"Hello! A friend invited you to join La Ruedita Club. What's your name?":"¡Hola! Llegaste por la invitación de un amigo para sumarte al Club Ruedita. ¿Cuál es tu nombre?"):T("name"),T("namePlaceholder"));
   }
   function startLookup(){flow={type:"lookup",step:"code"};ask(T("code"),T("codePlaceholder"));}
-  function nextJoin(){
+  async function nextJoin(){
     const d=flow.data;
-    if(flow.step==="name"){d.name=flow.value;flow.step="phone";ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"));}
-    else if(flow.step==="phone"){d.phone=flow.value;flow.step="birthday";ask(T("birthday"),"YYYY-MM-DD");chatInput.type="date";}
+    if(flow.step==="name"){d.name=flow.value;flow.step="phone";ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"),[],"tel");setupChatPhone();}
+    else if(flow.step==="phone"){
+      if(!chatPhoneIti){addMessage(T("phoneError"));ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"),[],"tel");setupChatPhone();return;}
+      if(chatPhoneIti.promise) await chatPhoneIti.promise;
+      if(!chatPhoneIti.isValidNumber()){addMessage(T("invalidPhone"));ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"),[],"tel");return;}
+      d.phone=chatPhoneIti.getNumber();
+      chatPhoneIti.destroy();chatPhoneIti=null;
+      flow.step="birthday";ask(T("birthday"),"YYYY-MM-DD");chatInput.type="date";
+    }
     else if(flow.step==="birthday"){afterBirthday(flow.value);}
     else if(flow.step==="ref"){d.ref=flow.value.toUpperCase();askConsent();}
   }
