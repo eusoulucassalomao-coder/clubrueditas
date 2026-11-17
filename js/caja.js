@@ -24,7 +24,7 @@
     CF = await F.init();
     $("gate").hidden = true; $("app").hidden = false;
     $("logo").src = CF.logo; $("club").textContent = CF.name;
-    $("bBirth").textContent = `Cumpleaños +${fmt(CF.bonus.birthday)}`; $("bReview").textContent = `Reseña +${fmt(CF.bonus.review)}`;
+    $("bBirth").textContent = `Cumpleaños +${fmt(CF.bonus.birthday)}`;
     recent();
   }
   $("loginForm").addEventListener("submit", async e => {
@@ -81,16 +81,12 @@
       else if(r.campaignEvent === "not_configured") t += " Aviso: falta configurar la conexión con n8n.";
       else if(r.campaignEvent === "failed") t += " La visita quedó registrada, pero n8n no respondió.";
       showCust(r.customer);
-      if(r.surveyUrl){
-        m.innerHTML = `${esc(t)} <a href="${esc(r.surveyUrl)}" target="_blank" rel="noopener">Abrir encuesta</a>`;
-      }else{
-        m.textContent = t;
-      }
+      m.textContent = t;
       m.className = "msg ok"; recent();
     }catch(e){ m.textContent = e.message; m.className = "msg err"; }
     btn.disabled = false;
   };
-  [["bBirth", "birthday"], ["bReview", "review"]].forEach(([id, type]) => $(id).onclick = async () => {
+  [["bBirth", "birthday"]].forEach(([id, type]) => $(id).onclick = async () => {
     try{
       const r = await run(() => F.bonus(tok, sel.id, type));
       showCust(r.customer); $("vMsg").textContent = `✓ +${fmt(r.pts)} puntos para ${r.customer.name}.`; $("vMsg").className = "msg ok"; recent();
