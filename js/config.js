@@ -5,7 +5,7 @@ window.CFG = {
   api: "/api/fid",
   ownerEmail: "laruedita@2027.com",
   name: "La Ruedita",
-  club: "Club Ruedita",
+  club: "Club La Ruedita",
   tagline: "Parrilla · Galetería",
   logo: "assets/logo.webp",
   address: "Alfonso de Arrechea 835, Posadas, Misiones",
