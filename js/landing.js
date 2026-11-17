@@ -108,9 +108,9 @@
       code:"Escribí tu código del Club Ruedita y busco tus puntos.", codePlaceholder:"Ej.: ANA123",
       name:"¡Qué bueno que quieras sumarte! ¿Cuál es tu nombre?", namePlaceholder:"Tu nombre",
       phone:n=>`Gracias, ${n}. ¿Cuál es tu número de celular?`, phonePlaceholder:"Ej.: 376 4123456",
-      birthday:"¿Cuál es tu fecha de cumpleaños? Es opcional.", skipBirthday:"Prefiero no decir",
+      birthday:"¿Cuál es tu fecha de nacimiento? La usamos para saludarte en tu día y acreditar tu beneficio de cumpleaños.", skipBirthday:"",
       ref:"¿Tenés el código de un amigo que te invitó? También es opcional.", refPlaceholder:"Código de invitación", noRef:"No tengo código",
-      consent:"Antes de terminar, necesitamos tu autorización para administrar tu membresía. Usaremos tu nombre, celular y, si lo compartiste, tu cumpleaños para identificarte, guardar tus puntos y gestionar tus beneficios.",
+      consent:"Al unirte al Club Ruedita, aceptás recibir por WhatsApp comunicaciones sobre tu membresía, puntos, beneficios, cumpleaños y encuestas después de tus visitas. También usaremos tu nombre, celular y fecha de nacimiento para administrar tu cuenta y acreditar tu beneficio de cumpleaños. Si no estás de acuerdo, no completes la inscripción. Podés darte de baja respondiendo BAJA.",
       accept:"Acepto y quiero crear mi cuenta", deny:"No autorizo",
       denied:"Entendido. Sin esta autorización no podemos crear ni administrar tu membresía. No se guardó ningún registro.",
       waConsent:"¿Querés recibir por WhatsApp novedades, promociones y beneficios de La Ruedita? Es opcional y no cambia tu membresía. Podés darte de baja cuando quieras.",
@@ -130,7 +130,7 @@
       earnA:()=>rulesText(CF).earn+rulesText(CF).extra+" También sumás por traer amigos, en tu cumpleaños y por dejar tu reseña.",
       redeemA:"Entrá a “Mis puntos”, elegí el premio que quieras canjear y mostrá el código en caja para retirarlo.",
       expiryA:()=>`Tus puntos vencen después de ${Number(CF.expireMonths || 12)} meses, según las reglas actuales del Club.`,
-      privacyA:"Usamos tus datos para administrar tu membresía y tus puntos. Los mensajes promocionales por WhatsApp son opcionales y requieren tu autorización.",
+      privacyA:"Usamos tu nombre, celular y fecha de nacimiento para administrar tu membresía, tus puntos y tu beneficio de cumpleaños. Al unirte, aceptás recibir comunicaciones del club por WhatsApp. Podés darte de baja respondiendo BAJA.",
       send:"Enviar", input:"Escribí tu respuesta", faqIntro:"Elegí una pregunta frecuente o seleccioná “Otras dudas” para comunicarte con nuestro equipo.",
       retryCode:"Probar otro código", notSaved:"Tus datos no se guardaron. Intentá de nuevo."
     },
@@ -140,9 +140,9 @@
       code:"Enter your La Ruedita Club code and I'll look up your points.", codePlaceholder:"e.g. ANA123",
       name:"Great that you want to join! What's your name?", namePlaceholder:"Your name",
       phone:n=>`Thanks, ${n}. What's your mobile number?`, phonePlaceholder:"e.g. +54 9 376 1234567",
-      birthday:"What's your date of birth? This is optional.", skipBirthday:"I'd rather not say",
+      birthday:"What's your date of birth? We use it to greet you and provide your birthday benefit.", skipBirthday:"",
       ref:"Do you have the code of the friend who invited you? This is optional.", refPlaceholder:"Invitation code", noRef:"I don't have a code",
-      consent:"Before finishing, we need your permission to manage your membership. We'll use your name, phone number and, if provided, your birthday to identify your account, record your points and manage your benefits.",
+      consent:"By joining La Ruedita Club, you agree to receive WhatsApp messages about your membership, points, benefits, birthday and post-visit surveys. We also use your name, phone number and date of birth to manage your account and birthday benefit. If you do not agree, do not complete registration. Reply BAJA to unsubscribe.",
       accept:"I agree and want to create my account", deny:"I do not agree",
       denied:"Understood. Without this permission, we can't create or manage your membership. No registration was saved.",
       waConsent:"Would you like to receive La Ruedita news, promotions and benefits on WhatsApp? This is optional and does not affect your membership. You can unsubscribe at any time.",
@@ -162,7 +162,7 @@
       earnA:()=>{const r=CF.earn;let x=`You earn ${r.points} point(s) for every $${fmt(r.perAmount)} spent.`;Object.entries(CF.multipliers||{}).forEach(([d,v])=>{if(v>1)x+=` The points multiplier is x${v} on ${["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d]}.`;});return x+" Bonus points may also be available for referrals, birthdays and reviews.";},
       redeemA:"Open “My points”, choose the reward you want and show the redemption code at the register.",
       expiryA:()=>`Points expire after ${Number(CF.expireMonths || 12)} months, according to the Club's current rules.`,
-      privacyA:"Your data is used to manage your membership and points. Promotional WhatsApp messages are optional and require your consent.",
+      privacyA:"We use your name, phone number and date of birth to manage your membership, points and birthday benefit. By joining, you agree to receive Club messages on WhatsApp. Reply BAJA to unsubscribe.",
       send:"Send", input:"Type your answer", faqIntro:"Choose a frequently asked question or select “Other questions” to contact our team.",
       retryCode:"Try another code", notSaved:"Your information was not saved. Please try again."
     }
@@ -211,21 +211,21 @@
   function nextJoin(){
     const d=flow.data;
     if(flow.step==="name"){d.name=flow.value;flow.step="phone";ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"));}
-    else if(flow.step==="phone"){d.phone=flow.value;flow.step="birthday";ask(T("birthday"),"YYYY-MM-DD",[[T("skipBirthday"),()=>afterBirthday("")]]);chatInput.type="date";}
+    else if(flow.step==="phone"){d.phone=flow.value;flow.step="birthday";ask(T("birthday"),"YYYY-MM-DD");chatInput.type="date";}
     else if(flow.step==="birthday"){afterBirthday(flow.value);}
     else if(flow.step==="ref"){d.ref=flow.value.toUpperCase();askConsent();}
   }
   function afterBirthday(value){flow.data.birthday=value;if(flow.data.ref)askConsent();else{flow.step="ref";ask(T("ref"),T("refPlaceholder"),[[T("noRef"),()=>{flow.data.ref="";askConsent();}]]);}}
   function askConsent(){
     flow.step="consent";chatForm.hidden=true;addMessage(T("consent"));
-    showOptions([[T("accept"),askWhatsAppConsent],[T("deny"),()=>{flow=null;addMessage(T("denied"));showOptions([[T("home"),welcome],[T("join"),startJoin]]);} ]]);
+    showOptions([[T("accept"),()=>submitJoin(true)],[T("deny"),()=>{flow=null;addMessage(T("denied"));showOptions([[T("home"),welcome],[T("join"),startJoin]]);} ]]);
   }
   function askWhatsAppConsent(){
     flow.step="whatsapp";chatForm.hidden=true;addMessage(T("waConsent"));
     showOptions([[T("waYes"),()=>submitJoin(true)],[T("waNo"),()=>submitJoin(false)]]);
   }
   async function submitJoin(waConsent){
-    if(!flow||flow.step!=="whatsapp"||typeof waConsent!=="boolean")return;
+    if(!flow||flow.step!=="consent"||waConsent!==true)return;
     flow.data.consent=true;flow.data.waConsent=waConsent;showOptions([]);addMessage(T("saving"));
     try{
       const r=await F.register(flow.data);setToken(r.token);let d;
