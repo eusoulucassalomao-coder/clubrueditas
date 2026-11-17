@@ -5,6 +5,15 @@
   const ago = ts => { if(!ts) return "nunca"; const d = Math.floor((Date.now() - new Date(ts).getTime()) / 86400000); return d <= 0 ? "hoy" : d === 1 ? "ayer" : `hace ${d} días`; };
   const TK = "mkf_caja_" + F.slug;
   let tok = "", sel = null, CF = F.conf(), timer = 0;
+  const phoneInput = $("phoneInput");
+  const phoneIti = window.intlTelInput && phoneInput ? window.intlTelInput(phoneInput, {
+    initialCountry: "ar",
+    preferredCountries: ["ar", "br", "us", "gb", "es"],
+    separateDialCode: true,
+    nationalMode: true,
+    autoPlaceholder: "polite",
+    loadUtils: () => import("https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js")
+  }) : null;
   try{ tok = sessionStorage.getItem(TK) || ""; }catch(e){}
 
   function logout(msg){ try{ sessionStorage.removeItem(TK); }catch(e){} tok = ""; $("app").hidden = true; $("gate").hidden = false; $("loginMsg").textContent = msg || ""; }
@@ -111,7 +120,10 @@
   $("newForm").addEventListener("submit", async e => {
     e.preventDefault(); const f = e.target, m = $("nMsg"); m.className = "msg err"; m.textContent = "";
     try{
-      const r = await run(() => F.newCustomer(tok, { name: f.name.value, phone: f.phone.value, birthday: f.birthday.value, consent: true, waConsent: true }));
+      if(!phoneIti){ throw new Error("No se pudo cargar el selector de país. Actualizá la página e intentá nuevamente."); }
+      if(!phoneIti.isValidNumber()){ phoneInput.focus(); throw new Error("Revisá el número de WhatsApp y el país seleccionado."); }
+      const internationalPhone = phoneIti.getNumber();
+      const r = await run(() => F.newCustomer(tok, { name: f.name.value, phone: internationalPhone, birthday: f.birthday.value, consent: true, waConsent: true }));
       f.reset(); m.className = "msg ok"; m.textContent = `✓ ${r.customer.name} ya está en el club (código ${r.customer.code}).`;
     }catch(err){ m.textContent = err.message; }
   });
