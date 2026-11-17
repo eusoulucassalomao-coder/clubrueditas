@@ -1,4 +1,4 @@
-const CACHE_NAME = "club-ruedita-v3";
+const CACHE_NAME = "club-ruedita-v4";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -8,6 +8,7 @@ const APP_SHELL = [
   "/js/api.js",
   "/js/landing.js",
   "/assets/logo.webp",
+  "/assets/club-logo.svg",
   "/assets/icon.svg",
   "/assets/logo.webp"
 ];
