@@ -13,7 +13,7 @@
     catch(e){ throw Object.assign(new Error("Sin conexión. Probá de nuevo."), { code: "network" }); }
     let j = {}; try{ j = await r.json(); }catch(e){}
     if(!r.ok){
-      const msg = j.message || ({ "bad-secret": "Incorrecto", unauthorized: "La sesión venció. Entrá de nuevo.", forbidden: "No tenés permiso.", role_not_authorized: "Este usuario no está autorizado." })[j.error] || "No se pudo completar. Probá de nuevo.";
+      const msg = j.message || ({ "bad-secret": "Incorrecto", unauthorized: "La sesión venció. Entrá de nuevo.", forbidden: "No tenés permiso.", role_not_authorized: "Esta cuenta no tiene permiso para este panel.", invalid_credentials: "Correo o contraseña incorrectos." })[j.error] || "No se pudo completar. Probá de nuevo.";
       throw Object.assign(new Error(msg), { code: j.error || "server", status: r.status });
     }
     return j;
@@ -43,7 +43,7 @@
         action: "auth",
         role,
         email: String(email || "").trim().toLowerCase(),
-        secret: password
+        password
       });
       return data.token;
     },
