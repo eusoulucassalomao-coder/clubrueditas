@@ -206,6 +206,9 @@ async function notifyVisitWebhook(r, customer, visitId, visit) {
   const url = process.env.N8N_VISIT_WEBHOOK_URL || "";
   const apiKey = process.env.N8N_VISIT_WEBHOOK_API_KEY || "";
   if (!url || !apiKey) return { state: "not_configured" };
+  const surveyToken = crypto.randomBytes(16).toString("hex");
+  const siteUrl = (r.config?.siteUrl||r.slug+".vercel.app").replace(/\/$/,"");
+  const surveyUrl = `${siteUrl}/survey.html?t=${surveyToken}`;
   const payload = {
     event: "visit.registered",
     visitId,
@@ -214,7 +217,7 @@ async function notifyVisitWebhook(r, customer, visitId, visit) {
     customerName: customer.name,
     phone: customer.phone,
     consentWhatsApp: Boolean(customer.wa_confirmed_at && !customer.opted_out),
-    surveyUrl: String(r.config?.surveyUrl || process.env.CLUB_SURVEY_URL || ""),
+    surveyUrl,
     visitAt: visit.created_at,
     amount: visit.amount,
     points: visit.points,
@@ -226,6 +229,12 @@ async function notifyVisitWebhook(r, customer, visitId, visit) {
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(5000),
     });
+    if(response.ok){
+      await commitOperations([transactionCreate("surveys",crypto.randomUUID(),{
+        restaurant_id:r.$id,customer_id:customer.$id,visit_id:visitId,
+        token:surveyToken,created_at:new Date().toISOString()
+      })]);
+    }
     return { state: response.ok ? "sent" : "failed", status: response.status };
   } catch (error) {
     console.error("visit-webhook", error);
@@ -469,6 +478,35 @@ module.exports = async function handler(req,res) {
       const state=await waCall(r,action.slice(3));
       return res.status(200).json(state);
     }
+
+    if(action==="submit_survey"){
+      const token=String(body.token||"");
+      if(!token) throw Object.assign(new Error("Token de encuesta requerido"),{code:"survey"});
+      const survey=await one("surveys",[queryEqual("restaurant_id",r.$id),queryEqual("token",token)]);
+      if(!survey) throw Object.assign(new Error("Encuesta no válida o expirada"),{code:"survey"});
+      if(survey.response) throw Object.assign(new Error("Encuesta ya respondida"),{code:"survey"});
+      const rating=Number(body.rating||0);
+      if(rating<1||rating>5) throw Object.assign(new Error("Calificación inválida"),{code:"survey"});
+      const comment=String(body.comment||"").trim().slice(0,500);
+      const now=isoNow();
+      const customer=await getDocument("customers",survey.customer_id);
+      await commitOperations([
+        transactionUpdate("surveys",survey.$id,{response:comment||null,rating,reviewed_at:now}),
+        transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.$id,customer_id:customer.$id,points:0,type:"reseña",note:`Evaluación ${rating}/5${comment?" — "+comment.substring(0,50):""}`,created_at:now}),
+        transactionCreate("message_log",crypto.randomUUID(),{restaurant_id:r.$id,customer_id:customer.$id,kind:"survey_submitted",meta:JSON.stringify({rating,comment}),created_at:now}),
+      ]);
+      if(rating>=4){
+        const googleMsg=`¡Gracias por tu calificación ${rating}/5! Te invitamos a dejar una reseña en Google: ${r.config?.reviewUrl||""}`;
+        await waCall(r,`encuesta_${rating}`,{customer:customer,$id:customer.$id,message:googleMsg});
+        return res.status(200).json({message:"¡Gracias por tu opinión!", rating, reviewUrl:r.config?.reviewUrl});
+      }
+      if(rating>=1&&rating<=3){
+        await waCall(r,`encuesta_reclamacion`,{customer:customer,$id:customer.$id,message:`Lamentamos que tu experiencia fue de ${rating}/5. Encontrás un 10% de descuento en tu próxima cuenta: DESCUENTO10`});
+        return res.status(200).json({message:"Gracias por tu feedback. Te ha enviado un beneficio.", rating});
+      }
+      return res.status(200).json({message:"¡Gracias por tu opinión!", rating});
+    }
+
     return res.status(400).json({error:"bad-action"});
   } catch(error) {
     const status=error.status||(error.code==="APPWRITE_NOT_CONFIGURED"||error.code==="APPWRITE_DATABASE_NOT_CONFIGURED"?503:500);
