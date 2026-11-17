@@ -7,7 +7,7 @@ window.CFG = {
   name: "La Ruedita",
   club: "Club La Ruedita",
   tagline: "Parrilla · Galetería",
-  logo: "assets/logo.webp",
+  logo: "assets/club-logo.svg",
   address: "Alfonso de Arrechea 835, Posadas, Misiones",
   whatsapp: "5493764236680",
   menuUrl: "https://laruedita-carta.vercel.app",
