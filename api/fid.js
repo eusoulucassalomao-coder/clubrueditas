@@ -30,7 +30,7 @@ const publicCustomer = c => ({
   optedOut: !!c.opted_out, confirmed: !!c.wa_confirmed_at, marketingConsent: !!c.wa_confirmed_at && !c.opted_out,
 });
 async function many(collection, queries = [], limit = 100) {
-  const result = await listDocuments(collection, [...queries, ...queryLimit(limit)]);
+  const result = await listDocuments(collection, [...queries, queryLimit(limit)]);
   return result.documents || [];
 }
 async function one(collection, queries) {
