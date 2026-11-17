@@ -3,131 +3,76 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Encuesta La Ruedita Club</title>
+  <title>Encuesta</title>
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:Arial,sans-serif;background:#f5f5f5}
-    .container{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.1)}
-    h2{text-align:center;margin-bottom:8px;color:#333}
-    p{text-align:center;color:#666;margin-bottom:24px;font-size:14px}
-    .rating-digits{display:flex;justify-content:center;gap:12px;margin-bottom:24px}
-    .digit-label{
-      position:relative;
-      cursor:pointer;
-      width:50px;height:50px;
-      border:2px solid #ccc;
-      border-radius:50%;
-      display:flex;align-items:center;justify-content:center;
-      font-size:20px;font-weight:bold;color:#333;
-      transition:all .2s
-    }
-    .digit-label.checked{
-      background:#ffc107;
-      border-color:#ffc107;
-      color:#333;
-    }
-    .digit-label:hover{
-      background:#ffeaa7;
-      border-color:#f0b819;
-    }
-    input[type=radio]{display:none}
-    textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;resize:vertical;font-family:inherit;font-size:14px;margin-bottom:16px}
-    textarea:focus{outline:none;border-color:#007bff;box-shadow:0 0 0 2px rgba(0,123,255,.25)}
-    label{display:block;margin-bottom:8px;color:#555;font-size:14px}
-    button{
-      width:100%;padding:12px;background:#007bff;color:#fff;border:none;border-radius:6px;
-      font-size:16px;cursor:pointer;transition:background .2s
-    }
-    button:hover:not(:disabled){background:#0056b3}
-    button:disabled{background:#6c757d;cursor:not-allowed}
-    .msg{padding:12px 16px;border-radius:6px;margin-top:16px;font-size:14px}
-    .msg.success{background:#d1e7dd;color:#0f5132}
-    .msg.error{background:#f8d7da;color:#842029}
-    .hidden{display:none}
+    body{font-family:sans-serif;background:#f5f5f5;margin:0;padding:20px}
+    .card{background:#fff;max-width:400px;margin:40px auto;padding:24px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+    h2{margin-bottom:20px;text-align:center}
+    .choices{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
+    .choice{background:#eee;border:1px solid #ccc;border-radius:50%;width:50px;height:50px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold}
+    .choice.selected{background:#007bff;color:#fff;border-color:#007bff}.choice:hover{background:#ddd}
+    textarea{width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;height:70px;margin-bottom:16px}
+    button{width:100%;padding:10px;background:#007bff;color:#fff;border:none;border-radius:4px;cursor:pointer}
+    button:disabled{background:#999;cursor:not-allowed}
+    .msg{padding:10px;margin-top:10px;border-radius:4px}.msg.s{background:#d4edda;color:#155724}.msg.e{background:#f8d7da;color:#721c24}.hidden{display:none}
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="card">
     <h2>¿Cómo fue tu experiencia?</h2>
-    <p>La Ruedita Club agradece tu opinión</p>
-    <form id="form">
-      <input type="hidden" id="token" name="token">
-      <div class="rating-digits">
-        <label class="digit-label" for="r1"><input type="radio" name="rating" value="1" id="r1">1</label>
-        <label class="digit-label" for="r2"><input type="radio" name="rating" id="r2">2</label>
-        <label class="digit-label" for="r3"><input type="radio" name="rating" id="r3">3</label>
-        <label class="digit-label" for="r4"><input type="radio" name="rating" id="r4">4</label>
-        <label class="digit-label" for="r5"><input type="radio" name="rating" id="r5">5</label>
+    <form id="f">
+      <input type="hidden" id="token">
+      <input type="hidden" id="rating">
+      <div class="choices" id="choices">
+        <div class="choice" data-val="1">1</div>
+        <div class="choice" data-val="2">2</div>
+        <div class="choice" data-val="3">3</div>
+        <div class="choice" data-val="4">4</div>
+        <div class="choice" data-val="5">5</div>
       </div>
-      <label for="comment">Comentario (opcional):</label>
-      <textarea id="comment" name="comment" placeholder="Cuéntanos qué mejorarías..."></textarea>
-      <button type="submit" id="submitBtn" disabled>Enviar encuesta</button>
-      <div id="successMsg" class="msg success hidden"></div>
-      <div id="errorMsg" class="msg error hidden"></div>
+      <textarea id="c" placeholder="Comentario..."></textarea>
+      <button id="b" disabled>Enviar</button>
+      <div id="s" class="msg s hidden"></div>
+      <div id="e" class="msg e hidden"></div>
     </form>
   </div>
   <script>
-    var urlParams=new URLSearchParams(window.location.search);
-    if(urlParams.has('t'))document.getElementById('token').value=urlParams.get('t');
+    var p=new URLSearchParams(location.search);
+    if(p.has('t'))document.getElementById('token').value=p.get('t');
+    var choices=document.getElementById('choices').children;
+    var rating=document.getElementById('rating');
+    var btn=document.getElementById('b');
+    var success=document.getElementById('s');
+    var error=document.getElementById('e');
+    var form=document.getElementById('f');
 
-    var form=document.getElementById('form'),
-        ratingInputs=form.querySelectorAll('input[type=radio]'),
-        submitBtn=document.getElementById('submitBtn'),
-        successMsg=document.getElementById('successMsg'),
-        errorMsg=document.getElementById('errorMsg');
+    for(var i=0;i<choices.length;i++){
+      choices[i].onclick=function(){
+        for(var j=0;j<choices.length;j++)choices[j].classList.remove('selected');
+        this.classList.add('selected');
+        rating.value=this.getAttribute('data-val');
+        btn.disabled=false;
+      };
+    }
 
-    ratingInputs.forEach(function(input){
-      input.addEventListener('change',function(){
-        submitBtn.disabled=false;
-        ratingInputs.forEach(function(i){i.parentNode.classList.remove('checked')});
-        this.parentNode.classList.add('checked');
-      });
-    });
-
-    form.addEventListener('submit',function(e){
+    form.onsubmit=function(e){
       e.preventDefault();
-      var selectedRating=form.querySelector('input[name="rating"]:checked');
-      if(!selectedRating){return;}
-
-      submitBtn.disabled=true;
-      submitBtn.textContent='Enviando...';
-      successMsg.classList.add('hidden');
-      errorMsg.classList.add('hidden');
-
-      var ratingValue=parseInt(selectedRating.value);
-      var commentValue=document.getElementById('comment').value.trim();
-      var tokenValue=document.getElementById('token').value;
-
-      fetch('/api/fid',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          action:'submit_survey',
-          token:tokenValue,
-          rating:ratingValue,
-          comment:commentValue
+      btn.disabled=true;
+      btn.innerHTML='Enviando...';
+      success.classList.add('hidden');
+      error.classList.add('hidden');
+      var t=document.getElementById('token').value;
+      var r=rating.value;
+      var c=document.getElementById('c').value.trim();
+      fetch('/api/fid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'submit_survey',token:t,rating:parseInt(r),comment:c})})
+        .then(function(x){return x.json().then(function(d){return {o:x.ok,d:d})})})
+        .then(function(x){
+          if(x.o){success.classList.remove('hidden');success.innerHTML=x.d.message||'Gracias';form.innerHTML='';}
+          else{error.classList.remove('hidden');error.innerHTML=x.d.message||'Error';}
         })
-      })
-      .then(function(response){return response.json().then(function(data){return {ok:response.ok,data:data});})}
-      .then(function(result){
-        if(result.ok){
-          successMsg.classList.remove('hidden');
-          successMsg.textContent=result.data.message||'¡Gracias por tu opinión!';
-          form.innerHTML='';
-        } else {
-          errorMsg.classList.remove('hidden');
-          errorMsg.textContent=result.data.message||'Error al enviar. Intenta de nuevo.';
-        }
-      })
-      .catch(function(){
-        errorMsg.classList.remove('hidden');
-        errorMsg.textContent='Error de conexión. Intenta de nuevo.';
-      })
-      .finally(function(){
-        submitBtn.disabled=false;
-        submitBtn.textContent='Enviar encuesta';
-      });
-    });
+        .catch(function(){error.classList.remove('hidden');error.innerHTML='Error de conexión';})
+        .finally(function(){btn.disabled=false;btn.innerHTML='Enviar';});
+    };
   </script>
 </body>
 </html>
