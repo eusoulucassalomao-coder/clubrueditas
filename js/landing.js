@@ -318,37 +318,183 @@
     if(skipWelcome)greeted=true;if(open&&!greeted)welcome();if(open)chatInput.focus();
   }
 
-  // ---------- instalação PWA ---------- 
+  // ---------- bienvenida e instalación PWA ----------
   let deferredInstallPrompt=null;
+  const INSTALL_CHOICE_KEY="clubruedita_entry_choice_v1";
   const installOverlay=$("appWelcomeOverlay");
+  const installChoice=$("appWelcomeChoice");
+  const installGuide=$("appWelcomeGuide");
   const installNowBtn=$("installNowBtn");
   const continueOnWebBtn=$("continueOnWebBtn");
+  const guideTitle=$("appWelcomeGuideTitle");
+  const guideText=$("appWelcomeGuideText");
+  const guideSteps=$("appWelcomeSteps");
+  const guideContinueBtn=$("appWelcomeGuideContinue");
+  const guideBackBtn=$("appWelcomeBackBtn");
+  const copyWrap=$("appWelcomeCopyWrap");
+  const copyLinkBtn=$("copyInstallLinkBtn");
   const installNote=$("appInstallNote");
-  function isStandalone(){return window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;}
-  function closeInstallWelcome(){if(installOverlay)installOverlay.hidden=true;}
-  function showInstallInstructions(){
-    const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
-    installNote.textContent=ios?"Para instalar: toque em Compartilhar no Safari e escolha “Adicionar à Tela de Início”.":"Para instalar: abra o menu do navegador e escolha “Instalar aplicativo” ou “Adicionar à tela inicial”.";
-    installNowBtn.textContent="Entendi";
-    installNowBtn.onclick=closeInstallWelcome;
-    continueOnWebBtn.hidden=true;
+
+  function isStandalone(){
+    return !!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true;
+  }
+  function isIOSDevice(){
+    return /iphone|ipad|ipod/i.test(navigator.userAgent)||(/MacIntel/.test(navigator.platform||"")&&navigator.maxTouchPoints>1);
+  }
+  function isAndroidDevice(){return /android/i.test(navigator.userAgent);}
+  function isSafariOnIOS(){
+    const ua=navigator.userAgent;
+    return isIOSDevice()&&/safari/i.test(ua)&&!/crios|fxios|edgios|opios|duckduckgo/i.test(ua);
+  }
+  function readInstallChoice(){
+    try{return localStorage.getItem(INSTALL_CHOICE_KEY)||"";}catch(_){return "";}
+  }
+  function saveInstallChoice(value){
+    try{localStorage.setItem(INSTALL_CHOICE_KEY,value);}catch(_){}
+  }
+  function closeInstallWelcome(saveChoice=false){
+    if(saveChoice)saveInstallChoice("continue");
+    if(installOverlay)installOverlay.hidden=true;
+    document.body.classList.remove("app-welcome-open");
+  }
+  function openInstallWelcome(){
+    if(!installOverlay)return;
+    installOverlay.hidden=false;
+    document.body.classList.add("app-welcome-open");
+  }
+  function showWelcomeChoice(){
+    if(installChoice)installChoice.hidden=false;
+    if(installGuide)installGuide.hidden=true;
+    if(installOverlay)installOverlay.setAttribute("aria-labelledby","appWelcomeTitle");
+  }
+  function showInstallInstructions(kind){
+    openInstallWelcome();
+    if(installChoice)installChoice.hidden=true;
+    if(installGuide)installGuide.hidden=false;
+    if(installOverlay)installOverlay.setAttribute("aria-labelledby","appWelcomeGuideTitle");
+    if(copyWrap)copyWrap.hidden=kind!=="ios-other";
+    if(guideSteps)guideSteps.replaceChildren();
+
+    let title="Instalá Club La Ruedita";
+    let description="Seguí estos pasos para agregar el Club a la pantalla de inicio de tu dispositivo.";
+    let steps=[];
+
+    if(kind==="ios"){
+      title="Instalá el Club en tu iPhone";
+      description="En Safari podés agregar Club La Ruedita a tu pantalla de inicio y abrirlo como una aplicación.";
+      steps=[
+        "Tocá el botón Compartir de Safari (el cuadrado con una flecha hacia arriba).",
+        "Deslizá las opciones y elegí “Agregar a pantalla de inicio”.",
+        "Si aparece, activá “Abrir como app web” y tocá “Agregar”."
+      ];
+      if(installNote)installNote.textContent="Después vas a encontrar el ícono de Club La Ruedita en la pantalla de inicio de tu iPhone.";
+    }else if(kind==="ios-other"){
+      title="Abrí el Club en Safari";
+      description="Para agregar la aplicación a tu iPhone, primero abrí este mismo enlace en Safari.";
+      steps=[
+        "Copiá el enlace con el botón de abajo.",
+        "Abrí Safari y pegá el enlace en la barra de direcciones.",
+        "Tocá Compartir → “Agregar a pantalla de inicio”.",
+        "Si aparece, activá “Abrir como app web” y tocá “Agregar”."
+      ];
+      if(installNote)installNote.textContent="La instalación se confirma en el propio iPhone; este sitio no puede ejecutarla automáticamente.";
+    }else if(kind==="android"){
+      title="Instalá la aplicación";
+      description="Si no apareció la ventana automática, podés instalarla desde el menú de tu navegador.";
+      steps=[
+        "Abrí el menú del navegador (⋮), arriba a la derecha.",
+        "Elegí “Instalar aplicación” o “Agregar a pantalla de inicio”.",
+        "Confirmá la instalación y buscá Club La Ruedita en tu pantalla de inicio."
+      ];
+      if(installNote)installNote.textContent="Los nombres de las opciones pueden variar según el navegador y el dispositivo.";
+    }else if(kind==="accepted"){
+      title="El navegador aceptó la instalación";
+      description="El navegador está completando el proceso. Cuando termine, buscá Club La Ruedita en la pantalla de inicio o en el menú de aplicaciones.";
+      steps=["Esperá a que el navegador termine.","Abrí Club La Ruedita desde el nuevo ícono."];
+      if(installNote)installNote.textContent="Si la instalación no se completa, podés continuar por el sitio y volver a intentarlo más tarde.";
+    }else{
+      title="Instalá Club La Ruedita";
+      description="Podés instalar el Club desde el navegador para abrirlo en una ventana propia.";
+      steps=[
+        "Buscá el ícono de instalación en la barra de direcciones, si está disponible.",
+        "También podés abrir el menú del navegador y elegir “Instalar aplicación”.",
+        "Confirmá la instalación."
+      ];
+      if(installNote)installNote.textContent="La opción de instalación depende del navegador que estés utilizando.";
+    }
+
+    if(guideTitle)guideTitle.textContent=title;
+    if(guideText)guideText.textContent=description;
+    steps.forEach(step=>{
+      const item=document.createElement("li");
+      item.textContent=step;
+      guideSteps.append(item);
+    });
+  }
+  async function copyInstallLink(){
+    const value=window.location.href;
+    try{
+      await navigator.clipboard.writeText(value);
+      copyLinkBtn.textContent="Enlace copiado";
+    }catch(_){
+      const field=document.createElement("textarea");
+      field.value=value;field.setAttribute("readonly","");field.style.position="fixed";field.style.opacity="0";
+      document.body.append(field);field.select();
+      let copied=false;try{copied=document.execCommand("copy");}catch(__){}
+      field.remove();
+      copyLinkBtn.textContent=copied?"Enlace copiado":"Copiá el enlace desde la barra del navegador";
+    }
   }
   async function installClubApp(){
-    if(deferredInstallPrompt){
-      deferredInstallPrompt.prompt();
-      const choice=await deferredInstallPrompt.userChoice;
-      deferredInstallPrompt=null;
-      if(choice&&choice.outcome==="accepted"){closeInstallWelcome();return;}
+    if(isStandalone())return;
+    openInstallWelcome();
+    if(isIOSDevice()){
+      showInstallInstructions(isSafariOnIOS()?"ios":"ios-other");
+      return;
     }
-    showInstallInstructions();
+    if(deferredInstallPrompt){
+      const promptEvent=deferredInstallPrompt;
+      deferredInstallPrompt=null;
+      installNowBtn.disabled=true;
+      installNowBtn.querySelector("strong").textContent="Abriendo instalación…";
+      try{
+        promptEvent.prompt();
+        const choice=await promptEvent.userChoice;
+        if(choice&&choice.outcome==="accepted")showInstallInstructions("accepted");
+        else showInstallInstructions("android");
+      }catch(_){showInstallInstructions(isAndroidDevice()?"android":"desktop");}
+      finally{
+        installNowBtn.disabled=false;
+        installNowBtn.querySelector("strong").textContent="Instalar aplicación";
+      }
+      return;
+    }
+    showInstallInstructions(isAndroidDevice()?"android":"desktop");
   }
+
   if(!isStandalone()){
-    installNowBtn.addEventListener("click",installClubApp);
-    continueOnWebBtn.addEventListener("click",closeInstallWelcome);
-  }else if(installOverlay){installOverlay.hidden=true;}
-  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;});
-  window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;closeInstallWelcome();});
-  if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(err=>console.warn("PWA service worker:",err)));}
+    if(readInstallChoice()==="continue")closeInstallWelcome();
+    else openInstallWelcome();
+  }else if(installOverlay){closeInstallWelcome();}
+
+  installNowBtn.onclick=installClubApp;
+  continueOnWebBtn.onclick=()=>closeInstallWelcome(true);
+  guideContinueBtn.onclick=()=>closeInstallWelcome(true);
+  guideBackBtn.onclick=showWelcomeChoice;
+  copyLinkBtn.onclick=copyInstallLink;
+
+  window.addEventListener("beforeinstallprompt",event=>{
+    event.preventDefault();
+    deferredInstallPrompt=event;
+  });
+  window.addEventListener("appinstalled",()=>{
+    deferredInstallPrompt=null;
+    saveInstallChoice("installed");
+    closeInstallWelcome();
+  });
+  if("serviceWorker" in navigator){
+    window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(err=>console.warn("PWA service worker:",err)));
+  }
   // ---------- sessão já existente ----------
   async function showMine(){
     const t = getToken(); if(!t) return false;
