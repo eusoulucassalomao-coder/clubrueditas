@@ -5,6 +5,7 @@ const {
   commitOperations, transactionCreate, transactionUpdate, transactionDelete,
 } = require("./_lib/supabase-db");
 const { mintToken, verifyToken, bearer, verifyRestaurantSecret } = require("./_lib/fid-auth");
+const { supabase } = require("./_lib/supabase");
 
 const digits = value => String(value || "").replace(/\D/g, "");
 const isoNow = () => new Date().toISOString();
@@ -12,6 +13,16 @@ const parseConfig = value => {
   if (value && typeof value === "object") return value;
   try { return JSON.parse(value || "{}"); } catch (_) { return {}; }
 };
+async function rpc(name, args) {
+  const { data, error } = await supabase.rpc(name, args);
+  if (error) {
+    const match = /^E\\|([^|]+)\\|([\\s\\S]*)$/.exec(error.message || "");
+    if (match) throw Object.assign(new Error(match[2]), { code: match[1], status: 400 });
+    console.error("Supabase RPC", name, error.message);
+    throw Object.assign(new Error("No se pudo completar la operación"), { code: "db", status: 500 });
+  }
+  return data;
+}
 const publicCustomer = c => ({
   id: c.id, name: c.name, phone: c.phone, code: c.code, birthday: c.birthday || null,
   points: c.points, lifetime: c.lifetime, visits: c.visits,
@@ -61,39 +72,35 @@ async function uniqueCode(r, name) {
   throw new Error("No se pudo generar un código único");
 }
 async function registerCustomer(r, input) {
-  const name = String(input.name || "").trim(), phone = digits(input.phone);
+  const name = String(input.name || "").trim();
+  const phone = digits(input.phone);
   if (name.length < 2 || name.length > 80) throw Object.assign(new Error("Escribí tu nombre"), { code: "name" });
   if (phone.length < 8 || phone.length > 15) throw Object.assign(new Error("Revisá tu número de celular con código de área"), { code: "phone" });
   const birthday = String(input.birthday || "").trim();
   const birthdayDate = new Date(birthday + "T00:00:00Z");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthday) || !Number.isFinite(birthdayDate.getTime()) || birthdayDate.toISOString().slice(0, 10) !== birthday || birthday > isoNow().slice(0, 10)) {
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(birthday) || !Number.isFinite(birthdayDate.getTime()) ||
+      birthdayDate.toISOString().slice(0, 10) !== birthday || birthday > isoNow().slice(0, 10)) {
     throw Object.assign(new Error("Ingresá tu fecha de nacimiento para recibir tu saludo y beneficio de cumpleaños"), { code: "birthday" });
   }
-  if (!input.consent || input.waConsent !== true) throw Object.assign(new Error("Para unirte al club necesitás aceptar las comunicaciones y el uso de tus datos informados en el alta"), { code: "consent" });
-  const phoneKey = phone.slice(-8);
-  if (await one("customers", [queryEqual("restaurant_id", r.id), queryEqual("phone_key", phoneKey)])) {
-    throw Object.assign(new Error("Este número de celular ya está registrado"), { code: "exists" });
+  if (!input.consent || input.waConsent !== true) {
+    throw Object.assign(new Error("Para unirte al club necesitás aceptar las comunicaciones y el uso de tus datos informados en el alta"), { code: "consent" });
   }
-  let referredBy = null;
-  if (String(input.ref || "").trim()) {
-    const ref = await one("customers", [queryEqual("restaurant_id", r.id), queryEqual("code", String(input.ref).trim().toUpperCase())]);
-    if (ref) referredBy = ref.id;
-  }
-  const welcome = Math.max(0, Number(r.config?.bonus?.welcome) || 0);
-  const id = crypto.randomUUID(), now = isoNow();
-  const customer = {
-    restaurant_id: r.id, name, phone, phone_key: phoneKey, birthday,
-    code: await uniqueCode(r, name), referred_by: referredBy, points: welcome, lifetime: welcome,
-    visits: 0, last_visit: null, consent: true, consent_at: now, opted_out: false,
-    access_token: crypto.randomBytes(18).toString("hex"), created_at: now, wa_confirmed_at: now,
+  const data = await rpc("fid_register", {
+    p_slug: r.slug,
+    p_name: name,
+    p_phone: phone,
+    p_birthday: birthday,
+    p_ref: String(input.ref || "").trim() || null,
+    p_consent: true
+  });
+  const now = isoNow();
+  return {
+    id: data.id, name: data.name, phone, code: data.code, birthday: data.birthday || birthday,
+    points: data.points, lifetime: data.lifetime, visits: data.visits,
+    last_visit: data.lastVisit || null, created_at: data.createdAt || now,
+    opted_out: !!data.optedOut, wa_confirmed_at: data.confirmed ? now : null,
+    access_token: data.accessToken
   };
-  const operations = [transactionCreate("customers", id, customer)];
-  if (welcome > 0) operations.push(transactionCreate("ledger", crypto.randomUUID(), {
-    restaurant_id: r.id, customer_id: id, points: welcome, type: "bienvenida",
-    note: "Bienvenida al club", created_at: now,
-  }));
-  await commitOperations(operations);
-  return { ...customer, id: id };
 }
 function localParts(date, timeZone) {
   const parts = new Intl.DateTimeFormat("en-US", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" }).formatToParts(date);
@@ -202,12 +209,13 @@ async function waCall(r, action) {
     return {state:String(j.state||"unknown").slice(0,20),qr,pairingCode:String(j.pairingCode||"").slice(0,20)};
   } catch (_) { return {state:"unavailable"}; }
 }
-async function notifyVisitWebhook(r, customer, visitId, visit) {
+async function notifyVisitWebhook(r, customer, visitId, surveyToken, visit) {
   const url = process.env.N8N_VISIT_WEBHOOK_URL || "";
   const apiKey = process.env.N8N_VISIT_WEBHOOK_API_KEY || "";
   if (!url || !apiKey) return { state: "not_configured" };
-  const surveyToken = crypto.randomBytes(16).toString("hex");
-  const siteUrl = (r.config?.siteUrl||r.slug+".vercel.app").replace(/\/$/,"");
+  if (!surveyToken || !visitId) return { state: "missing_survey" };
+
+  const siteUrl = (r.config?.siteUrl || "https://laruedita-club.vercel.app").replace(/\\/$/, "");
   const surveyUrl = `${siteUrl}/survey.html?t=${surveyToken}`;
   const payload = {
     event: "visit.registered",
@@ -220,89 +228,84 @@ async function notifyVisitWebhook(r, customer, visitId, visit) {
     surveyUrl,
     visitAt: visit.created_at,
     amount: visit.amount,
-    points: visit.points,
+    points: visit.points
   };
+
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: { "content-type": "application/json", apikey: apiKey },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(5000)
     });
-    if(response.ok){
-      await commitOperations([transactionCreate("surveys",crypto.randomUUID(),{
-        restaurant_id:r.id,customer_id:customer.id,visit_id:visitId,
-        token:surveyToken,created_at:new Date().toISOString()
-      })]);
-    }
-    return { state: response.ok ? "sent" : "failed", status: response.status };
+    return { state: response.ok ? "sent" : "failed", status: response.status, surveyUrl };
   } catch (error) {
     console.error("visit-webhook", error);
-    return { state: "failed" };
+    return { state: "failed", surveyUrl };
   }
 }
 
 async function addVisit(r, customer, amount) {
-  const value=Number(amount);
-  if(!Number.isFinite(value)||value<=0||value>100000000) throw Object.assign(new Error("Ingresá el valor de la cuenta"),{code:"amount"});
-  const now=new Date(), tz=r.config?.tz||"America/Argentina/Buenos_Aires", dow=localParts(now,tz).weekday;
-  const mult=Number(r.config?.multipliers?.[dow]||1), per=Math.max(1,Number(r.config?.earn?.perAmount)||100);
-  const points=Math.floor(Math.floor(value/per)*(Number(r.config?.earn?.points)||1)*mult);
-  const updated={...customer,points:customer.points+points,lifetime:customer.lifetime+points,visits:customer.visits+1,last_visit:now.toISOString()};
-  const visitId = crypto.randomUUID();
-  const ops=[
-    transactionUpdate("customers",customer.id,{points:updated.points,lifetime:updated.lifetime,visits:updated.visits,last_visit:updated.last_visit}),
-    transactionCreate("visits",visitId,{restaurant_id:r.id,customer_id:customer.id,amount:value,points,multiplier:mult,staff:"caja",created_at:updated.last_visit}),
-    transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.id,customer_id:customer.id,points,type:"visita",note:`Cuenta $${value.toLocaleString("es-AR")}${mult>1?` (x${mult})`:""}`,created_at:updated.last_visit}),
-  ];
-  const bonuses=[];
-  if(customer.visits===0&&customer.referred_by){
-    const ref=await getDocument("customers",customer.referred_by);
-    const bonus=Math.max(0,Number(r.config?.bonus?.referral)||0);
-    if(ref.restaurant_id===r.id&&bonus>0){
-      updated.points+=bonus;updated.lifetime+=bonus;
-      ops[0]=transactionUpdate("customers",customer.id,{points:updated.points,lifetime:updated.lifetime,visits:updated.visits,last_visit:updated.last_visit});
-      ops.push(transactionUpdate("customers",ref.id,{points:ref.points+bonus,lifetime:ref.lifetime+bonus}));
-      ops.push(transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.id,customer_id:customer.id,points:bonus,type:"indicación",note:"Bono por venir invitado",created_at:updated.last_visit}));
-      ops.push(transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.id,customer_id:ref.id,points:bonus,type:"indicación",note:`Tu amigo ${customer.name} ya visitó el local`,created_at:updated.last_visit}));
-      bonuses.push({to:customer.name,pts:bonus,why:"viene invitado"},{to:ref.name,pts:bonus,why:"su amigo ya visitó"});
-    }
+  const value = Number(amount);
+  if (!Number.isFinite(value) || value <= 0 || value > 100000000) {
+    throw Object.assign(new Error("Ingresá el valor de la cuenta"), { code: "amount" });
   }
-  await commitOperations(ops);
-  const campaignEvent = await notifyVisitWebhook(r, customer, visitId, {
-    created_at: updated.last_visit, amount: value, points,
+
+  const result = await rpc("fid_add_visit", {
+    p_slug: r.slug,
+    p_customer: customer.id,
+    p_amount: value,
+    p_staff: "caja"
   });
-  return {customer:{...publicCustomer(updated),id:customer.id},pts:points,mult,bonuses,campaignEvent:campaignEvent.state};
+
+  const saved = result.customer || {};
+  const updated = {
+    ...customer,
+    points: Number(saved.points ?? customer.points),
+    lifetime: Number(saved.lifetime ?? customer.lifetime),
+    visits: Number(saved.visits ?? customer.visits),
+    last_visit: saved.lastVisit || isoNow(),
+    opted_out: !!saved.optedOut,
+    wa_confirmed_at: saved.confirmed ? (customer.wa_confirmed_at || isoNow()) : null
+  };
+  const campaignEvent = await notifyVisitWebhook(
+    r,
+    { ...customer, ...updated, name: saved.name || customer.name, phone: saved.phone || customer.phone },
+    result.visitId,
+    result.surveyToken,
+    { created_at: updated.last_visit, amount: value, points: Number(result.pts || 0) }
+  );
+
+  return {
+    customer: { ...publicCustomer(updated), id: customer.id },
+    pts: Number(result.pts || 0),
+    mult: Number(result.mult || 1),
+    bonuses: result.bonuses || [],
+    campaignEvent: campaignEvent.state,
+    surveyUrl: campaignEvent.surveyUrl || null
+  };
 }
 async function addBonus(r, customer, type) {
-  if(!["birthday","review"].includes(type)) throw Object.assign(new Error("Bono no disponible"),{code:"bonus"});
-  const points=Math.max(0,Number(r.config?.bonus?.[type])||0);
-  if(!points) throw Object.assign(new Error("Bono no disponible"),{code:"bonus"});
-  const ledger=await many("ledger",[queryEqual("customer_id",customer.id),queryEqual("type",type==="birthday"?"cumpleaños":"reseña")],5000);
-  const tz=r.config?.tz||"America/Argentina/Buenos_Aires", year=localParts(new Date(),tz).year;
-  if(type==="birthday"&&ledger.some(x=>localParts(new Date(x.created_at),tz).year===year)) throw Object.assign(new Error("Ya recibió el regalo de cumpleaños de este año"),{code:"bonus"});
-  if(type==="review"&&ledger.length) throw Object.assign(new Error("Ya recibió el bono por reseña"),{code:"bonus"});
-  const now=isoNow();
-  await commitOperations([
-    transactionUpdate("customers",customer.id,{points:customer.points+points,lifetime:customer.lifetime+points}),
-    transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.id,customer_id:customer.id,points,type:type==="birthday"?"cumpleaños":"reseña",note:type==="birthday"?"Regalo de cumpleaños":"Reseña en Google",created_at:now}),
-  ]);
-  return {customer:{...publicCustomer({...customer,points:customer.points+points,lifetime:customer.lifetime+points}),id:customer.id},pts:points};
+  if (!["birthday", "review"].includes(type)) {
+    throw Object.assign(new Error("Bono no disponible"), { code: "bonus" });
+  }
+  const result = await rpc("fid_add_bonus", {
+    p_slug: r.slug,
+    p_customer: customer.id,
+    p_type: type
+  });
+  const saved = result.customer || {};
+  const updated = {
+    ...customer,
+    points: Number(saved.points ?? customer.points),
+    lifetime: Number(saved.lifetime ?? customer.lifetime),
+    visits: Number(saved.visits ?? customer.visits),
+    last_visit: saved.lastVisit || customer.last_visit
+  };
+  return { customer: { ...publicCustomer(updated), id: customer.id }, pts: Number(result.pts || 0) };
 }
 async function expirePoints(r) {
-  const months=Math.max(1,Number(r.config?.expireMonths)||12), now=Date.now();
-  const customers=await many("customers",[queryEqual("restaurant_id",r.id)],5000);
-  const expired=customers.filter(c=>c.points>0&&c.last_visit&&now>=addCalendarMonths(c.last_visit,months));
-  let count=0;
-  for(let i=0;i<expired.length;i+=50){
-    const batch=expired.slice(i,i+50),ops=[];
-    for(const c of batch){
-      ops.push(transactionUpdate("customers",c.id,{points:0}));
-      ops.push(transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.id,customer_id:c.id,points:-c.points,type:"vencimiento",note:"Puntos vencidos por inactividad",created_at:isoNow()}));
-    }
-    await commitOperations(ops);count+=batch.length;
-  }
-  return {expired:count};
+  return await rpc("fid_expire", { p_slug: r.slug });
 }
 async function autoCandidates(r, kind) {
   const now=new Date(),tz=r.config?.tz||"America/Argentina/Buenos_Aires",today=localParts(now,tz);
@@ -355,12 +358,18 @@ module.exports = async function handler(req,res) {
     }
     if(action==="login") return res.status(200).json({ok:true,channel:false});
     if(action==="auth"){
-      const role=body.role==="panel"?"panel":"caja",hash=role==="panel"?r.panel_pass_hash:r.caja_pin_hash;
-      if(!(await verifyRestaurantSecret(hash,String(body.secret||"")))){
-        await new Promise(resolve=>setTimeout(resolve,350));
-        return res.status(401).json({error:"bad-secret",message:"Incorrecto"});
+      const role = body.role === "panel" ? "panel" : "caja";
+      const email = String(body.email || "").trim().toLowerCase();
+      const allowedEmail = String(process.env[role === "panel" ? "APPWRITE_OWNER_EMAIL" : "APPWRITE_CAJA_EMAIL"] || "").trim().toLowerCase();
+      const hash = role === "panel" ? r.panel_pass_hash : r.caja_pin_hash;
+      if (!allowedEmail || email !== allowedEmail) {
+        return res.status(403).json({ error: "role_not_authorized", message: "Usuario no autorizado" });
       }
-      return res.status(200).json({token:mintToken(slug,role)});
+      if (!(await verifyRestaurantSecret(hash, String(body.secret || "")))) {
+        await new Promise(resolve => setTimeout(resolve, 400));
+        return res.status(401).json({ error: "bad-secret", message: "Incorrecto" });
+      }
+      return res.status(200).json({ token: mintToken(slug, role) });
     }
 
     if(action.startsWith("auto_")){
@@ -417,15 +426,10 @@ module.exports = async function handler(req,res) {
       return res.status(200).json({status:red.status,name:red.name,customer:c.name,pts:red.points,code:red.code});
     }
     if(action==="deliver"){
-      const code=String(body.code||"").trim().toUpperCase();
-      const red=await one("redemptions",[queryEqual("restaurant_id",r.id),queryEqual("code",code)]);
-      if(!red) throw Object.assign(new Error("Código de canje no encontrado. Ingresá el código del premio que empieza con P y que el cliente ve en “Mis puntos”; no el código de socio."),{status:404,code:"redemption-not-found"});
-      if(red.status==="canjeado") throw Object.assign(new Error("Este premio ya fue entregado"),{code:"code"});
-      if(red.status!=="pendiente") throw Object.assign(new Error("Código no válido"),{code:"code"});
-      const now=isoNow();
-      await commitOperations([transactionUpdate("redemptions",red.id,{status:"canjeado",used_at:now})]);
-      const c=await customerById(r,red.customer_id);
-      return res.status(200).json({code:red.code,name:red.name,pts:red.points,status:"canjeado",customer:c.name});
+      const result=await rpc("fid_deliver",{p_slug:r.slug,p_code:String(body.code||"").trim().toUpperCase()});
+      return res.status(200).json({
+        code:result.code,name:result.name,pts:result.pts,status:result.status,customer:result.customer
+      });
     }
     if(action==="recent"){
       const visits=await many("visits",[queryEqual("restaurant_id",r.id),queryOrderDesc("created_at")],8);
@@ -434,19 +438,12 @@ module.exports = async function handler(req,res) {
     }
     if(action==="claim"||action==="claim_by_code"){
       const c=action==="claim_by_code"?await customerByCode(r,body.code):await customerByToken(r,body.token);
-      const reward=(r.config?.rewards||[]).find(x=>x.id===String(body.reward||""));
-      if(!reward) throw Object.assign(new Error("Premio no disponible"),{code:"reward"});
-      if(c.points<Number(reward.pts)) throw Object.assign(new Error(`Te faltan ${Number(reward.pts)-c.points} puntos`),{code:"points"});
-      let code;
-      for(let i=0;i<30;i++){const candidate="P"+String(10000+crypto.randomInt(0,90000));if(!(await one("redemptions",[queryEqual("restaurant_id",r.id),queryEqual("code",candidate)]))){code=candidate;break;}}
-      if(!code) throw new Error("No se pudo generar el código de canje");
-      const id=crypto.randomUUID(),now=isoNow(),pts=Number(reward.pts);
-      await commitOperations([
-        transactionUpdate("customers",c.id,{points:c.points-pts}),
-        transactionCreate("redemptions",id,{restaurant_id:r.id,customer_id:c.id,reward_id:reward.id,name:reward.name,points:pts,code,status:"pendiente",created_at:now}),
-        transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.id,customer_id:c.id,points:-pts,type:"canje",note:reward.name,created_at:now}),
-      ]);
-      return res.status(200).json({redemption:{id,code,name:reward.name,pts,status:"pendiente",createdAt:now}});
+      const redemption=await rpc("fid_claim",{
+        p_slug:r.slug,
+        p_customer:c.id,
+        p_reward:String(body.reward||"")
+      });
+      return res.status(200).json({redemption});
     }
     if(action==="stats") return res.status(200).json(await statsFor(r));
     if(action==="customers"){
@@ -480,36 +477,18 @@ module.exports = async function handler(req,res) {
 
     if(action==="submit_survey"){
       const token=String(body.token||"");
-      if(!token) throw Object.assign(new Error("Token de encuesta requerido"),{code:"survey"});
-      const survey=await one("surveys",[queryEqual("restaurant_id",r.id),queryEqual("token",token)]);
-      if(!survey) throw Object.assign(new Error("Encuesta no válida o expirada"),{code:"survey"});
-      if(survey.response) throw Object.assign(new Error("Encuesta ya respondida"),{code:"survey"});
       const rating=Number(body.rating||0);
-      if(rating<1||rating>5) throw Object.assign(new Error("Calificación inválida"),{code:"survey"});
       const comment=String(body.comment||"").trim().slice(0,500);
-      const now=isoNow();
-      const customer=await getDocument("customers",survey.customer_id);
-      await commitOperations([
-        transactionUpdate("surveys",survey.id,{response:comment||null,rating,reviewed_at:now}),
-        transactionCreate("ledger",crypto.randomUUID(),{restaurant_id:r.id,customer_id:customer.id,points:0,type:"reseña",note:`Evaluación ${rating}/5${comment?" — "+comment.substring(0,50):""}`,created_at:now}),
-        transactionCreate("message_log",crypto.randomUUID(),{restaurant_id:r.id,customer_id:customer.id,kind:"survey_submitted",meta:JSON.stringify({rating,comment}),created_at:now}),
-      ]);
-      if(rating>=4){
-        const googleMsg=`¡Gracias por tu calificación ${rating}/5! Te invitamos a dejar una reseña en Google: ${r.config?.reviewUrl||""}`;
-        await waCall(r,`encuesta_${rating}`,{customer:customer,id:customer.id,message:googleMsg});
-        return res.status(200).json({message:"¡Gracias por tu opinión!", rating, reviewUrl:r.config?.reviewUrl});
-      }
-      if(rating>=1&&rating<=3){
-        await waCall(r,`encuesta_reclamacion`,{customer:customer,id:customer.id,message:`Lamentamos que tu experiencia fue de ${rating}/5. Encontrás un 10% de descuento en tu próxima cuenta: DESCUENTO10`});
-        return res.status(200).json({message:"Gracias por tu feedback. Te ha enviado un beneficio.", rating});
-      }
-      return res.status(200).json({message:"¡Gracias por tu opinión!", rating});
+      const result=await rpc("fid_submit_survey",{
+        p_slug:r.slug,p_token:token,p_rating:rating,p_comment:comment
+      });
+      return res.status(200).json(result);
     }
 
     return res.status(400).json({error:"bad-action"});
   } catch(error) {
     const status=error.status||(error.code==="APPWRITE_NOT_CONFIGURED"||error.code==="APPWRITE_DATABASE_NOT_CONFIGURED"?503:500);
-    if(status>=500) console.error("fid-appwrite",error);
+    if(status>=500) console.error("fid-supabase",error);
     return res.status(status).json({error:error.code||"server",message:status>=500?"No se pudo completar. Probá de nuevo.":error.message});
   }
 };
