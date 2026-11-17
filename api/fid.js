@@ -64,7 +64,12 @@ async function registerCustomer(r, input) {
   const name = String(input.name || "").trim(), phone = digits(input.phone);
   if (name.length < 2 || name.length > 80) throw Object.assign(new Error("Escribí tu nombre"), { code: "name" });
   if (phone.length < 8 || phone.length > 15) throw Object.assign(new Error("Revisá tu número de celular con código de área"), { code: "phone" });
-  if (!input.consent) throw Object.assign(new Error("Necesitamos tu autorización para gestionar tu membresía y tus puntos"), { code: "consent" });
+  const birthday = String(input.birthday || "").trim();
+  const birthdayDate = new Date(birthday + "T00:00:00Z");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthday) || !Number.isFinite(birthdayDate.getTime()) || birthdayDate.toISOString().slice(0, 10) !== birthday || birthday > isoNow().slice(0, 10)) {
+    throw Object.assign(new Error("Ingresá tu fecha de nacimiento para recibir tu saludo y beneficio de cumpleaños"), { code: "birthday" });
+  }
+  if (!input.consent || input.waConsent !== true) throw Object.assign(new Error("Para unirte al club necesitás aceptar las comunicaciones y el uso de tus datos informados en el alta"), { code: "consent" });
   const phoneKey = phone.slice(-8);
   if (await one("customers", [queryEqual("restaurant_id", r.$id), queryEqual("phone_key", phoneKey)])) {
     throw Object.assign(new Error("Este número de celular ya está registrado"), { code: "exists" });
@@ -77,10 +82,10 @@ async function registerCustomer(r, input) {
   const welcome = Math.max(0, Number(r.config?.bonus?.welcome) || 0);
   const id = crypto.randomUUID(), now = isoNow();
   const customer = {
-    restaurant_id: r.$id, name, phone, phone_key: phoneKey, birthday: input.birthday || null,
+    restaurant_id: r.$id, name, phone, phone_key: phoneKey, birthday,
     code: await uniqueCode(r, name), referred_by: referredBy, points: welcome, lifetime: welcome,
-    visits: 0, last_visit: null, consent: true, consent_at: now, opted_out: input.waConsent === true ? false : true,
-    access_token: crypto.randomBytes(18).toString("hex"), created_at: now, wa_confirmed_at: input.waConsent === true ? now : null,
+    visits: 0, last_visit: null, consent: true, consent_at: now, opted_out: false,
+    access_token: crypto.randomBytes(18).toString("hex"), created_at: now, wa_confirmed_at: now,
   };
   const operations = [transactionCreate("customers", id, customer)];
   if (welcome > 0) operations.push(transactionCreate("ledger", crypto.randomUUID(), {
