@@ -13,6 +13,18 @@
 </head>
 <body>
 
+<div class="app-welcome-overlay" id="appWelcomeOverlay" role="dialog" aria-modal="true" aria-labelledby="appWelcomeTitle">
+  <div class="app-welcome-card">
+    <img src="/assets/club-logo.svg" alt="Club La Ruedita" class="app-welcome-logo">
+    <p class="app-welcome-eyebrow">LA RUEDITA · PARRILLA Y GALETERÍA</p>
+    <h2 id="appWelcomeTitle">¡Bienvenido a Club La Ruedita!</h2>
+    <p class="app-welcome-text">Instalá nuestra app para tener tus puntos, premios y promociones siempre a mano.</p>
+    <button type="button" class="app-welcome-install" id="installNowBtn">Instalar aplicación</button>
+    <button type="button" class="app-welcome-continue" id="continueOnWebBtn">Continuar por el sitio web</button>
+    <p class="app-welcome-note" id="appInstallNote">Es gratis y solo te llevará unos segundos.</p>
+  </div>
+</div>
+
 <header class="nav" id="nav">
   <div class="wrap nav-in">
     <a class="brand" href="#top"><img id="navLogo" alt=""><span><b id="navName"></b><small id="navClub"></small></span></a>
@@ -23,7 +35,7 @@
   </div>
 </header>
 
-<section class="pwa-install-banner" id="pwaInstallBanner" aria-label="Instalar aplicación" hidden><div class="pwa-install-copy"><b>¡Llevá Club La Ruedita en tu celular!</b><p>Instalá la app y tené tus puntos, premios y promociones siempre a mano.</p></div><div class="pwa-install-actions"><button type="button" id="pwaInstallBtn">Instalar ahora</button><button type="button" id="pwaInstallClose" aria-label="Cerrar">×</button></div></section>
+
 
 <!-- ATENCIÓN -->
 <section class="hero dark" id="top">
@@ -139,7 +151,7 @@
   <p class="copy">© <span id="yr"></span> <span id="copyName"></span> · Programa de fidelidad por MK Conecta</p>
 </footer>
 
-\n<section class="cookie-banner" id="cookieBanner" aria-label="Preferencias de privacidad" hidden>
+<section class="cookie-banner" id="cookieBanner" aria-label="Preferencias de privacidad" hidden>
   <div><b>Tu privacidad importa</b><p>Usamos cookies necesarias para que el Club funcione. Con tu permiso, también podremos usar cookies de análisis y marketing.</p></div>
   <div class="cookie-actions">
     <button type="button" class="cookie-btn cookie-secondary" id="cookieReject">Rechazar opcionales</button>
