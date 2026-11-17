@@ -58,8 +58,8 @@
       <form id="newForm" novalidate>
         <label>Nombre<input name="name" autocomplete="off" required></label>
         <label>WhatsApp<input name="phone" type="tel" inputmode="tel" autocomplete="off" required></label>
-        <label>Cumpleaños (opcional)<input name="birthday" type="date"></label>
-        <label style="display:flex;gap:10px;align-items:flex-start;font-weight:400;color:var(--muted)"><input type="checkbox" name="consent" style="width:20px;height:20px;margin-top:2px"><span>El cliente aceptó recibir mensajes por WhatsApp.</span></label>
+        <label>Fecha de nacimiento<input name="birthday" type="date" required></label>
+        <p class="sub">Al ingresar al Club, el cliente acepta recibir por WhatsApp información sobre su membresía, puntos, beneficios, cumpleaños y encuestas después de sus visitas. Si no está de acuerdo, no completes el alta.</p>
         <p class="msg" id="nMsg" role="alert"></p>
         <button class="btn full" type="submit">Dar de alta</button>
       </form>
