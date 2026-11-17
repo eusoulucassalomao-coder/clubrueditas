@@ -1,5 +1,5 @@
 {
-  "cleanUrls": true,
+  "cleanUrls": false,
   "rewrites": [{ "source": "/caja", "destination": "/caja.html" }, { "source": "/panel", "destination": "/panel.html" }, { "source": "/survey", "destination": "/survey.html" }],
   "headers": [
     {
