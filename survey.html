@@ -76,24 +76,7 @@
         .then(function(payload){
           if(!payload || !payload.message) throw new Error('No se pudo confirmar la encuesta');
           success.classList.remove('hidden');
-          success.textContent=payload.message;
-
-          if(payload.pointsAwarded>0){
-            success.appendChild(document.createTextNode(' Recibiste '+payload.pointsAwarded+' puntos por responder.'));
-          }
-          if(payload.benefit){
-            success.appendChild(document.createTextNode(' Como cortesía, tenés un '+payload.benefit.percent+'% de descuento en tu próxima visita. Código: '+payload.benefit.code+'.'));
-          }
-          if(payload.reviewUrl){
-            var br=document.createElement('br');
-            var link=document.createElement('a');
-            link.href=payload.reviewUrl;
-            link.target='_blank';
-            link.rel='noopener noreferrer';
-            link.textContent='Si querés, también podés dejar una reseña en Google.';
-            success.appendChild(br);
-            success.appendChild(link);
-          }
+          success.textContent='¡Tu opinión fue recibida! ¡Gracias por contactarnos!';
 
           document.getElementById('choices').style.display='none';
           document.getElementById('c').style.display='none';
