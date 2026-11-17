@@ -99,32 +99,14 @@
 
   // ---------- asistente guiado, sin IA/API ----------
   const chat = $("clubChat"), messages = $("chatMessages"), options = $("chatOptions"), chatForm = $("chatForm"), chatInput = $("chatInput");
-  let flow = null, greeted = false, chatPhoneIti = null;
-  function setupChatPhone(){
-    if(chatPhoneIti || !window.intlTelInput) return;
-    chatPhoneIti = window.intlTelInput(chatInput, {
-      initialCountry: "ar",
-      // Prioriza estes países no topo, mas mantém a lista mundial completa.
-      countryOrder: ["ar", "br", "us", "gb", "es"],
-      countrySelectorMode: "DROPDOWN",
-      countrySearch: true,
-      showFlags: true,
-      separateDialCode: true,
-      nationalMode: true,
-      // A lista precisa ficar fora do chat, que usa overflow:hidden.
-      dropdownParent: document.body,
-      autoPlaceholder: "polite",
-      loadUtils: () => import("https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js")
-    });
-  }
-  let LANG = (() => { try { return localStorage.getItem("clubruedita_lang") === "en" ? "en" : "es"; } catch (_) { return "es"; } })();
+  let flow = null, greeted = false;\n  let LANG = (() => { try { return localStorage.getItem("clubruedita_lang") === "en" ? "en" : "es"; } catch (_) { return "es"; } })();
   const TXT = {
     es: {
       assistant:"Asistente Club Ruedita", subtitle:"Consultas sobre el Club y tus puntos", hello:"¡Hola! Soy el asistente virtual de Club Ruedita. ¿Qué necesitás hacer?",
       points:"Consultar mis puntos", join:"Inscribirme en el Club", questions:"Tengo otras dudas", faq:"Preguntas frecuentes",
       code:"Escribí tu código del Club Ruedita y busco tus puntos.", codePlaceholder:"Ej.: ANA123",
       name:"¡Qué bueno que quieras sumarte! ¿Cuál es tu nombre?", namePlaceholder:"Tu nombre",
-      phone:n=>`Gracias, ${n}. Elegí tu país en la bandera y escribí tu número sin el prefijo internacional. Para Brasil, por ejemplo, ingresá el DDD y el número.`, phonePlaceholder:"Número sin código de país", invalidPhone:"Revisá el país y el número de celular e intentá nuevamente.", phoneError:"No se pudo cargar el selector de país. Actualizá la página e intentá nuevamente.",
+      phone:n=>`Gracias, ${n}. Escribí tu número completo incluyendo el código internacional, el código de área (DDD) y el número. Por ejemplo, Brasil: +55 + DDD + número.`, phonePlaceholder:"+55 11 99999-9999", invalidPhone:"Ingresá un número válido con el código internacional, por ejemplo +55 seguido del DDD y el número.", phoneError:"No se pudo cargar el selector de país. Actualizá la página e intentá nuevamente.",
       birthday:"¿Cuál es tu fecha de nacimiento? La usamos para saludarte en tu día y acreditar tu beneficio de cumpleaños.", skipBirthday:"",
       ref:"¿Tenés el código de un amigo que te invitó? También es opcional.", refPlaceholder:"Código de invitación", noRef:"No tengo código",
       consent:"Al unirte al Club Ruedita, aceptás recibir por WhatsApp comunicaciones sobre tu membresía, puntos, beneficios, cumpleaños y encuestas después de tus visitas. También usaremos tu nombre, celular y fecha de nacimiento para administrar tu cuenta y acreditar tu beneficio de cumpleaños. Si no estás de acuerdo, no completes la inscripción. Podés darte de baja respondiendo BAJA.",
@@ -156,7 +138,7 @@
       points:"Check my points", join:"Join the Club", questions:"I have other questions", faq:"Frequently asked questions",
       code:"Enter your La Ruedita Club code and I'll look up your points.", codePlaceholder:"e.g. ANA123",
       name:"Great that you want to join! What's your name?", namePlaceholder:"Your name",
-      phone:n=>`Thanks, ${n}. Choose your country using the flag, then enter your number without the international prefix.`, phonePlaceholder:"Number without country code", invalidPhone:"Check the selected country and mobile number, then try again.", phoneError:"The country selector could not load. Refresh the page and try again.",
+      phone:n=>`Thanks, ${n}. Enter your full phone number, including the international country code, area code and number. For example, Brazil: +55 + area code + number.`, phonePlaceholder:"+55 11 99999-9999", invalidPhone:"Enter a valid number including the international country code, such as +55 followed by the area code and number.", phoneError:"The country selector could not load. Refresh the page and try again.",
       birthday:"What's your date of birth? We use it to greet you and provide your birthday benefit.", skipBirthday:"",
       ref:"Do you have the code of the friend who invited you? This is optional.", refPlaceholder:"Invitation code", noRef:"I don't have a code",
       consent:"By joining La Ruedita Club, you agree to receive WhatsApp messages about your membership, points, benefits, birthday and post-visit surveys. We also use your name, phone number and date of birth to manage your account and birthday benefit. If you do not agree, do not complete registration. Reply BAJA to unsubscribe.",
@@ -196,12 +178,13 @@
   function ask(text,placeholder,extra=[],inputType="text"){
     addMessage(text);chatForm.hidden=false;chatInput.placeholder=placeholder;chatInput.value="";chatInput.type=inputType;chatInput.autocomplete="off";chatInput.focus();showOptions(extra);
   }
+  function showMainOptions(){showOptions([[T("points"),startLookup],[T("join"),startJoin],[T("questions"),startFaq]]);}
   function welcome(){
     flow=null;messages.replaceChildren();greeted=true;addMessage(T("hello"));
     chatForm.hidden=true;
-    showOptions([[T("points"),startLookup],[T("join"),startJoin],[T("questions"),startFaq]]);
+    showOptions([[LANG==="en"?"Continue here":"Continuar por aquí",showMainOptions],[LANG==="en"?"Install the app":"Instalar la aplicación",installClubApp]]);
   }
-  function openWhatsApp(){
+    function openWhatsApp(){
     const text=encodeURIComponent(T("whatsappText"));
     const url=`https://wa.me/${String(CF.whatsapp||"").replace(/\D/g,"")}?text=${text}`;
     addMessage(T("otherIntro"));
@@ -227,13 +210,12 @@
   function startLookup(){flow={type:"lookup",step:"code"};ask(T("code"),T("codePlaceholder"));}
   async function nextJoin(){
     const d=flow.data;
-    if(flow.step==="name"){d.name=flow.value;flow.step="phone";ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"),[],"tel");setupChatPhone();}
+    if(flow.step==="name"){d.name=flow.value;flow.step="phone";ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"),[],"tel");}
     else if(flow.step==="phone"){
-      if(!chatPhoneIti){addMessage(T("phoneError"));ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"),[],"tel");setupChatPhone();return;}
-      if(chatPhoneIti.promise) await chatPhoneIti.promise;
-      if(!chatPhoneIti.isValidNumber()){addMessage(T("invalidPhone"));ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"),[],"tel");return;}
-      d.phone=chatPhoneIti.getNumber();
-      chatPhoneIti.destroy();chatPhoneIti=null;
+      const raw=String(flow.value||"").trim();
+      const digits=raw.replace(/\D/g,"");
+      if(!raw.startsWith("+") || digits.length<10 || digits.length>15){addMessage(T("invalidPhone"));ask(T("phone")(d.name.split(" ")[0]),T("phonePlaceholder"),[],"tel");return;}
+      d.phone="+"+digits;
       flow.step="birthday";ask(T("birthday"),"YYYY-MM-DD");chatInput.type="date";
     }
     else if(flow.step==="birthday"){afterBirthday(flow.value);}
@@ -312,7 +294,7 @@
       ["#puntos p","Have questions or want to join? The assistant can help with your points, rewards and membership.","¿Tenés dudas o querés sumarte? El asistente puede ayudarte con tus puntos, tus premios y tu ingreso al Club Ruedita."],
       ["#faq .eyebrow","Questions","Dudas"],["#faq h2","Frequently asked questions","Preguntas frecuentes"],
       ["#faq details:nth-of-type(1) summary","Is it free?","¿Cuánto cuesta?"],["#faq details:nth-of-type(1) p","The Club is free.","Nada. El club es gratis."],
-      ["#faq details:nth-of-type(2) summary","Do I need to download an app?","¿Tengo que descargar una app?"],["#faq details:nth-of-type(2) p","No. Everything works on your phone, directly on this website.","No. Todo funciona desde tu celular, directamente en este sitio."],
+      ["#faq details:nth-of-type(2) summary","Do I need to download an app?","¿Tengo que descargar una app?"],["#faq details:nth-of-type(2) p","You can use the website or install the Club app on your phone.","Podés usar el sitio o instalar la aplicación del Club en tu celular."],
       ["#faq details:nth-of-type(4) summary","How do I redeem a reward?","¿Cómo canjeo un premio?"],["#faq details:nth-of-type(4) p","Go to “My points”, choose a reward and show the code at the register.","Entrá a “Mis puntos”, elegí el premio y mostrá el código en caja. Te lo entregamos al momento."],
       ["#faq details:nth-of-type(5) summary","Do points expire?","¿Los puntos vencen?"],["#faq details:nth-of-type(5) p",`Yes: after ${Number(CF.expireMonths||12)} months, according to the Club's rules.`,"Sí: pasados 12 meses sin visitas. Así no se pierden si venís seguido."],
       ["#faq details:nth-of-type(6) summary","How is my data used?","¿Qué hacen con mis datos?"],
@@ -335,6 +317,16 @@
     if(skipWelcome)greeted=true;if(open&&!greeted)welcome();if(open)chatInput.focus();
   }
 
+  // ---------- instalación PWA ----------
+  let deferredInstallPrompt=null;
+  const installBanner=$("pwaInstallBanner");
+  function isStandalone(){return window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;}
+  function installHelp(){const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);addMessage(ios?"Para instalar: tocá en Compartir en Safari y elegí “Agregar a pantalla de inicio”.":"Para instalar: abrí el menú del navegador y elegí “Instalar aplicación” o “Agregar a pantalla de inicio”.");showOptions([[LANG==="en"?"Continue here":"Continuar por aquí",showMainOptions],[LANG==="en"?"Back":"Volver",welcome]]);}
+  async function installClubApp(){if(deferredInstallPrompt){deferredInstallPrompt.prompt();const choice=await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;if(choice&&choice.outcome==="accepted"){if(installBanner)installBanner.hidden=true;addMessage("La instalación de la aplicación comenzó.");showMainOptions();return;}}installHelp();}
+  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;if(installBanner&&!isStandalone())installBanner.hidden=false;});
+  window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;if(installBanner)installBanner.hidden=true;});
+  if(installBanner){$("pwaInstallBtn").addEventListener("click",installClubApp);$("pwaInstallClose").addEventListener("click",()=>installBanner.hidden=true);if(!isStandalone())setTimeout(()=>{if(!deferredInstallPrompt)installBanner.hidden=false;},2500);}
+  if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(err=>console.warn("PWA service worker:",err)));}
   // ---------- sessão já existente ----------
   async function showMine(){
     const t = getToken(); if(!t) return false;
