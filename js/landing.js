@@ -99,7 +99,8 @@
 
   // ---------- asistente guiado, sin IA/API ----------
   const chat = $("clubChat"), messages = $("chatMessages"), options = $("chatOptions"), chatForm = $("chatForm"), chatInput = $("chatInput");
-  let flow = null, greeted = false;\n  let LANG = (() => { try { return localStorage.getItem("clubruedita_lang") === "en" ? "en" : "es"; } catch (_) { return "es"; } })();
+  let flow = null, greeted = false;
+  let LANG = (() => { try { return localStorage.getItem("clubruedita_lang") === "en" ? "en" : "es"; } catch (_) { return "es"; } })();
   const TXT = {
     es: {
       assistant:"Asistente Club Ruedita", subtitle:"Consultas sobre el Club y tus puntos", hello:"¡Hola! Soy el asistente virtual de Club Ruedita. ¿Qué necesitás hacer?",
