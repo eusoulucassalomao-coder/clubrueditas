@@ -1,0 +1,16 @@
+{
+  "id": "/",
+  "name": "Club Ruedita",
+  "short_name": "Ruedita",
+  "description": "Tus puntos, premios y promociones de La Ruedita.",
+  "lang": "es-AR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e1f15",
+  "theme_color": "#0e1f15",
+  "icons": [
+    { "src": "/assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
