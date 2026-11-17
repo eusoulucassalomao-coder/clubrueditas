@@ -104,12 +104,15 @@
     if(chatPhoneIti || !window.intlTelInput) return;
     chatPhoneIti = window.intlTelInput(chatInput, {
       initialCountry: "ar",
-      preferredCountries: ["ar", "br", "us", "gb", "es"],
+      // Prioriza estes países no topo, mas mantém a lista mundial completa.
+      countryOrder: ["ar", "br", "us", "gb", "es"],
+      countrySelectorMode: "DROPDOWN",
+      countrySearch: true,
+      showFlags: true,
       separateDialCode: true,
       nationalMode: true,
-      // Renderiza a lista fora do painel do chat, que usa overflow:hidden.
-      // Isso impede que a lista de países fique cortada ou invisível.
-      dropdownContainer: document.body,
+      // A lista precisa ficar fora do chat, que usa overflow:hidden.
+      dropdownParent: document.body,
       autoPlaceholder: "polite",
       loadUtils: () => import("https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js")
     });
