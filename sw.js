@@ -1,4 +1,4 @@
-const CACHE_NAME = "club-ruedita-v2";
+const CACHE_NAME = "club-ruedita-v3";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -8,7 +8,8 @@ const APP_SHELL = [
   "/js/api.js",
   "/js/landing.js",
   "/assets/logo.webp",
-  "/assets/icon.svg"
+  "/assets/icon.svg",
+  "/assets/logo.webp"
 ];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
