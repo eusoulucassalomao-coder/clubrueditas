@@ -108,7 +108,7 @@
       code:"Escribí tu código del Club Ruedita y busco tus puntos.", codePlaceholder:"Ej.: ANA123",
       name:"¡Qué bueno que quieras sumarte! ¿Cuál es tu nombre?", namePlaceholder:"Tu nombre",
       phone:n=>`Gracias, ${n}. Escribí tu número completo incluyendo el código internacional, el código de área (DDD) y el número. Por ejemplo, Brasil: +55 + DDD + número.`, phonePlaceholder:"+55 11 99999-9999", invalidPhone:"Ingresá un número válido con el código internacional, por ejemplo +55 seguido del DDD y el número.", phoneError:"No se pudo cargar el selector de país. Actualizá la página e intentá nuevamente.",
-      birthday:"¿Cuál es tu fecha de nacimiento? La usamos para saludarte en tu día y acreditar tu beneficio de cumpleaños.", skipBirthday:"",
+      birthday:"¿Cuál es tu fecha de nacimiento?", skipBirthday:"",
       ref:"¿Tenés el código de un amigo que te invitó? También es opcional.", refPlaceholder:"Código de invitación", noRef:"No tengo código",
       consent:"Al unirte al Club Ruedita, aceptás recibir por WhatsApp comunicaciones sobre tu membresía, puntos, beneficios, cumpleaños y encuestas después de tus visitas. También usaremos tu nombre, celular y fecha de nacimiento para administrar tu cuenta y acreditar tu beneficio de cumpleaños. Si no estás de acuerdo, no completes la inscripción. Podés darte de baja respondiendo BAJA.",
       accept:"Acepto y quiero crear mi cuenta", deny:"No autorizo",
@@ -140,7 +140,7 @@
       code:"Enter your La Ruedita Club code and I'll look up your points.", codePlaceholder:"e.g. ANA123",
       name:"Great that you want to join! What's your name?", namePlaceholder:"Your name",
       phone:n=>`Thanks, ${n}. Enter your full phone number, including the international country code, area code and number. For example, Brazil: +55 + area code + number.`, phonePlaceholder:"+55 11 99999-9999", invalidPhone:"Enter a valid number including the international country code, such as +55 followed by the area code and number.", phoneError:"The country selector could not load. Refresh the page and try again.",
-      birthday:"What's your date of birth? We use it to greet you and provide your birthday benefit.", skipBirthday:"",
+      birthday:"What's your date of birth?", skipBirthday:"",
       ref:"Do you have the code of the friend who invited you? This is optional.", refPlaceholder:"Invitation code", noRef:"I don't have a code",
       consent:"By joining La Ruedita Club, you agree to receive WhatsApp messages about your membership, points, benefits, birthday and post-visit surveys. We also use your name, phone number and date of birth to manage your account and birthday benefit. If you do not agree, do not complete registration. Reply BAJA to unsubscribe.",
       accept:"I agree and want to create my account", deny:"I do not agree",
@@ -174,7 +174,7 @@
     points:"Consultar meus pontos", join:"Participar do Clube", questions:"Tenho outras dúvidas", faq:"Perguntas frequentes",
     code:"Digite seu código do Club La Ruedita para consultar seus pontos.", codePlaceholder:"Ex.: ANA123", name:"Que bom que você quer participar! Qual é o seu nome?", namePlaceholder:"Seu nome",
     phone:n=>"Obrigado, "+n+". Digite seu telefone completo, incluindo código internacional, código de área e número. Exemplo Brasil: +55 + DDD + número.", phonePlaceholder:"+55 11 99999-9999", invalidPhone:"Digite um telefone válido com código internacional.",
-    birthday:"Qual é sua data de nascimento? Usamos essa informação para oferecer seu benefício de aniversário.", ref:"Você tem o código de um amigo que convidou você? É opcional.", refPlaceholder:"Código de convite", noRef:"Não tenho código",
+    birthday:"Qual é sua data de nascimento?", ref:"Você tem o código de um amigo que convidou você? É opcional.", refPlaceholder:"Código de convite", noRef:"Não tenho código",
     consent:"Ao participar do Club La Ruedita, você concorda em receber pelo WhatsApp comunicações sobre sua associação, pontos, benefícios, aniversário e pesquisas após suas visitas. Também usaremos seu nome, telefone e data de nascimento para administrar sua conta. Para cancelar, responda BAJA.",
     accept:"Aceito e quero criar minha conta", deny:"Não autorizo", denied:"Entendido. Nenhum cadastro foi salvo.", waConsent:"Você gostaria de receber novidades, promoções e benefícios pelo WhatsApp? É opcional e você pode cancelar quando quiser.",
     waYes:"Sim, aceito receber mensagens", waNo:"Não, prefiro não receber", saving:"Um momento, estamos salvando sua associação…", registered:n=>"Tudo certo, "+n+"! Seu cadastro no Club La Ruedita foi concluído.",
@@ -223,10 +223,11 @@
     const answers={price:T("priceA"),earn:T("earnA")(),redeem:T("redeemA"),expiry:T("expiryA")(),privacy:T("privacyA")};
     addMessage(answers[topic]);showOptions([[T("anotherQuestion"),openWhatsApp],[T("faq"),startFaq],[T("home"),welcome]]);
   }
-  function startJoin(){const inviteCode=new URLSearchParams(location.search).get("ref")||"";flow={type:"join",step:"name",data:{ref:inviteCode}};const invited=LANG==="en"?"A friend invited you to join La Ruedita Club. What is your name?":LANG==="pt"?"Um amigo convidou você para participar do Club La Ruedita. Qual é seu nome?":"¡Hola! Llegaste por la invitación de un amigo para sumarte al Club Ruedita. ¿Cuál es tu nombre?";ask(inviteCode?invited:T("name"),T("namePlaceholder"));}
+  function startJoin(){
     const inviteCode=new URLSearchParams(location.search).get("ref")||"";
     flow={type:"join",step:"name",data:{ref:inviteCode}};
-    ask(inviteCode?(LANG==="en"?"A friend invited you to join La Ruedita Club. What is your name?":LANG==="pt"?"Um amigo convidou você para participar do Club La Ruedita. Qual é seu nome?":"¡Hola! Llegaste por la invitación de un amigo para sumarte al Club Ruedita. ¿Cuál es tu nombre?"):T("name"),T("namePlaceholder"));
+    const invited=LANG==="en"?"A friend invited you to join La Ruedita Club. What is your name?":LANG==="pt"?"Um amigo convidou você para participar do Club La Ruedita. Qual é seu nome?":"¡Hola! Llegaste por la invitación de un amigo para sumarte al Club Ruedita. ¿Cuál es tu nombre?";
+    ask(inviteCode?invited:T("name"),T("namePlaceholder"));
   }
   function startLookup(){flow={type:"lookup",step:"code"};ask(T("code"),T("codePlaceholder"));}
   async function nextJoin(){
@@ -242,27 +243,24 @@
     else if(flow.step==="birthday"){afterBirthday(flow.value);}
     else if(flow.step==="ref"){d.ref=flow.value.toUpperCase();askConsent();}
   }
-  function afterBirthday(value){flow.data.birthday=value;if(flow.data.ref)askConsent();else{flow.step="ref";ask(T("ref"),T("refPlaceholder"),[[T("noRef"),()=>{flow.data.ref="";askConsent();}]]);}}
-  function askConsent(){
-    flow.step="consent";chatForm.hidden=true;addMessage(T("consent"));
-    showOptions([[T("accept"),()=>submitJoin(true)],[T("deny"),()=>{flow=null;addMessage(T("denied"));showOptions([[T("home"),welcome],[T("join"),startJoin]]);} ]]);
+  function afterBirthday(value){
+    flow.data.birthday=value;
+    if(flow.data.ref)submitJoin(false);
+    else{flow.step="ref";ask(T("ref"),T("refPlaceholder"),[[T("noRef"),()=>{flow.data.ref="";submitJoin(false);}]]);}
   }
-  function askWhatsAppConsent(){
-    flow.step="whatsapp";chatForm.hidden=true;addMessage(T("waConsent"));
-    showOptions([[T("waYes"),()=>submitJoin(true)],[T("waNo"),()=>submitJoin(false)]]);
-  }
+  function askConsent(){flow.step="consent";submitJoin(false);}
   async function submitJoin(waConsent){
-    if(!flow||flow.step!=="consent"||waConsent!==true)return;
-    flow.data.consent=true;flow.data.waConsent=waConsent;showOptions([]);addMessage(T("saving"));
+    if(!flow||flow.step!=="consent")return;
+    flow.data.consent=true;flow.data.waConsent=false;showOptions([]);addMessage(T("saving"));
     try{
       const r=await F.register(flow.data);setToken(r.token);let d;
       try{d=await F.me(r.token);}catch{
         messages.replaceChildren();addMessage(T("registered")(r.customer.name.split(" ")[0]));
-        addMessage(T("welcomePoints")(r.customer.code));addMessage(waConsent?T("waAccepted"):T("waDeclined"));
+        addMessage(T("welcomePoints")(r.customer.code));
         showOptions([[T("points"),startLookup],[T("home"),welcome]]);chatForm.hidden=true;flow=null;return;
       }
       messages.replaceChildren();addMessage(T("registered")(d.customer.name.split(" ")[0]));
-      addMessage(memberCard(d,{welcome:true}),"bot",true);wire(messages);addMessage(waConsent?T("waAccepted"):T("waDeclined"));addMessage(T("thanks"));
+      addMessage(memberCard(d,{welcome:true}),"bot",true);wire(messages);addMessage(T("thanks"));
       showOptions([[T("points"),startLookup],[T("home"),welcome]]);chatForm.hidden=true;flow=null;
     }catch(e){addMessage(e.message||T("noAnswer"));showOptions([[T("retry"),startJoin],[T("home"),welcome]]);chatForm.hidden=true;}
   }
@@ -291,7 +289,7 @@
   }
   chatForm.addEventListener("submit",e=>{e.preventDefault();submitAnswer(chatInput.value);});
   $("chatClose").onclick=()=>setChat(false);
-  const openChatButtons=["chatOpenTop","chatOpenAction"];
+  const openChatButtons=["chatOpenFloating","chatOpenAction"];
   openChatButtons.forEach(id=>{const b=$(id);if(b)b.onclick=()=>setChat(true);});
   function translatePage(){
     const en=LANG==="en";
@@ -343,7 +341,7 @@
     $("langToggle").value=LANG;$("chatLangToggle").value=LANG;
     set(".chat-head b",T("assistant"));set(".chat-head small",T("subtitle"));
     const close=$("chatClose");if(close)close.setAttribute("aria-label",en?"Close assistant":LANG==="pt"?"Fechar assistente":"Cerrar asistente");
-    $("chatOpenTop").setAttribute("aria-label",en?"Open assistant":LANG==="pt"?"Abrir assistente":"Abrir asistente");
+    const floating=$("chatOpenFloating");if(floating){const label=en?"Open assistant":LANG==="pt"?"Abrir assistente":"Abrir asistente";floating.setAttribute("aria-label",label);floating.title=label;}
 
   }
   function changeLanguage(event){
