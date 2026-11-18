@@ -36,7 +36,7 @@ function mapRewards(config: any): RewardDefinition[] {
   return rows.map((item: any, index: number) => {
     const name = String(item.name || item.id || 'Beneficio');
     const lower = name.toLowerCase();
-    const category = lower.includes('postre') || lower.includes('molleja') || lower.includes('entrada')
+    const category: RewardDefinition['category'] = lower.includes('postre') || lower.includes('molleja') || lower.includes('entrada')
       ? 'experiences'
       : lower.includes('descuento')
         ? 'boutique'
@@ -59,7 +59,7 @@ function mapRewards(config: any): RewardDefinition[] {
 }
 
 function mapHistory(data: any): HistoryEntry[] {
-  const ledger: HistoryEntry[] = (data.history || []).map((entry: any, index: number) => {
+  const ledger: HistoryEntry[] = (data.history || []).filter((entry: any) => entry.type !== 'canje').map((entry: any, index: number) => {
     const points = Number(entry.points || 0);
     return {
       id: `ledger-${index}-${entry.created_at || ''}`,
@@ -221,7 +221,7 @@ export function useAppState() {
       ? await fidApi.claim(token, rewardId)
       : await fidApi.claimByCode(member.customerCode, rewardId);
     const code = String(response.redemption?.code || response.redemption?.voucher || '');
-    await refreshMember();
+    try { await refreshMember(); } catch { /* Keep the confirmed redemption code visible even if refresh fails. */ }
     return code || null;
   }, [member.customerCode, sessionToken, refreshMember]);
 
