@@ -120,7 +120,7 @@
       if(phoneIti.promise) await phoneIti.promise;
       if(!phoneIti.isValidNumber()){ phoneInput.focus(); throw new Error("Revisá el número de WhatsApp y el país seleccionado."); }
       const internationalPhone = phoneIti.getNumber();
-      const r = await run(() => F.newCustomer(tok, { name: f.name.value, phone: internationalPhone, birthday: f.birthday.value, consent: true, waConsent: true }));
+      const r = await run(() => F.newCustomer(tok, { name: f.name.value, phone: internationalPhone, birthday: f.birthday.value, consent: true, waConsent: false }));
       f.reset(); m.className = "msg ok"; m.textContent = `✓ ${r.customer.name} ya está en el club (código ${r.customer.code}).`;
     }catch(err){ m.textContent = err.message; }
   });
