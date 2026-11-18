@@ -12,7 +12,7 @@ interface RegistrationModalProps {
     fullName: string;
     phone: string;
     birthDate: string;
-  }) => MemberProfile;
+  }) => Promise<MemberProfile>;
 }
 
 type LegalDocKey = 'terms' | 'privacy' | 'cookies';
@@ -45,7 +45,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const nextErrors: Record<string, string> = {};
 
@@ -66,15 +66,18 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
     setErrors({});
     setSubmitting(true);
-    window.setTimeout(() => {
-      const profile = onRegister({
+    try {
+      const profile = await onRegister({
         fullName,
         phone,
         birthDate,
       });
       setCreatedProfile(profile);
+    } catch (error) {
+      setErrors({ form: error instanceof Error ? error.message : 'Não foi possível concluir o cadastro.' });
+    } finally {
       setSubmitting(false);
-    }, 550);
+    }
   };
 
   return (
@@ -225,6 +228,10 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                   </p>
                 )}
               </div>
+
+              {errors.form && (
+                <p role="alert" className="text-sm text-[#9E3B2B] font-medium">{errors.form}</p>
+              )}
 
               <button
                 type="submit"
