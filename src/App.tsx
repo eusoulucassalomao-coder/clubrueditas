@@ -5,6 +5,7 @@ import { CookiePreferences } from './components/CookiePreferences';
 import { MemberCardModal } from './components/MemberCardModal';
 import { PWAInstallGate } from './components/PWAInstallGate';
 import { PWAStatusBanners } from './components/PWAStatusBanners';
+import { NotificationPermissionPrompt } from './components/NotificationPermissionPrompt';
 import { RegistrationModal } from './components/RegistrationModal';
 import { RewardDetailModal } from './components/RewardDetailModal';
 import { VirtualAssistantDrawer } from './components/VirtualAssistantDrawer';
@@ -92,6 +93,8 @@ export default function App() {
         onContinueInBrowser={handleDismissInstallGate}
         t={t}
       />
+
+      <NotificationPermissionPrompt isInstalled={isInstalled} />
 
       <Layout
         activeTab={activeTab}
