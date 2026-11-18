@@ -96,8 +96,12 @@ async function registerCustomer(r, input) {
   const now = isoNow();
   let waConfirmedAt = null;
   if (input.waConsent === true) {
-    const updated = await updateDocument("customers", data.id, { wa_confirmed_at: now, opted_out: false });
-    waConfirmedAt = updated.wa_confirmed_at || now;
+    try {
+      const updated = await updateDocument("customers", data.id, { wa_confirmed_at: now, opted_out: false });
+      waConfirmedAt = updated.wa_confirmed_at || now;
+    } catch (error) {
+      console.error("marketing-consent-save", error);
+    }
   }
   return {
     id: data.id, name: data.name, phone, code: data.code, birthday: data.birthday || birthday,
