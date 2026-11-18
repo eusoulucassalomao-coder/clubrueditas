@@ -289,3 +289,9 @@ details p{margin:0 0 16px;font-size:14px;color:var(--muted)}
 .club-chat:not([hidden])~.chat-fab{opacity:0;pointer-events:none}
 @media(max-width:640px){.chat-fab{right:16px;bottom:16px;width:62px;height:62px}}
 @media(prefers-reduced-motion:reduce){.chat-fab,.chat-fab-wave{animation:none}}
+
+/* Correção final: mão acenando no cabeçalho, sem botão inferior ou robô */
+.nav-assistant-btn{width:48px;height:48px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(233,196,106,.65);border-radius:50%;background:linear-gradient(180deg,#f0d27f,#c9a227);color:#14261a;box-shadow:0 5px 18px rgba(201,162,39,.18);cursor:pointer;flex:0 0 48px}
+.nav-assistant-btn .chat-fab-wave{font-size:34px;line-height:1;display:inline-block;transform-origin:70% 80%;animation:assistant-wave 1.8s ease-in-out infinite}
+.chat-fab{display:none!important}.chat-fab-robot{display:none!important}
+@media(max-width:420px){.nav-assistant-btn{width:44px;height:44px;flex-basis:44px}.nav-assistant-btn .chat-fab-wave{font-size:32px}}
