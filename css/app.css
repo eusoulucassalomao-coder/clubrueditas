@@ -267,3 +267,12 @@ details p{margin:0 0 16px;font-size:14px;color:var(--muted)}
 @keyframes pwaBannerIn{from{opacity:0;transform:translateY(-9px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:600px){.pwa-install-banner{margin:8px 10px 0;padding:12px 12px;align-items:center;gap:8px}.pwa-install-copy b{font-size:15px}.pwa-install-banner p{font-size:11px;max-width:225px}.pwa-install-actions{gap:4px}.pwa-install-actions button:first-child{padding:10px 13px;font-size:12px}}
 @media(prefers-reduced-motion:reduce){.pwa-install-banner,.pwa-install-actions button:first-child{animation:none}}
+
+/* Ajustes de navegação: seletor ES / EN / PT e atalho do assistente */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.lang-toggle,.chat-lang-toggle{appearance:none;-webkit-appearance:none;min-width:54px;text-align:center;background-color:rgba(255,255,255,.08);color:var(--cream);border:1px solid rgba(233,196,106,.55);border-radius:999px;padding:8px 10px;font:700 12px var(--sans);cursor:pointer}
+.lang-toggle option,.chat-lang-toggle option{color:#17251b;background:#faf6ec}
+.nav-assistant-btn{width:42px;height:42px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(233,196,106,.65);border-radius:50%;background:linear-gradient(180deg,#f0d27f,#c9a227);color:#14261a;box-shadow:0 5px 18px rgba(201,162,39,.18);cursor:pointer}
+.nav-assistant-btn .chat-fab-wave{font-size:27px;line-height:1;display:inline-block;transform-origin:70% 80%;animation:assistant-wave 1.8s ease-in-out infinite}
+.chat-head .chat-lang-toggle{margin-left:auto;margin-right:8px}
+@media(max-width:420px){.nav-assistant-btn{width:38px;height:38px}.nav-assistant-btn .chat-fab-wave{font-size:25px}.lang-toggle{min-width:48px;padding:7px 8px}}
