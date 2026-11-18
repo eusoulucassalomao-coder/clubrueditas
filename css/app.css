@@ -281,3 +281,11 @@ details p{margin:0 0 16px;font-size:14px;color:var(--muted)}
 .chat-head>div:first-child{display:flex;flex:1;flex-direction:column;line-height:1.25;min-width:0}
 .pwa-install-actions button:first-child{background:linear-gradient(180deg,#f0d27f,#c9a227);color:#14261a;box-shadow:0 8px 20px rgba(201,162,39,.24)}
 .nav-assistant-btn .chat-fab-wave{font-size:30px}
+
+/* Atalho flutuante do assistente: somente a mão acenando */
+.chat-fab{position:fixed;right:22px;bottom:22px;z-index:110;width:64px;height:64px;padding:0;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;background:linear-gradient(180deg,#f0d27f,#c9a227);color:#14261a;box-shadow:0 10px 30px rgba(0,0,0,.25);cursor:pointer;animation:assistant-attention 2.8s ease-in-out infinite}
+.chat-fab-wave{display:inline-block;font-size:34px;line-height:1;transform-origin:70% 80%;animation:assistant-wave 1.8s ease-in-out infinite}
+.chat-fab-robot{display:none!important}
+.club-chat:not([hidden])~.chat-fab{opacity:0;pointer-events:none}
+@media(max-width:640px){.chat-fab{right:16px;bottom:16px;width:62px;height:62px}}
+@media(prefers-reduced-motion:reduce){.chat-fab,.chat-fab-wave{animation:none}}
