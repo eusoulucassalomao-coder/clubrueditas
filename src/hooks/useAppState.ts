@@ -1,217 +1,269 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  INITIAL_HISTORY,
-  INITIAL_MEMBER,
-  POINT_MILESTONES,
-  REWARDS_CATALOG,
-} from '../data/demoData';
-import { HistoryEntry, Language, MemberProfile } from '../types';
+import { HistoryEntry, Language, MemberProfile, RewardDefinition } from '../types';
+import { fidApi } from '../services/fidApi';
+import { getCookiePreferences } from '../services/cookiePreferences';
 
-const STORAGE_KEY = 'club_la_ruedita_demo_v1';
+const TOKEN_KEY = 'club_la_ruedita_customer_token';
+const CODE_KEY = 'club_la_ruedita_customer_code';
+const LANGUAGE_KEY = 'club_la_ruedita_language';
 
-interface PersistedState {
-  language: Language;
-  member: MemberProfile;
-  history: HistoryEntry[];
+const EMPTY_MEMBER: MemberProfile = {
+  id: '',
+  customerCode: '',
+  fullName: '',
+  firstName: '',
+  email: '',
+  phone: '',
+  birthDate: '',
+  memberSince: '',
+  avatarUrl: null,
+  points: 0,
+  lifetimePoints: 0,
+  redeemedPoints: 0,
+  nextRewardTarget: 300,
+  favoriteBranch: 'La Ruedita',
+  whatsappOptIn: false,
+  notificationsPreviewEnabled: false,
+};
+
+function getNextTarget(points: number, rewards: RewardDefinition[]): number {
+  const next = rewards.map((reward) => reward.pointsRequired).filter((value) => value > points).sort((a, b) => a - b)[0];
+  return next ?? rewards.map((reward) => reward.pointsRequired).sort((a, b) => a - b).at(-1) ?? 300;
 }
 
-function getNextTarget(points: number): number {
-  const next = POINT_MILESTONES.find((m) => m > points);
-  return next ?? POINT_MILESTONES[POINT_MILESTONES.length - 1];
+function mapRewards(config: any): RewardDefinition[] {
+  const rows = Array.isArray(config?.rewards) ? config.rewards : [];
+  return rows.map((item: any, index: number) => {
+    const name = String(item.name || item.id || 'Beneficio');
+    const lower = name.toLowerCase();
+    const category = lower.includes('postre') || lower.includes('molleja') || lower.includes('entrada')
+      ? 'experiences'
+      : lower.includes('descuento')
+        ? 'boutique'
+        : lower.includes('café') || lower.includes('cafe')
+          ? 'cafe'
+          : 'bakery';
+    const image = String(item.img || 'assets/logo.webp').replace(/^\//, '');
+    return {
+      id: String(item.id || `reward-${index}`),
+      title: name,
+      shortDesc: String(item.note || ''),
+      fullDesc: String(item.note || ''),
+      pointsRequired: Number(item.pts || 0),
+      category,
+      imageUrl: `/${image}`,
+      featured: index < 3,
+      codePrefix: String(item.id || 'PREMIO').toUpperCase(),
+    };
+  }).filter((item: RewardDefinition) => item.pointsRequired > 0);
 }
 
-function loadInitialState(): PersistedState {
-  if (typeof window === 'undefined') {
+function mapHistory(data: any): HistoryEntry[] {
+  const ledger: HistoryEntry[] = (data.history || []).map((entry: any, index: number) => {
+    const points = Number(entry.points || 0);
     return {
-      language: 'es',
-      member: INITIAL_MEMBER,
-      history: INITIAL_HISTORY,
+      id: `ledger-${index}-${entry.created_at || ''}`,
+      type: points >= 0 ? 'earned' : 'used',
+      pointsDelta: points,
+      dateIso: String(entry.created_at || '').slice(0, 10),
+      customTitle: String(entry.note || (points >= 0 ? 'Puntos recibidos' : 'Puntos utilizados')),
+      customDescription: String(entry.type || ''),
     };
-  }
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return {
-        language: 'es',
-        member: INITIAL_MEMBER,
-        history: INITIAL_HISTORY,
-      };
-    }
-    const parsed = JSON.parse(raw) as Partial<PersistedState>;
-    const lang: Language =
-      parsed.language === 'en' || parsed.language === 'pt' || parsed.language === 'es'
-        ? parsed.language
-        : 'es';
-    return {
-      language: lang,
-      member: parsed.member ? { ...INITIAL_MEMBER, ...parsed.member } : INITIAL_MEMBER,
-      history: Array.isArray(parsed.history) ? parsed.history : INITIAL_HISTORY,
-    };
-  } catch {
-    return {
-      language: 'es',
-      member: INITIAL_MEMBER,
-      history: INITIAL_HISTORY,
-    };
-  }
+  });
+  const redemptions: HistoryEntry[] = (data.redemptions || []).map((entry: any, index: number) => ({
+    id: `redemption-${index}-${entry.code || ''}`,
+    type: 'redeemed',
+    pointsDelta: -Math.abs(Number(entry.points || 0)),
+    dateIso: String(entry.created_at || '').slice(0, 10),
+    customTitle: String(entry.name || 'Beneficio canjeado'),
+    customDescription: String(entry.status || ''),
+    voucherCode: String(entry.code || ''),
+  }));
+  return [...ledger, ...redemptions].sort((a, b) => b.dateIso.localeCompare(a.dateIso));
+}
+
+function mapMember(customer: any, rewards: RewardDefinition[]): MemberProfile {
+  const fullName = String(customer.name || '');
+  const points = Number(customer.points || 0);
+  const lifetime = Number(customer.lifetime ?? customer.points ?? 0);
+  const createdAt = String(customer.createdAt || customer.created_at || new Date().toISOString());
+  return {
+    ...EMPTY_MEMBER,
+    id: String(customer.id || ''),
+    customerCode: String(customer.code || ''),
+    fullName,
+    firstName: fullName.trim().split(/\s+/)[0] || '',
+    phone: String(customer.phone || ''),
+    birthDate: String(customer.birthday || ''),
+    memberSince: createdAt.slice(0, 7),
+    points,
+    lifetimePoints: lifetime,
+    redeemedPoints: Math.max(0, lifetime - points),
+    nextRewardTarget: getNextTarget(points, rewards),
+    whatsappOptIn: Boolean(customer.marketingConsent || customer.confirmed),
+  };
 }
 
 export function useAppState() {
-  const [state, setState] = useState<PersistedState>(() => loadInitialState());
+  const [language, setLanguageState] = useState<Language>(() => {
+    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(LANGUAGE_KEY) : null;
+    return saved === 'pt' || saved === 'en' || saved === 'es' ? saved : 'es';
+  });
+  const [member, setMember] = useState<MemberProfile>(EMPTY_MEMBER);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [rewards, setRewards] = useState<RewardDefinition[]>([]);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState('');
+
+  const applyMemberResponse = useCallback((response: any, rewardList = rewards) => {
+    const nextMember = mapMember(response.customer || {}, rewardList);
+    setMember(nextMember);
+    setHistory(mapHistory(response));
+    return nextMember;
+  }, [rewards]);
+
+  const refreshMember = useCallback(async () => {
+    const token = sessionToken || localStorage.getItem(TOKEN_KEY);
+    const code = member.customerCode || localStorage.getItem(CODE_KEY) || '';
+    if (token) {
+      const response = await fidApi.me(token);
+      applyMemberResponse(response);
+      return;
+    }
+    if (code) {
+      const response = await fidApi.lookupCode(code);
+      applyMemberResponse(response);
+    }
+  }, [sessionToken, member.customerCode, applyMemberResponse]);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      document.documentElement.lang = state.language;
-    } catch {
-      // Ignore storage quota issues in restricted preview environments
-    }
-  }, [state]);
+    document.documentElement.lang = language;
+    localStorage.setItem(LANGUAGE_KEY, language);
+  }, [language]);
 
-  const setLanguage = useCallback((language: Language) => {
-    setState((prev) => ({ ...prev, language }));
-  }, []);
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const configResponse = await fidApi.config();
+        const configuredRewards = mapRewards(configResponse.config);
+        if (active) setRewards(configuredRewards);
 
-  const updateMember = useCallback(
-    (patch: Partial<MemberProfile>) => {
-      setState((prev) => {
-        const nextFullName = patch.fullName ?? prev.member.fullName;
-        const firstName = nextFullName.trim().split(/\s+/)[0] || prev.member.firstName;
-        return {
-          ...prev,
-          member: {
-            ...prev.member,
-            ...patch,
-            firstName,
-          },
-        };
-      });
-    },
-    []
-  );
-
-  const simulateRedeemReward = useCallback((rewardId: string): string | null => {
-    const reward = REWARDS_CATALOG.find((r) => r.id === rewardId);
-    if (!reward) return null;
-
-    let generatedVoucher: string | null = null;
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const code = `LR-DEMO-${randomNum}`;
-
-    setState((prev) => {
-      if (prev.member.points < reward.pointsRequired) {
-        return prev;
+        const token = localStorage.getItem(TOKEN_KEY);
+        const savedCode = localStorage.getItem(CODE_KEY);
+        if (token) {
+          const response = await fidApi.me(token);
+          if (active) {
+            setSessionToken(token);
+            const nextMember = mapMember(response.customer || {}, configuredRewards);
+            setMember(nextMember);
+            setHistory(mapHistory(response));
+          }
+        } else if (savedCode) {
+          const response = await fidApi.lookupCode(savedCode);
+          if (active) {
+            setMember(mapMember(response.customer || {}, configuredRewards));
+            setHistory(mapHistory(response));
+          }
+        }
+      } catch (error) {
+        if (active) setApiError(error instanceof Error ? error.message : 'Não foi possível carregar seus dados.');
+      } finally {
+        if (active) setLoading(false);
       }
-      generatedVoucher = code;
-      const newPoints = prev.member.points - reward.pointsRequired;
-      const todayIso = new Date().toISOString().slice(0, 10);
-      const newEntry: HistoryEntry = {
-        id: `hist-demo-${Date.now()}`,
-        type: 'redeemed',
-        pointsDelta: -reward.pointsRequired,
-        dateIso: todayIso,
-        rewardId: reward.id,
-        descriptionKey: 'hist_demo_redemption_desc',
-        voucherCode: code,
-        branchName: prev.member.favoriteBranch.replace('La Ruedita — ', ''),
-      };
-      return {
-        ...prev,
-        member: {
-          ...prev.member,
-          points: newPoints,
-          redeemedPoints: prev.member.redeemedPoints + reward.pointsRequired,
-          nextRewardTarget: getNextTarget(newPoints),
-        },
-        history: [newEntry, ...prev.history],
-      };
-    });
-
-    return generatedVoucher ?? code;
+    })();
+    return () => { active = false; };
   }, []);
 
-  const registerDemoAccount = useCallback(
-    (payload: {
-      fullName: string;
-      phone: string;
-      birthDate: string;
-    }): MemberProfile => {
-      const cleanName = payload.fullName.trim();
-      const firstName = cleanName.split(/\s+/)[0] || cleanName;
-      const prefix = cleanName
-        .replace(/[^A-Za-z]/g, '')
-        .slice(0, 3)
-        .toUpperCase()
-        .padEnd(3, 'L');
-      const codeNum = Math.floor(1000 + Math.random() * 9000);
-      const todayIso = new Date().toISOString().slice(0, 10);
-      const ym = todayIso.slice(0, 7);
+  const setLanguage = useCallback((next: Language) => setLanguageState(next), []);
 
-      const newMember: MemberProfile = {
-        id: `member-demo-${Date.now()}`,
-        customerCode: `${prefix}${codeNum}`,
-        fullName: cleanName,
-        firstName,
-        email: '',
-        phone: payload.phone.trim(),
-        birthDate: payload.birthDate,
-        memberSince: ym,
-        avatarUrl: null,
-        points: 100,
-        lifetimePoints: 100,
-        redeemedPoints: 0,
-        nextRewardTarget: 300,
-        favoriteBranch: INITIAL_MEMBER.favoriteBranch,
-        whatsappOptIn: false,
-        notificationsPreviewEnabled: false,
-        isCustomDemoAccount: true,
-      };
+  const updateMember = useCallback((patch: Partial<MemberProfile>) => {
+    setMember((previous) => ({ ...previous, ...patch }));
+  }, []);
 
-      const welcomeEntry: HistoryEntry = {
-        id: `hist-welcome-${Date.now()}`,
-        type: 'earned',
-        pointsDelta: 100,
-        dateIso: todayIso,
-        titleKey: 'hist_new_member_title',
-        descriptionKey: 'hist_new_member_desc',
-        branchName: 'Club La Ruedita',
-      };
+  const registerDemoAccount = useCallback(async (payload: {
+    fullName: string;
+    phone: string;
+    birthDate: string;
+  }): Promise<MemberProfile> => {
+    setApiError('');
+    const preferences = getCookiePreferences();
+    const response = await fidApi.register({
+      name: payload.fullName.trim(),
+      phone: payload.phone,
+      birthday: payload.birthDate,
+      waConsent: preferences?.marketing === true,
+    });
+    if (!response.token) throw new Error('O cadastro foi criado, mas não recebemos a chave de acesso. Entre em contato com a loja.');
+    localStorage.setItem(TOKEN_KEY, response.token);
+    localStorage.setItem(CODE_KEY, String(response.customer?.code || ''));
+    setSessionToken(response.token);
+    const detail = await fidApi.me(response.token);
+    return applyMemberResponse(detail);
+  }, [applyMemberResponse]);
 
-      setState((prev) => ({
-        ...prev,
-        member: newMember,
-        history: [welcomeEntry],
+  const lookupByCode = useCallback(async (code: string) => {
+    setApiError('');
+    const cleanCode = code.trim().toUpperCase();
+    const response = await fidApi.lookupCode(cleanCode);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.setItem(CODE_KEY, cleanCode);
+    setSessionToken(null);
+    applyMemberResponse(response);
+    return response.customer;
+  }, [applyMemberResponse]);
+
+  const simulateRedeemReward = useCallback(async (rewardId: string): Promise<string | null> => {
+    if (!member.customerCode) return null;
+    const token = sessionToken || localStorage.getItem(TOKEN_KEY);
+    const response = token
+      ? await fidApi.claim(token, rewardId)
+      : await fidApi.claimByCode(member.customerCode, rewardId);
+    const code = String(response.redemption?.code || response.redemption?.voucher || '');
+    await refreshMember();
+    return code || null;
+  }, [member.customerCode, sessionToken, refreshMember]);
+
+  const updateMarketingPreference = useCallback(async (allowed: boolean) => {
+    const token = sessionToken || localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    const response = await fidApi.marketingPreference(token, allowed);
+    if (response.customer) {
+      setMember((previous) => ({
+        ...previous,
+        whatsappOptIn: Boolean(response.customer.marketingConsent),
       }));
-
-      return newMember;
-    },
-    []
-  );
+    }
+  }, [sessionToken]);
 
   const switchBackToMaria = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      member: INITIAL_MEMBER,
-      history: INITIAL_HISTORY,
-    }));
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(CODE_KEY);
+    setSessionToken(null);
+    setMember(EMPTY_MEMBER);
+    setHistory([]);
   }, []);
 
-  const resetDemoData = useCallback(() => {
-    setState((prev) => ({
-      language: prev.language,
-      member: INITIAL_MEMBER,
-      history: INITIAL_HISTORY,
-    }));
-  }, []);
+  const resetDemoData = switchBackToMaria;
 
   return {
-    language: state.language,
-    member: state.member,
-    history: state.history,
+    language,
+    member,
+    history,
+    rewards,
+    milestones: rewards.map((reward) => reward.pointsRequired).sort((a, b) => a - b),
+    sessionToken,
+    loading,
+    apiError,
+    hasMember: Boolean(member.customerCode),
     setLanguage,
     updateMember,
     simulateRedeemReward,
     registerDemoAccount,
+    lookupByCode,
+    refreshMember,
+    updateMarketingPreference,
     switchBackToMaria,
     resetDemoData,
   };
