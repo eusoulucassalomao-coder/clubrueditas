@@ -276,3 +276,8 @@ details p{margin:0 0 16px;font-size:14px;color:var(--muted)}
 .nav-assistant-btn .chat-fab-wave{font-size:27px;line-height:1;display:inline-block;transform-origin:70% 80%;animation:assistant-wave 1.8s ease-in-out infinite}
 .chat-head .chat-lang-toggle{margin-left:auto;margin-right:8px}
 @media(max-width:420px){.nav-assistant-btn{width:38px;height:38px}.nav-assistant-btn .chat-fab-wave{font-size:25px}.lang-toggle{min-width:48px;padding:7px 8px}}
+
+/* Ajustes finais do cabeçalho e do botão de instalação */
+.chat-head>div:first-child{display:flex;flex:1;flex-direction:column;line-height:1.25;min-width:0}
+.pwa-install-actions button:first-child{background:linear-gradient(180deg,#f0d27f,#c9a227);color:#14261a;box-shadow:0 8px 20px rgba(201,162,39,.24)}
+.nav-assistant-btn .chat-fab-wave{font-size:30px}
