@@ -19,7 +19,7 @@
     <nav class="nav-links" aria-label="Secciones">
       <a href="#como">Cómo funciona</a><a href="#premios">Premios</a><a href="#invita">Invitá</a><a href="#puntos">Mis puntos</a>
     </nav>
-    <div class="nav-tools"><button class="lang-toggle" id="langToggle" type="button" aria-label="Change language">English</button><button class="nav-assistant-btn" id="chatOpenTop" type="button">🤖 Asistente</button></div>
+    <div class="nav-tools"><label class="sr-only" for="langToggle">Idioma</label><select class="lang-toggle" id="langToggle" aria-label="Idioma"><option value="es">ES</option><option value="en">EN</option><option value="pt">PT</option></select><button class="nav-assistant-btn" id="chatOpenTop" type="button" aria-label="Abrir assistente"><span class="chat-fab-wave" aria-hidden="true">👋</span></button></div>
   </div>
 </header>
 
@@ -107,7 +107,7 @@
     <div class="head rv"><p class="eyebrow">Es hora</p><h2>Unite al club</h2><p class="sub">Tarda menos de un minuto.</p></div>
     <div class="assistant-callout" id="puntos">
       <p>¿Tenés dudas o querés sumarte? El asistente puede ayudarte con tus puntos, tus premios y tu ingreso al Club Ruedita.</p>
-      <button class="btn" id="chatOpenAction" type="button">🤖 Hablar con el asistente</button>
+      <button class="btn" id="chatOpenAction" type="button">Hablar con el asistente</button>
     </div>
   </div>
 </section>
@@ -162,12 +162,12 @@
 <div class="modal" id="modal" hidden><div class="modal-box" role="dialog" aria-modal="true"><button class="x" id="modalX" aria-label="Cerrar">&times;</button><div id="modalBody"></div></div></div>
 
 <aside class="club-chat" id="clubChat" aria-label="Asistente virtual del Club Ruedita" hidden>
-  <div class="chat-head"><div class="chat-avatar" aria-hidden="true">🤖</div><div><b>Asistente Club Ruedita</b><small>Consultas sobre el Club y tus puntos</small></div><button class="chat-lang-toggle" id="chatLangToggle" type="button">English</button><button class="chat-close" id="chatClose" type="button" aria-label="Cerrar asistente">&times;</button></div>
+  <div class="chat-head"><div><b>Asistente Club Ruedita</b><small>Consultas sobre el Club y tus puntos</small></div><label class="sr-only" for="chatLangToggle">Idioma</label><select class="chat-lang-toggle" id="chatLangToggle" aria-label="Idioma"><option value="es">ES</option><option value="en">EN</option><option value="pt">PT</option></select><button class="chat-close" id="chatClose" type="button" aria-label="Cerrar asistente">&times;</button></div>
   <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-relevant="additions"></div>
   <div class="chat-options" id="chatOptions"></div>
   <form class="chat-input-row" id="chatForm" hidden><input id="chatInput" aria-label="Sua resposta" autocomplete="off"><button class="btn" type="submit" aria-label="Enviar resposta">Enviar</button></form>
 </aside>
-<button class="chat-fab" id="clubChatLauncher" type="button" aria-controls="clubChat" aria-expanded="false"><span class="chat-fab-robot" aria-hidden="true">🤖</span><span>¡Hola! Estoy aquí para ayudarte</span><span class="chat-fab-wave" aria-hidden="true">👋</span></button>
+
 
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
