@@ -245,8 +245,8 @@
   }
   function afterBirthday(value){
     flow.data.birthday=value;
-    if(flow.data.ref)submitJoin(false);
-    else{flow.step="ref";ask(T("ref"),T("refPlaceholder"),[[T("noRef"),()=>{flow.data.ref="";submitJoin(false);}]]);}
+    if(flow.data.ref)askConsent();
+    else{flow.step="ref";ask(T("ref"),T("refPlaceholder"),[[T("noRef"),()=>{flow.data.ref="";askConsent();}]]);}
   }
   function askConsent(){flow.step="consent";submitJoin(false);}
   async function submitJoin(waConsent){
