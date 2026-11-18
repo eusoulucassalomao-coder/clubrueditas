@@ -82,8 +82,8 @@ async function registerCustomer(r, input) {
       birthdayDate.toISOString().slice(0, 10) !== birthday || birthday > isoNow().slice(0, 10)) {
     throw Object.assign(new Error("Ingresá tu fecha de nacimiento para recibir tu saludo y beneficio de cumpleaños"), { code: "birthday" });
   }
-  if (!input.consent || input.waConsent !== true) {
-    throw Object.assign(new Error("Para unirte al club necesitás aceptar las comunicaciones y el uso de tus datos informados en el alta"), { code: "consent" });
+  if (input.consent !== true) {
+    throw Object.assign(new Error("Necesitamos tu autorización para gestionar tu membresía y tus puntos"), { code: "consent" });
   }
   const data = await rpc("fid_register", {
     p_slug: r.slug,
@@ -94,11 +94,16 @@ async function registerCustomer(r, input) {
     p_consent: true
   });
   const now = isoNow();
+  let waConfirmedAt = null;
+  if (input.waConsent === true) {
+    const updated = await updateDocument("customers", data.id, { wa_confirmed_at: now, opted_out: false });
+    waConfirmedAt = updated.wa_confirmed_at || now;
+  }
   return {
     id: data.id, name: data.name, phone, code: data.code, birthday: data.birthday || birthday,
     points: data.points, lifetime: data.lifetime, visits: data.visits,
     last_visit: data.lastVisit || null, created_at: data.createdAt || now,
-    opted_out: !!data.optedOut, wa_confirmed_at: data.confirmed ? now : null,
+    opted_out: !!data.optedOut, wa_confirmed_at: waConfirmedAt,
     access_token: data.accessToken
   };
 }
@@ -386,6 +391,15 @@ module.exports = async function handler(req,res) {
       const c=await registerCustomer(r,body);
       if(action==="new_customer") return res.status(200).json({customer:{id:c.id,name:c.name,code:c.code}});
       return res.status(200).json({customer:publicCustomer(c),token:c.access_token});
+    }
+    if(action==="marketing_preference"){
+      const c=await customerByToken(r,body.token);
+      const allowed=body.allowed===true;
+      const patch=allowed
+        ? { wa_confirmed_at: c.wa_confirmed_at || isoNow(), opted_out: false }
+        : { opted_out: true };
+      const updated=await updateDocument("customers",c.id,patch);
+      return res.status(200).json({customer:publicCustomer(updated)});
     }
     if(action==="me"){
       const c=await customerByToken(r,body.token);
