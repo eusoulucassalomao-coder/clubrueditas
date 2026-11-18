@@ -522,7 +522,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       languageSectionDesc: 'Cambia el idioma de todos los textos, menús y asistente.',
       preferencesTitle: 'Preferencias y comunicaciones',
       whatsappTitle: 'Novedades por WhatsApp',
-      whatsappDesc: 'Recibir campañas y promociones del club por WhatsApp (opcional).',
+      whatsappDesc: 'La autorización de campañas y mensajes por WhatsApp se administra en las Preferencias de cookies.',
       notificationsTitle: 'Avisos de recompensas (próximamente)',
       notificationsDesc:
         'Preferencia visual preparada para futuras alertas. No solicita permisos reales.',
@@ -530,7 +530,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
         'Preferencia guardada. No se solicita permiso de notificaciones del navegador.',
       settingsTitle: 'Cuenta y aplicación',
       registerNewAccount: 'Probar flujo de registro',
-      registerNewAccountDesc: 'Crea una cuenta ficticia para probar el alta de nuevos socios.',
+      registerNewAccountDesc: 'Registra a otro miembro del Club.',
       switchToMaria: 'Volver al perfil de María Rodríguez (MAR4821)',
       switchToMariaDesc: 'Restaura la cuenta principal de demostración con 850 puntos.',
       resetDemoData: 'Restablecer datos de demostración',
@@ -613,7 +613,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
           title: 'Política de Privacidad',
           body: [
             'Valoramos tu privacidad y utilizamos tus datos únicamente para identificar tu membresía, calcular tus puntos y ofrecerte recompensas relevantes.',
-            'El envío de novedades por WhatsApp es completamente opcional y solo se activa si marcas expresamente la casilla correspondiente.',
+            'La autorización de campañas y mensajes por WhatsApp se administra en las Preferencias de cookies.',
             'Esta vista previa funciona de forma local en tu navegador y no transmite información personal a servidores externos.',
           ],
         },
@@ -900,7 +900,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       languageSectionDesc: 'Switch the language across all screens, menus, and assistant replies.',
       preferencesTitle: 'Preferences & communications',
       whatsappTitle: 'WhatsApp updates',
-      whatsappDesc: 'Receive club campaigns and promotions via WhatsApp (optional).',
+      whatsappDesc: 'WhatsApp campaign and message authorization is managed in Cookie Preferences.',
       notificationsTitle: 'Reward alerts (coming soon)',
       notificationsDesc:
         'Visual preference prepared for future alerts. Does not request real permissions.',
@@ -991,7 +991,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
           title: 'Privacy Policy',
           body: [
             'We respect your privacy and use member details solely to manage your membership, points balance, and tailored rewards.',
-            'WhatsApp promotional updates are strictly optional and only enabled when you explicitly check the opt-in box.',
+            'WhatsApp campaign and message authorization is managed in Cookie Preferences.',
             'This preview runs locally inside your browser and does not send personal data to external servers.',
           ],
         },
@@ -1278,15 +1278,15 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       languageSectionDesc: 'Altere o idioma de todos os menus, telas e respostas do assistente.',
       preferencesTitle: 'Preferências e comunicações',
       whatsappTitle: 'Novidades pelo WhatsApp',
-      whatsappDesc: 'Receber campanhas e promoções do clube pelo WhatsApp (opcional).',
+      whatsappDesc: 'A autorização de campanhas e mensagens pelo WhatsApp é gerenciada nas Preferências de cookies.',
       notificationsTitle: 'Alertas de recompensas (em breve)',
       notificationsDesc:
         'Preferência visual preparada para futuros alertas. Não solicita permissões reais.',
       notificationsPreviewNotice:
         'Preferência visual salva. Nenhuma permissão de notificação é solicitada.',
       settingsTitle: 'Conta e aplicativo',
-      registerNewAccount: 'Testar fluxo de cadastro',
-      registerNewAccountDesc: 'Crie uma conta fictícia para experimentar o cadastro de clientes.',
+      registerNewAccount: 'Cadastrar outra conta',
+      registerNewAccountDesc: 'Cadastre outro membro do Club.',
       switchToMaria: 'Voltar para María Rodríguez (MAR4821)',
       switchToMariaDesc: 'Restaura o perfil principal de demonstração com 850 pontos.',
       resetDemoData: 'Restaurar dados de demonstração',
@@ -1369,7 +1369,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
           title: 'Política de Privacidade',
           body: [
             'Respeitamos sua privacidade e usamos seus dados apenas para identificar sua conta, calcular pontos e oferecer benefícios relevantes.',
-            'O envio de campanhas pelo WhatsApp é sempre opcional e só é ativado quando você marca a caixa correspondente.',
+            'A autorização de campanhas e mensagens pelo WhatsApp é gerenciada nas Preferências de cookies.',
             'Seus dados são enviados com segurança ao sistema do Club para administrar sua conta.',
           ],
         },
