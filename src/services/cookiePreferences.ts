@@ -6,6 +6,7 @@ export interface CookiePreferences {
 }
 
 const COOKIE_KEY = 'club_la_ruedita_preferences';
+const LEGACY_COOKIE_KEY = 'clubruedita_cookie_consent_v1';
 
 function readCookie(): string | null {
   if (typeof document === 'undefined') return null;
@@ -15,7 +16,7 @@ function readCookie(): string | null {
 
 export function getCookiePreferences(): CookiePreferences | null {
   try {
-    const raw = readCookie() || localStorage.getItem(COOKIE_KEY);
+    const raw = readCookie() || localStorage.getItem(COOKIE_KEY) || localStorage.getItem(LEGACY_COOKIE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return {
