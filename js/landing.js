@@ -224,7 +224,7 @@
   function startJoin(){
     const inviteCode=new URLSearchParams(location.search).get("ref")||"";
     flow={type:"join",step:"name",data:{ref:inviteCode}};
-    ask(inviteCode?(LANG==="en"?"Hello! A friend invited you to join La Ruedita Club. What's your name?":"¡Hola! Llegaste por la invitación de un amigo para sumarte al Club Ruedita. ¿Cuál es tu nombre?"):T("name"),T("namePlaceholder"));
+    ask(inviteCode?(LANG==="en"?"A friend invited you to join La Ruedita Club. What is your name?":LANG==="pt"?"Um amigo convidou você para participar do Club La Ruedita. Qual é seu nome?":"¡Hola! Llegaste por la invitación de un amigo para sumarte al Club Ruedita. ¿Cuál es tu nombre?"):T("name"),T("namePlaceholder"));
   }
   function startLookup(){flow={type:"lookup",step:"code"};ask(T("code"),T("codePlaceholder"));}
   async function nextJoin(){
@@ -266,7 +266,7 @@
   }
   async function submitLookup(code){
     const memberCode=code.trim().toUpperCase();
-    addMessage(LANG==="en"?"Looking up your points…":"Estoy buscando tu saldo…");showOptions([]);chatForm.hidden=true;
+    addMessage(LANG==="en"?"Looking up your points…":LANG==="pt"?"Consultando seus pontos…":"Estoy buscando tu saldo…");showOptions([]);chatForm.hidden=true;
     try{
       const d=await F.lookupCode(memberCode);
       messages.replaceChildren();
@@ -338,7 +338,7 @@
     $("langToggle").value=LANG;$("chatLangToggle").value=LANG;
     set(".chat-head b",T("assistant"));set(".chat-head small",T("subtitle"));
     const close=$("chatClose");if(close)close.setAttribute("aria-label",en?"Close assistant":"Cerrar asistente");
-    const fab=$("clubChatLauncher");if(fab)fab.querySelector("span:nth-child(2)").textContent=en?"Hi! I'm here to help":"¡Hola! Estoy aquí para ayudarte";
+
   }
   function changeLanguage(event){
     LANG=event && event.target && event.target.value || "es";try{localStorage.setItem("clubruedita_lang",LANG);}catch(_){}
@@ -354,7 +354,7 @@
   let deferredInstallPrompt=null;
   const installBanner=$("pwaInstallBanner");
   function isStandalone(){return window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;}
-  function installHelp(){const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);addMessage(ios?"Para instalar: tocá en Compartir en Safari y elegí “Agregar a pantalla de inicio”.":"Para instalar: abrí el menú del navegador y elegí “Instalar aplicación” o “Agregar a pantalla de inicio”.");showOptions([[LANG==="en"?"Continue here":"Continuar por aquí",showMainOptions],[LANG==="en"?"Back":"Volver",welcome]]);}
+  function installHelp(){const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);const message=ios?(LANG==="pt"?"Para instalar: toque em Compartilhar no Safari e escolha “Adicionar à Tela de Início”.":LANG==="en"?"To install: tap Share in Safari and choose “Add to Home Screen”.":"Para instalar: tocá en Compartir en Safari y elegí “Agregar a pantalla de inicio”."):(LANG==="pt"?"Para instalar: abra o menu do navegador e escolha “Instalar aplicativo” ou “Adicionar à tela inicial”.":LANG==="en"?"To install: open the browser menu and choose “Install app” or “Add to Home Screen”.":"Para instalar: abrí el menú del navegador y elegí “Instalar aplicación” o “Agregar a pantalla de inicio”.");addMessage(message);showOptions([[T("continueHere"),showMainOptions],[LANG==="en"?"Back":LANG==="pt"?"Voltar":"Volver",welcome]]);}
   async function installClubApp(){if(deferredInstallPrompt){deferredInstallPrompt.prompt();const choice=await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;if(choice&&choice.outcome==="accepted"){if(installBanner)installBanner.hidden=true;addMessage("La instalación de la aplicación comenzó.");showMainOptions();return;}}installHelp();}
   window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstallPrompt=e;if(installBanner&&!isStandalone())installBanner.hidden=false;});
   window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;if(installBanner)installBanner.hidden=true;});
