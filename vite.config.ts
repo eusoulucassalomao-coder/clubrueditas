@@ -37,7 +37,7 @@ export default defineConfig({
           const from = path.join(root, item);
           if (fs.existsSync(from)) fs.cpSync(from, path.join(dist, item), { recursive: true, force: true });
         }
-        for (const file of ['caja.html', 'panel.html', 'survey.html', 'cookies.html', 'privacidad.html', 'manifest.json']) {
+        for (const file of ['caja.html', 'panel.html', 'survey.html', 'cookies.html', 'privacidad.html', 'landing.html', 'manifest.json']) {
           const from = path.join(root, file);
           if (fs.existsSync(from)) fs.copyFileSync(from, path.join(dist, file));
         }
