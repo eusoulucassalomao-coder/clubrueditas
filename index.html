@@ -13,54 +13,6 @@
 </head>
 <body>
 
-<div class="app-welcome-overlay" id="appWelcomeOverlay" role="dialog" aria-modal="true" aria-labelledby="appWelcomeTitle">
-  <div class="app-welcome-card">
-    <div class="app-welcome-brand">
-      <img src="/assets/club-logo.svg" alt="Club La Ruedita" class="app-welcome-logo">
-    </div>
-    <p class="app-welcome-eyebrow">CLUB LA RUEDITA · POSADAS</p>
-
-    <section id="appWelcomeChoice">
-      <h2 id="appWelcomeTitle">Tu club, siempre a mano</h2>
-      <p class="app-welcome-text">Elegí cómo querés ingresar. Podés instalar la aplicación para tener tus puntos y beneficios más cerca, o continuar directamente por el sitio.</p>
-
-      <div class="app-welcome-options">
-        <button type="button" class="app-welcome-option app-welcome-install" id="installNowBtn">
-          <span class="app-welcome-option-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M10 18.2h4M12 6v6m-2.5-2.5L12 12l2.5-2.5"/></svg>
-          </span>
-          <span class="app-welcome-option-copy"><strong>Instalar aplicación</strong><small>Accedé más rápido a tus puntos y premios.</small></span>
-          <span class="app-welcome-option-arrow" aria-hidden="true">›</span>
-        </button>
-
-        <button type="button" class="app-welcome-option app-welcome-continue" id="continueOnWebBtn">
-          <span class="app-welcome-option-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M3 12h17m-6-6 6 6-6 6"/></svg>
-          </span>
-          <span class="app-welcome-option-copy"><strong>Continuar por el sitio</strong><small>Entrá ahora sin instalar nada.</small></span>
-          <span class="app-welcome-option-arrow" aria-hidden="true">›</span>
-        </button>
-      </div>
-      <p class="app-welcome-note">La instalación es gratuita y opcional.</p>
-    </section>
-
-    <section class="app-welcome-guide" id="appWelcomeGuide" hidden>
-      <div class="app-welcome-guide-symbol" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M12 16V3m-5 5 5-5 5 5M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>
-      </div>
-      <h2 id="appWelcomeGuideTitle">Instalá Club La Ruedita</h2>
-      <p class="app-welcome-text" id="appWelcomeGuideText"></p>
-      <ol class="app-welcome-steps" id="appWelcomeSteps"></ol>
-      <div class="app-welcome-copy-wrap" id="appWelcomeCopyWrap" hidden>
-        <button type="button" class="app-welcome-copy" id="copyInstallLinkBtn">Copiar enlace del Club</button>
-      </div>
-      <button type="button" class="app-welcome-guide-continue" id="appWelcomeGuideContinue">Continuar por el sitio</button>
-      <button type="button" class="app-welcome-back" id="appWelcomeBackBtn">Volver</button>
-      <p class="app-welcome-note" id="appInstallNote">Seguí estos pasos para agregar el Club a tu pantalla de inicio.</p>
-    </section>
-  </div>
-</div>
-
 <header class="nav" id="nav">
   <div class="wrap nav-in">
     <a class="brand" href="#top"><img id="navLogo" alt=""><span><b id="navName"></b><small id="navClub"></small></span></a>
@@ -71,7 +23,7 @@
   </div>
 </header>
 
-
+<section class="pwa-install-banner" id="pwaInstallBanner" aria-label="Instalar aplicación" hidden><div class="pwa-install-copy"><b>¡Llevá Club La Ruedita en tu celular!</b><p>Instalá la app y tené tus puntos, premios y promociones siempre a mano.</p></div><div class="pwa-install-actions"><button type="button" id="pwaInstallBtn">Instalar ahora</button><button type="button" id="pwaInstallClose" aria-label="Cerrar">×</button></div></section>
 
 <!-- ATENCIÓN -->
 <section class="hero dark" id="top">
@@ -187,7 +139,7 @@
   <p class="copy">© <span id="yr"></span> <span id="copyName"></span> · Programa de fidelidad por MK Conecta</p>
 </footer>
 
-<section class="cookie-banner" id="cookieBanner" aria-label="Preferencias de privacidad" hidden>
+\n<section class="cookie-banner" id="cookieBanner" aria-label="Preferencias de privacidad" hidden>
   <div><b>Tu privacidad importa</b><p>Usamos cookies necesarias para que el Club funcione. Con tu permiso, también podremos usar cookies de análisis y marketing.</p></div>
   <div class="cookie-actions">
     <button type="button" class="cookie-btn cookie-secondary" id="cookieReject">Rechazar opcionales</button>
