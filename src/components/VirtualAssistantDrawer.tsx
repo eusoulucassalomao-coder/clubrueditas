@@ -166,10 +166,6 @@ export const VirtualAssistantDrawer: React.FC<VirtualAssistantDrawerProps> = ({
     } else if (type === 'open-register') {
       onClose();
       onOpenRegister();
-    } else if (type === 'lookup-sof') {
-      handleSend('SOF4821');
-    } else if (type === 'lookup-mar') {
-      handleSend('MAR4821');
     } else if (type === 'navigate-profile-previews') {
       onClose();
       onNavigate('profile');
