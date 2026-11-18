@@ -489,7 +489,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       voucherModalTitle: 'Detalle del canje',
       entries: {
         hist_morning_visit_title: 'Desayuno en barra',
-        hist_morning_visit_desc: 'Compra registrada con código MAR4821 · Casa Central',
+        hist_morning_visit_desc: 'Compra registrada en Casa Central',
         hist_redeem_coffee_title: 'Canje: Café de especialidad',
         hist_redeem_coffee_desc: 'Recompensa disfrutada en tienda · Vale LR-DEMO-3041',
         hist_weekend_brunch_title: 'Brunch de fin de semana',
@@ -527,7 +527,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       notificationsDesc:
         'Preferencia visual preparada para futuras alertas. No solicita permisos reales.',
       notificationsPreviewNotice:
-        'Preferencia visual guardada solo en modo demostración. No activa notificaciones reales.',
+        'Preferencia guardada. No se solicita permiso de notificaciones del navegador.',
       settingsTitle: 'Cuenta y aplicación',
       registerNewAccount: 'Probar flujo de registro',
       registerNewAccountDesc: 'Crea una cuenta ficticia para probar el alta de nuevos socios.',
@@ -571,7 +571,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
     },
     registration: {
       title: 'Únete a Club La Ruedita',
-      subtitle: 'Crea tu perfil de demostración en segundos y empieza a disfrutar beneficios.',
+      subtitle: 'Únete al Club y disfruta de beneficios en cada visita.',
       fullNameLabel: 'Nombre completo',
       fullNamePlaceholder: 'Ej. Lucía Fernández',
       emailLabel: 'Correo electrónico',
@@ -605,7 +605,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
           title: 'Términos de Uso',
           body: [
             'Club La Ruedita es un programa de fidelidad pensado para premiar tus visitas en nuestras cafeterías y panaderías.',
-            'En esta versión de demostración, todos los saldos, puntos y canjes son ficticios y no representan transacciones comerciales reales.',
+            'Los puntos y beneficios se administran desde el sistema del Club La Ruedita.',
             'Los beneficios estarán sujetos a disponibilidad en sucursal una vez activada la versión final del programa.',
           ],
         },
@@ -620,8 +620,8 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
         cookies: {
           title: 'Política de Cookies',
           body: [
-            'Utilizamos almacenamiento local esencial para recordar tu idioma preferido, tu sesión de demostración y permitir que la aplicación funcione incluso sin conexión.',
-            'No utilizamos cookies publicitarias de terceros en esta etapa de demostración.',
+            'Utilizamos almacenamiento esencial para recordar tu idioma, mantener tu sesión y permitir que la aplicación funcione sin conexión.',
+            'Las preferencias de marketing y comunicaciones por WhatsApp se administran en las preferencias de cookies.',
           ],
         },
       },
@@ -651,7 +651,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       replyInstallGuide:
         'Puedes instalar Club La Ruedita en segundos:\n• En Android: toca el botón amarillo «Instalar aplicación» o usa el menú de Chrome.\n• En iPhone: abre en Safari y toca Compartir → Añadir a pantalla de inicio → Añadir.\n\nTambién puedes ver la vista previa visual de cada pantalla en tu Perfil.',
       replyFallback:
-        '¡Con gusto te ayudo! Puedes escribir un código de demostración como MAR4821 o SOF4821 para consultar puntos, preguntarme sobre beneficios disponibles o probar el flujo de registro.',
+        '¡Con gusto te ayudo! Escribe tu código de socio para consultar tus puntos, pregunta por los beneficios o abre el formulario de registro.',
       actionViewRewards: 'Ir a Beneficios',
       actionOpenRegister: 'Abrir formulario de registro',
       actionTrySof: 'Ver benefícios',
@@ -748,7 +748,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       featuredRewardsSub: 'Redeem your points for handcrafted café & bakery treats.',
       recentActivityTitle: 'Recent activity',
       recentActivitySub: 'Your latest club movements.',
-      noRecentActivity: 'No activity recorded in this demo session yet.',
+      noRecentActivity: 'Todavía no hay movimientos registrados en tu cuenta.',
     },
     points: {
       title: 'Your points',
@@ -867,7 +867,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       voucherModalTitle: 'Redemption details',
       entries: {
         hist_morning_visit_title: 'Morning counter visit',
-        hist_morning_visit_desc: 'Visit logged with code MAR4821 · Casa Central',
+        hist_morning_visit_desc: 'Visit logged at Casa Central',
         hist_redeem_coffee_title: 'Redeemed: Specialty coffee',
         hist_redeem_coffee_desc: 'In-store reward enjoyed · Voucher LR-DEMO-3041',
         hist_weekend_brunch_title: 'Weekend brunch table',
@@ -905,7 +905,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       notificationsDesc:
         'Visual preference prepared for future alerts. Does not request real permissions.',
       notificationsPreviewNotice:
-        'Visual preference saved in demo mode only. No real push permission is requested.',
+        'Preference saved. No browser notification permission is requested.',
       settingsTitle: 'Account & app settings',
       registerNewAccount: 'Try sign-up flow',
       registerNewAccountDesc: 'Create a fictional account to preview the member registration flow.',
@@ -949,7 +949,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
     },
     registration: {
       title: 'Join Club La Ruedita',
-      subtitle: 'Create your demo profile in seconds and explore member perks.',
+      subtitle: 'Join the Club and enjoy rewards with every visit.',
       fullNameLabel: 'Full name',
       fullNamePlaceholder: 'e.g. Clara Bennett',
       emailLabel: 'Email address',
@@ -998,7 +998,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
         cookies: {
           title: 'Cookie Policy',
           body: [
-            'We use essential local storage to remember your selected language, keep your demo state, and support offline access.',
+            'We use essential storage to remember your language, maintain your session, and support offline access.',
             'No third-party advertising cookies are used in this preview.',
           ],
         },
@@ -1029,7 +1029,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       replyInstallGuide:
         'You can install Club La Ruedita in seconds:\n• On Android: tap the yellow "Install app" button or Chrome’s menu.\n• On iPhone: open in Safari and tap Share → Add to Home Screen → Add.\n\nYou can also explore interactive device previews inside your Profile.',
       replyFallback:
-        'Happy to help! You can type a sample member code like MAR4821 or SOF4821 to check points, ask about available benefits, or try the registration flow.',
+        'I can help you check your points with your member code, explore rewards, or open the registration form.',
       actionViewRewards: 'Browse Rewards',
       actionOpenRegister: 'Open sign-up form',
       actionTrySof: 'Check SOF4821',
@@ -1155,7 +1155,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
     },
     rewards: {
       title: 'Benefícios e recompensas',
-      subtitle: 'Explore o catálogo de recompensas e simule um resgate demonstrativo.',
+      subtitle: 'Explore o catálogo e resgate seus benefícios.',
       yourBalance: 'Seu saldo',
       filterAll: 'Todos',
       filterAvailable: 'Disponíveis',
@@ -1245,7 +1245,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       voucherModalTitle: 'Detalhes do resgate',
       entries: {
         hist_morning_visit_title: 'Café da manhã no balcão',
-        hist_morning_visit_desc: 'Visita registrada com código MAR4821 · Casa Central',
+        hist_morning_visit_desc: 'Visita registrada na Casa Central',
         hist_redeem_coffee_title: 'Resgate: Café especial artesanal',
         hist_redeem_coffee_desc: 'Recompensa utilizada na loja · Vale LR-DEMO-3041',
         hist_weekend_brunch_title: 'Brunch de fim de semana',
@@ -1283,7 +1283,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       notificationsDesc:
         'Preferência visual preparada para futuros alertas. Não solicita permissões reais.',
       notificationsPreviewNotice:
-        'Preferência visual salva apenas no modo demonstração. Nenhuma permissão real é solicitada.',
+        'Preferência visual salva. Nenhuma permissão de notificação é solicitada.',
       settingsTitle: 'Conta e aplicativo',
       registerNewAccount: 'Testar fluxo de cadastro',
       registerNewAccountDesc: 'Crie uma conta fictícia para experimentar o cadastro de clientes.',
@@ -1327,7 +1327,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
     },
     registration: {
       title: 'Entre para o Club La Ruedita',
-      subtitle: 'Crie sua conta demonstrativa em segundos e descubra os benefícios.',
+      subtitle: 'Entre para o Club e aproveite benefícios a cada visita.',
       fullNameLabel: 'Nome completo',
       fullNamePlaceholder: 'Ex. Beatriz Almeida',
       emailLabel: 'E-mail',
@@ -1370,7 +1370,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
           body: [
             'Respeitamos sua privacidade e usamos seus dados apenas para identificar sua conta, calcular pontos e oferecer benefícios relevantes.',
             'O envio de campanhas pelo WhatsApp é sempre opcional e só é ativado quando você marca a caixa correspondente.',
-            'Esta demonstração funciona localmente no seu navegador e não envia dados pessoais para servidores externos.',
+            'Seus dados são enviados com segurança ao sistema do Club para administrar sua conta.',
           ],
         },
         cookies: {
@@ -1407,7 +1407,7 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       replyInstallGuide:
         'Você pode instalar o Club La Ruedita em instantes:\n• No Android: toque no botão amarelo "Instalar aplicativo" ou no menu do Chrome.\n• No iPhone: abra no Safari e toque em Compartilhar → Adicionar à Tela de Início → Adicionar.\n\nVocê também pode explorar a pré-visualização das telas no seu Perfil.',
       replyFallback:
-        'Será um prazer ajudar! Você pode digitar um código de teste como MAR4821 ou SOF4821 para consultar pontos, perguntar sobre benefícios disponíveis ou experimentar o cadastro.',
+        'Posso ajudar a consultar seus pontos com seu código de sócio, mostrar os benefícios ou abrir o formulário de cadastro.',
       actionViewRewards: 'Ir para Benefícios',
       actionOpenRegister: 'Abrir formulário de cadastro',
       actionTrySof: 'Consultar SOF4821',
