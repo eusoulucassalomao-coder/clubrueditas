@@ -29,8 +29,6 @@ interface ProfileScreenProps {
   onChangeLanguage: (lang: Language) => void;
   onUpdateMember: (patch: Partial<MemberProfile>) => void;
   onOpenRegister: () => void;
-  onSwitchToMaria: () => void;
-  onResetDemoData: () => void;
   onInstallPwa: () => void;
 }
 
@@ -42,8 +40,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onChangeLanguage,
   onUpdateMember,
   onOpenRegister,
-  onSwitchToMaria,
-  onResetDemoData,
   onInstallPwa,
 }) => {
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -128,14 +124,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={openEditModal}
-          className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-[#4A5D3F] hover:bg-[#38492F] text-[#FAF7F0] text-sm font-semibold inline-flex items-center gap-2 transition-colors whitespace-nowrap"
-        >
-          <Edit3 className="w-4 h-4" />
-          <span>{t.profile.editProfileBtn}</span>
-        </button>
+
       </div>
 
       {/* Inline Feedback Toast */}
@@ -189,10 +178,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         <dl className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div>
             <dt className="text-xs font-medium text-[#5A6353]">
-              {t.profile.emailLabel}
+              Teléfono
             </dt>
             <dd className="mt-1 text-sm font-semibold text-[#293622] break-all">
-              {member.email}
+              {member.phone}
             </dd>
           </div>
           <div>
@@ -287,37 +276,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </select>
             </div>
 
-            {/* Optional WhatsApp Opt-In Toggle */}
-            <div className="flex items-start justify-between gap-4 py-2">
-              <div className="flex items-start gap-3">
-                <MessageCircle className="w-5 h-5 text-[#4A5D3F] shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-semibold text-[#293622]">
-                    {t.profile.whatsappTitle}
-                  </p>
-                  <p className="text-xs text-[#5A6353] mt-0.5 leading-snug">
-                    {t.profile.whatsappDesc}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={member.whatsappOptIn}
-                onClick={() =>
-                  onUpdateMember({ whatsappOptIn: !member.whatsappOptIn })
-                }
-                className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4A5D3F] ${
-                  member.whatsappOptIn ? 'bg-[#4A5D3F]' : 'bg-[#D8CEB8]'
-                }`}
-              >
-                <span
-                  className={`inline-block h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
-                    member.whatsappOptIn ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
+            <p className="text-xs text-[#6B7365]">
+              La autorización de campañas y mensajes por WhatsApp se administra en las Preferencias de cookies.
+            </p>
 
             {/* Future Notifications Visual Toggle (Simulated — No Browser Permission) */}
             <div className="flex items-start justify-between gap-4 py-2">
@@ -410,54 +371,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 </div>
               </button>
 
-              {/* Switch Back to Maria if on custom demo account */}
-              {member.isCustomDemoAccount && (
-                <button
-                  type="button"
-                  onClick={onSwitchToMaria}
-                  className="w-full py-4 flex items-center justify-between gap-4 text-left hover:opacity-85 transition-opacity"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#FEF7DC] text-[#8C6413] flex items-center justify-center shrink-0">
-                      <UserCheck className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[#293622]">
-                        {t.profile.switchToMaria}
-                      </p>
-                      <p className="text-xs text-[#5A6353] mt-0.5">
-                        {t.profile.switchToMariaDesc}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              )}
-
-              {/* Reset Demo Data */}
-              <button
-                type="button"
-                onClick={handleResetDemo}
-                className="w-full py-4 last:pb-1 flex items-center justify-between gap-4 text-left hover:opacity-85 transition-opacity"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FAF7F0] border border-[#E7DFCC] text-[#5A6353] flex items-center justify-center shrink-0">
-                    <RotateCcw className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#293622]">
-                      {t.profile.resetDemoData}
-                    </p>
-                    <p className="text-xs text-[#5A6353] mt-0.5">
-                      {t.profile.resetDemoDataDesc}
-                    </p>
-                  </div>
-                </div>
-              </button>
             </div>
           </div>
 
           <p className="mt-6 pt-4 border-t border-[#F0E9D8] text-xs text-[#6B7365]">
-            {t.common.demoNote}
+            Tus datos y puntos se consultan desde el sistema del Club La Ruedita.
           </p>
         </section>
       </div>
