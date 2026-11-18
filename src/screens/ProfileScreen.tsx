@@ -246,7 +246,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </h3>
 
             <p className="text-xs text-[#6B7365]">
-              La autorización de campañas y mensajes por WhatsApp se administra en las Preferencias de cookies.
+              {t.profile.whatsappDesc}
             </p>
 
             {/* Future Notifications Visual Toggle (Simulated — No Browser Permission) */}
