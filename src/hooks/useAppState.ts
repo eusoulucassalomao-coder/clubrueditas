@@ -100,7 +100,7 @@ function mapMember(customer: any, rewards: RewardDefinition[]): MemberProfile {
     lifetimePoints: lifetime,
     redeemedPoints: Math.max(0, lifetime - points),
     nextRewardTarget: getNextTarget(points, rewards),
-    whatsappOptIn: Boolean(customer.marketingConsent || customer.confirmed),
+    whatsappOptIn: Boolean(customer.marketingConsent),
   };
 }
 
