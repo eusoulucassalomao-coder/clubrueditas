@@ -52,7 +52,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     if (fullName.trim().length < 2) {
       nextErrors.fullName = t.registration.errorNameRequired;
     }
-    if (phone.replace(/\\D/g, '').length < 8) {
+    if (phone.replace(/\D/g, '').length < 8) {
       nextErrors.phone = t.registration.errorPhoneInvalid;
     }
     if (!birthDate) {
