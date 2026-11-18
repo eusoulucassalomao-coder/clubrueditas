@@ -241,17 +241,16 @@
       flow.step="birthday";ask(T("birthday"),"YYYY-MM-DD");chatInput.type="date";
     }
     else if(flow.step==="birthday"){afterBirthday(flow.value);}
-    else if(flow.step==="ref"){d.ref=flow.value.toUpperCase();askConsent();}
+    else if(flow.step==="ref"){d.ref=flow.value.toUpperCase();submitJoin();}
   }
   function afterBirthday(value){
     flow.data.birthday=value;
-    if(flow.data.ref)askConsent();
-    else{flow.step="ref";ask(T("ref"),T("refPlaceholder"),[[T("noRef"),()=>{flow.data.ref="";askConsent();}]]);}
+    if(flow.data.ref)submitJoin();
+    else{flow.step="ref";ask(T("ref"),T("refPlaceholder"),[[T("noRef"),()=>{flow.data.ref="";submitJoin();}]]);}
   }
-  function askConsent(){flow.step="consent";submitJoin(false);}
-  async function submitJoin(waConsent){
-    if(!flow||flow.step!=="consent")return;
-    flow.data.consent=true;flow.data.waConsent=false;showOptions([]);addMessage(T("saving"));
+  async function submitJoin(){
+    if(!flow||flow.type!=="join")return;
+    showOptions([]);addMessage(T("saving"));
     try{
       const r=await F.register(flow.data);setToken(r.token);let d;
       try{d=await F.me(r.token);}catch{
@@ -289,13 +288,12 @@
   }
   chatForm.addEventListener("submit",e=>{e.preventDefault();submitAnswer(chatInput.value);});
   $("chatClose").onclick=()=>setChat(false);
-  const openChatButtons=["chatOpenFloating","chatOpenAction"];
+  const openChatButtons=["chatOpenFloating"];
   openChatButtons.forEach(id=>{const b=$(id);if(b)b.onclick=()=>setChat(true);});
   function translatePage(){
     const en=LANG==="en";
     document.documentElement.lang=LANG==="pt"?"pt-BR":LANG;
     const set=(selector,value)=>{const el=document.querySelector(selector);if(el)el.textContent=value;};
-    set("#chatOpenAction",en?"Talk to the assistant":LANG==="pt"?"Falar com o assistente":"Hablar con el asistente");
     set("#navClub",en?"Loyalty Club":LANG==="pt"?"Clube de fidelidade":"Club de clientes");
     set("#pwaInstallBanner b",en?"Take Club La Ruedita with you!":LANG==="pt"?"Leve o Club La Ruedita no seu celular!":"¡Llevá Club La Ruedita en tu celular!");
     set("#pwaInstallBanner p",en?"Install the app and keep your points, rewards and offers close at hand.":LANG==="pt"?"Instale o app e tenha seus pontos, prêmios e promoções sempre à mão.":"Instalá la app y tené tus puntos, premios y promociones siempre a mano.");
@@ -330,7 +328,7 @@
         ".hero-cta .btn:first-child":"Quero meus pontos",".hero-cta .btn-ghost":"Já faço parte do clube",".trust li:nth-child(1)":"Grátis",".trust li:nth-child(2)":"Sem precisar baixar nada",".trust li:nth-child(3)":"Prêmios de verdade",
         "#como .eyebrow":"Como funciona","#como h2":"É muito simples","#como .sub":"Três passos. Só isso.","#como .step:nth-child(1) h3":"Cadastre-se","#como .step:nth-child(1) p":"Informe seu nome, celular e data de nascimento. Ganhe pontos de boas-vindas e benefício de aniversário.","#como .step:nth-child(2) h3":"Ganhe pontos","#como .step:nth-child(3) h3":"Troque por prêmios","#como .step:nth-child(3) p":"Escolha seu presente e apresente o código no caixa.",
         "#premios .eyebrow":"Prêmios","#premios h2":"Presentes para aproveitar","#premios .sub":"Quanto mais você vem, mais você aproveita.","#invita .eyebrow":"Indique e ganhe","#invita h2":"Seu amigo vem. Os dois ganham.","#invita .sub":"Compartilhe seu código. Quando seu amigo nos visitar pela primeira vez, vocês dois ganham pontos.",
-        "#unirme .eyebrow":"Está na hora","#unirme h2":"Faça parte do clube","#unirme .sub":"Leva menos de um minuto.","#puntos p":"Tem dúvidas ou quer participar? O assistente pode ajudar com seus pontos, prêmios e cadastro.","#chatOpenAction":"Falar com o assistente",
+        "#unirme .eyebrow":"Está na hora","#unirme h2":"Faça parte do clube","#unirme .sub":"Leva menos de um minuto.","#puntos p":"Tem dúvidas ou quer participar? O assistente pode ajudar com seus pontos, prêmios e cadastro.",
         "#faq .eyebrow":"Dúvidas","#faq h2":"Perguntas frequentes","#faq details:nth-of-type(1) summary":"Quanto custa?","#faq details:nth-of-type(1) p":"Nada. O clube é gratuito.","#faq details:nth-of-type(2) summary":"Preciso baixar um aplicativo?","#faq details:nth-of-type(2) p":"Você pode usar o site ou instalar o aplicativo do Clube no celular.","#faq details:nth-of-type(4) summary":"Como resgato um prêmio?","#faq details:nth-of-type(4) p":"Acesse “Meus pontos”, escolha o prêmio e apresente o código no caixa.","#faq details:nth-of-type(5) summary":"Os pontos vencem?","#faq details:nth-of-type(5) p":"Sim: após "+Number(CF.expireMonths||12)+" meses, conforme as regras do Clube.","#faq details:nth-of-type(6) summary":"Como meus dados são utilizados?","#cookiePreferences":"Preferências de cookies",
         "#cookieBanner b":"Sua privacidade importa","#cookieBanner p":"Usamos cookies necessários para o funcionamento do Clube. Com sua permissão, também poderemos usar cookies de análise e marketing.","#cookieReject":"Recusar opcionais","#cookieCustomize":"Personalizar","#cookieAccept":"Aceitar todos",
         "#pwaInstallBanner b":"Leve o Club La Ruedita no seu celular!","#pwaInstallBanner p":"Instale o app e tenha seus pontos, prêmios e promoções sempre à mão.","#pwaInstallBtn":"Instalar agora"
