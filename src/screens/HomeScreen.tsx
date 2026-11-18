@@ -8,7 +8,6 @@ import {
   UserPlus,
   X,
 } from 'lucide-react';
-import { REWARDS_CATALOG } from '../data/demoData';
 import {
   formatDate,
   formatNumber,
@@ -28,6 +27,7 @@ import { SafeImage } from '../components/SafeImage';
 interface HomeScreenProps {
   member: MemberProfile;
   history: HistoryEntry[];
+  rewards: RewardDefinition[];
   language: Language;
   t: TranslationDictionary;
   isInstalled: boolean;
@@ -42,6 +42,7 @@ interface HomeScreenProps {
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   member,
   history,
+  rewards,
   language,
   t,
   isInstalled,
@@ -54,7 +55,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 }) => {
   const [desktopBannerHidden, setDesktopBannerHidden] = useState(false);
 
-  const featuredRewards = REWARDS_CATALOG.filter((r) => r.featured).slice(0, 3);
+  const featuredRewards = rewards.filter((r) => r.featured).slice(0, 3);
   const recentHistory = history.slice(0, 3);
 
   const progressPct = Math.min(
@@ -287,7 +288,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {featuredRewards.map((reward) => {
-            const copy = t.rewards.items[reward.id];
+            const copy = t.rewards.items[reward.id] ?? { title: reward.title || reward.id, shortDesc: reward.shortDesc || '', fullDesc: reward.fullDesc || '' };
             const unlocked = member.points >= reward.pointsRequired;
             const missing = reward.pointsRequired - member.points;
 
