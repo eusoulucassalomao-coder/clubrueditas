@@ -100,11 +100,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     showFeedback(t.profile.notificationsPreviewNotice);
   };
 
-  const handleResetDemo = () => {
-    onResetDemoData();
-    showFeedback(t.profile.resetDoneToast);
-  };
-
   const initials = member.fullName
     .split(/\s+/)
     .slice(0, 2)
