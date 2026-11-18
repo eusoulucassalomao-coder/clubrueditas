@@ -88,7 +88,8 @@ export const VirtualAssistantDrawer: React.FC<VirtualAssistantDrawerProps> = ({
     }
 
     if (lower.includes('puntos') || lower.includes('points') || lower.includes('saldo') || lower.includes('mis puntos')) {
-      return { text: t.assistant.replyCodeNotFound.replace('{code}', 'tu código de socio') };
+      const prompt = language === 'pt' ? 'Digite seu código de sócio para consultar seus pontos.' : language === 'en' ? 'Enter your member code to check your points.' : 'Escribe tu código de socio para consultar tus puntos.';
+      return { text: prompt };
     }
 
     if (lower.includes('instal') || lower.includes('app') || lower.includes('iphone') || lower.includes('safari') || lower.includes('android') || lower.includes('pwa')) {
@@ -124,7 +125,7 @@ export const VirtualAssistantDrawer: React.FC<VirtualAssistantDrawerProps> = ({
         const points = Number(customer.points || 0);
         const nextTarget = rewards.map((item) => item.pointsRequired).filter((value) => value > points).sort((a, b) => a - b)[0] || points;
         reply = {
-          text: formatTemplate(points >= nextTarget ? t.assistant.replyPointsUnlocked : t.assistant.replyPointsFound, {
+          text: formatTemplate(t.assistant.replyPointsFound, {
             name: String(customer.name || ''),
             code: String(customer.code || codeMatch[0]),
             points: formatNumber(points, language),
