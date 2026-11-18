@@ -298,7 +298,10 @@
     document.documentElement.lang=LANG==="pt"?"pt-BR":LANG;
     const set=(selector,value)=>{const el=document.querySelector(selector);if(el)el.textContent=value;};
     set("#chatOpenAction",en?"Talk to the assistant":LANG==="pt"?"Falar com o assistente":"Hablar con el asistente");
-    set("#navClub",en?"Loyalty Club":"Club de clientes");
+    set("#navClub",en?"Loyalty Club":LANG==="pt"?"Clube de fidelidade":"Club de clientes");
+    set("#pwaInstallBanner b",en?"Take Club La Ruedita with you!":LANG==="pt"?"Leve o Club La Ruedita no seu celular!":"¡Llevá Club La Ruedita en tu celular!");
+    set("#pwaInstallBanner p",en?"Install the app and keep your points, rewards and offers close at hand.":LANG==="pt"?"Instale o app e tenha seus pontos, prêmios e promoções sempre à mão.":"Instalá la app y tené tus puntos, premios y promociones siempre a mano.");
+    set("#pwaInstallBtn",en?"Install now":LANG==="pt"?"Instalar agora":"Instalar ahora");
     const pairs=[
       [".nav-links a:nth-child(1)","How it works","Cómo funciona"],[".nav-links a:nth-child(2)","Rewards","Premios"],[".nav-links a:nth-child(3)","Invite friends","Invitá"],[".nav-links a:nth-child(4)","My points","Mis puntos"],
       [".hero-copy .eyebrow","Customer club · Free","Club de clientes · Gratis"],[".hero-copy h1","Every visit brings you closer to your next reward","Cada visita te acerca a tu próximo premio"],
@@ -339,7 +342,8 @@
     }
     $("langToggle").value=LANG;$("chatLangToggle").value=LANG;
     set(".chat-head b",T("assistant"));set(".chat-head small",T("subtitle"));
-    const close=$("chatClose");if(close)close.setAttribute("aria-label",en?"Close assistant":"Cerrar asistente");
+    const close=$("chatClose");if(close)close.setAttribute("aria-label",en?"Close assistant":LANG==="pt"?"Fechar assistente":"Cerrar asistente");
+    $("chatOpenTop").setAttribute("aria-label",en?"Open assistant":LANG==="pt"?"Abrir assistente":"Abrir asistente");
 
   }
   function changeLanguage(event){
