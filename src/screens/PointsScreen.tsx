@@ -14,6 +14,7 @@ interface PointsScreenProps {
   milestones: number[];
   language: Language;
   t: TranslationDictionary;
+  onRefresh: () => Promise<void>;
 }
 
 type PointsFilter = 'all' | 'earned' | 'used';
@@ -24,6 +25,7 @@ export const PointsScreen: React.FC<PointsScreenProps> = ({
   milestones,
   language,
   t,
+  onRefresh,
 }) => {
   const [filter, setFilter] = useState<PointsFilter>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -40,9 +42,13 @@ export const PointsScreen: React.FC<PointsScreenProps> = ({
     return true;
   });
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    window.setTimeout(() => setIsRefreshing(false), 450);
+    try {
+      await onRefresh();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const resolveTitle = (entry: HistoryEntry) => {
