@@ -14,7 +14,7 @@ export default defineConfig({
       manifest: {
         id: '/',
         name: 'Club La Ruedita',
-        short_name: 'La Ruedita',
+        short_name: 'Club La Ruedita',
         description: 'Programa de fidelidad digital de Club La Ruedita.',
         theme_color: '#4A5D3F',
         background_color: '#FAF7F0',
@@ -23,7 +23,9 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         lang: 'es',
-        icons: [{ src: '/assets/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
+        icons: [
+          { src: '/assets/club-la-ruedita.webp', sizes: '512x512', type: 'image/webp', purpose: 'any maskable' }
+        ]
       },
       workbox: { globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}'], cleanupOutdatedCaches: true }
     }),
