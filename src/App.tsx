@@ -184,7 +184,7 @@ export default function App() {
                   <button onClick={() => setRegisterOpen(true)} className="mt-5 min-h-11 rounded-xl bg-[#4A5D3F] px-5 text-sm font-semibold text-white">Crear cuenta</button>
                 </section>
               )
-            )}}
+            )}
           </motion.div>
         </AnimatePresence>
       </Layout>
