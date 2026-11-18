@@ -49,6 +49,9 @@ export interface RewardDefinition {
   imageUrl: string;
   featured: boolean;
   codePrefix: string;
+  title?: string;
+  shortDesc?: string;
+  fullDesc?: string;
 }
 
 export interface HistoryEntry {
