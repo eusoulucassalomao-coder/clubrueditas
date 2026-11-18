@@ -411,9 +411,13 @@ module.exports = async function handler(req,res) {
     }
     if(action==="lookup_code"){
       const c=await customerByCode(r,body.code);
-      const redemptions=await many("redemptions",[queryEqual("customer_id",c.id),queryOrderDesc("created_at")],10);
+      const [redemptions,history]=await Promise.all([
+        many("redemptions",[queryEqual("customer_id",c.id),queryOrderDesc("created_at")],10),
+        many("ledger",[queryEqual("customer_id",c.id),queryOrderDesc("created_at")],20)
+      ]);
       return res.status(200).json({
         customer:{name:c.name,code:c.code,points:c.points},
+        history:history.map(x=>({points:x.points,type:x.type,note:x.note,created_at:x.created_at})),
         redemptions:redemptions.map(x=>({name:x.name,points:x.points,code:x.code,status:x.status,created_at:x.created_at}))
       });
     }
