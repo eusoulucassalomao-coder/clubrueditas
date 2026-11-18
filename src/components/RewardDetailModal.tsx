@@ -14,7 +14,7 @@ interface RewardDetailModalProps {
   language: Language;
   t: TranslationDictionary;
   onClose: () => void;
-  onConfirmRedeem: (rewardId: string) => string | null;
+  onConfirmRedeem: (rewardId: string) => Promise<string | null>;
 }
 
 export const RewardDetailModal: React.FC<RewardDetailModalProps> = ({
@@ -32,22 +32,25 @@ export const RewardDetailModal: React.FC<RewardDetailModalProps> = ({
   if (!reward) return null;
 
   const itemCopy = t.rewards.items[reward.id] ?? {
-    title: reward.id,
-    shortDesc: '',
-    fullDesc: '',
+    title: reward.title || reward.id,
+    shortDesc: reward.shortDesc || '',
+    fullDesc: reward.fullDesc || '',
   };
   const canRedeem = currentPoints >= reward.pointsRequired;
   const missing = Math.max(0, reward.pointsRequired - currentPoints);
   const remainingAfter = Math.max(0, currentPoints - reward.pointsRequired);
 
-  const handleSimulateRedeem = () => {
+  const handleSimulateRedeem = async () => {
     if (!canRedeem || isRedeeming) return;
     setIsRedeeming(true);
-    window.setTimeout(() => {
-      const code = onConfirmRedeem(reward.id);
+    try {
+      const code = await onConfirmRedeem(reward.id);
       setVoucherCode(code);
+    } catch {
+      setVoucherCode(null);
+    } finally {
       setIsRedeeming(false);
-    }, 550);
+    }
   };
 
   const handleCopyVoucher = async () => {
