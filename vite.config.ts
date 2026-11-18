@@ -24,7 +24,7 @@ export default defineConfig({
         scope: '/',
         lang: 'es',
         icons: [
-          { src: '/assets/club-la-ruedita.webp', sizes: '512x512', type: 'image/webp', purpose: 'any maskable' }
+          { src: '/assets/club-logo.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }
         ]
       },
       workbox: { globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}'], cleanupOutdatedCaches: true }
