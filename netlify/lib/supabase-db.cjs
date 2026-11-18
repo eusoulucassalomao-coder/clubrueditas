@@ -1,4 +1,4 @@
-const { supabase } = require("./supabase");
+const { supabase } = require("./supabase.cjs");
 
 function queryEqual(field, value) {
   return { type: "eq", field, value };
