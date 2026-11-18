@@ -5,7 +5,7 @@ interface BrandLogoProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-const LOGO_SRC = '/assets/aistudio/image_65c7880b.png';
+const LOGO_SRC = '/assets/club-la-ruedita.webp';
 
 export const BrandLogo: React.FC<BrandLogoProps> = ({
   variant = 'default',
@@ -28,24 +28,16 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     <img
       src={LOGO_SRC}
       alt="Club La Ruedita"
-      className={`${iconDimensions} rounded-full object-contain shrink-0 select-none ${
-        variant === 'inverted' ? 'shadow-sm ring-1 ring-[#FAF7F0]/30' : ''
-      }`}
+      className={`${iconDimensions} rounded-full object-contain shrink-0 select-none ${variant === 'inverted' ? 'shadow-sm ring-1 ring-[#FAF7F0]/30' : ''}`}
     />
   );
 
-  if (variant === 'icon-only') {
-    return emblem;
-  }
+  if (variant === 'icon-only') return emblem;
 
   return (
     <span className="inline-flex items-center gap-2.5 whitespace-nowrap shrink-0">
       {emblem}
-      <span
-        className={`font-display font-semibold tracking-tight ${textClass} ${
-          variant === 'inverted' ? 'text-[#FAF7F0]' : 'text-[#293622]'
-        }`}
-      >
+      <span className={`font-display font-semibold tracking-tight ${textClass} ${variant === 'inverted' ? 'text-[#FAF7F0]' : 'text-[#293622]'}`}>
         Club La Ruedita
       </span>
     </span>
