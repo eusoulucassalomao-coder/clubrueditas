@@ -1,27 +1,16 @@
 {
   "id": "/",
   "name": "Club La Ruedita",
-  "short_name": "La Ruedita",
+  "short_name": "Club La Ruedita",
   "description": "Tus puntos, premios y promociones de Club La Ruedita.",
   "lang": "es-AR",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0e1f15",
-  "theme_color": "#0e1f15",
+  "background_color": "#F8F1D9",
+  "theme_color": "#788B60",
   "icons": [
-    {
-      "src": "/assets/logo.webp",
-      "sizes": "260x260",
-      "type": "image/webp",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/logo.webp",
-      "sizes": "260x260",
-      "type": "image/webp",
-      "purpose": "any maskable"
-    }
+    { "src": "/assets/club-logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]
 }
