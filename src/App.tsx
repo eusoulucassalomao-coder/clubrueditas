@@ -34,8 +34,6 @@ export default function App() {
     updateMember,
     simulateRedeemReward,
     registerDemoAccount,
-    switchBackToMaria,
-    resetDemoData,
   } = useAppState();
 
   const { platform, isInstallable, isInstalled, install } = usePWAInstall();
@@ -109,20 +107,38 @@ export default function App() {
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
           >
             {activeTab === 'home' && (
-              <HomeScreen
-                member={member}
-                history={history}
-                rewards={rewards}
-                language={language}
-                t={t}
-                isInstalled={isInstalled}
-                isInstallable={isInstallable}
-                onInstallPwa={handleInstallAction}
-                onNavigate={handleNavigate}
-                onSelectReward={setSelectedReward}
-                onOpenMemberCard={() => setMemberCardOpen(true)}
-                onOpenRegister={() => setRegisterOpen(true)}
-              />
+              hasMember ? (
+                <HomeScreen
+                  member={member}
+                  history={history}
+                  rewards={rewards}
+                  language={language}
+                  t={t}
+                  isInstalled={isInstalled}
+                  isInstallable={isInstallable}
+                  onInstallPwa={handleInstallAction}
+                  onNavigate={handleNavigate}
+                  onSelectReward={setSelectedReward}
+                  onOpenMemberCard={() => setMemberCardOpen(true)}
+                  onOpenRegister={() => setRegisterOpen(true)}
+                />
+              ) : (
+                <section className="mx-auto max-w-2xl rounded-3xl border border-[#E7DFCC] bg-white p-8 text-center">
+                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#EAEFE5]">
+                    <span className="font-display text-2xl font-semibold text-[#4A5D3F]">R</span>
+                  </div>
+                  <h1 className="font-display text-3xl font-semibold text-[#293622]">Bienvenido al Club La Ruedita</h1>
+                  <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#5A6353]">
+                    Regístrate con tu nombre, teléfono y fecha de nacimiento para recibir tu código de socio y consultar tus puntos.
+                    Si ya eres miembro, abre el asistente y escribe tu código.
+                  </p>
+                  <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                    <button onClick={() => setRegisterOpen(true)} className="min-h-12 rounded-2xl bg-[#4A5D3F] px-6 text-sm font-semibold text-white">Unirme al Club</button>
+                    <button onClick={() => setAssistantOpen(true)} className="min-h-12 rounded-2xl border border-[#D8CEB8] px-6 text-sm font-semibold text-[#293622]">Ya soy miembro</button>
+                  </div>
+                  {loading && <p className="mt-4 text-xs text-[#6B7365]">Conectando con el Club...</p>}
+                </section>
+              )
             )}
 
             {activeTab === 'points' && (
@@ -150,19 +166,25 @@ export default function App() {
             )}
 
             {activeTab === 'profile' && (
-              <ProfileScreen
-                member={member}
-                language={language}
-                t={t}
-                isInstalled={isInstalled}
-                onChangeLanguage={setLanguage}
-                onUpdateMember={updateMember}
-                onOpenRegister={() => setRegisterOpen(true)}
-                onSwitchToMaria={switchBackToMaria}
-                onResetDemoData={resetDemoData}
-                onInstallPwa={handleInstallAction}
-              />
-            )}
+              hasMember ? (
+                <ProfileScreen
+                  member={member}
+                  language={language}
+                  t={t}
+                  isInstalled={isInstalled}
+                  onChangeLanguage={setLanguage}
+                  onUpdateMember={updateMember}
+                  onOpenRegister={() => setRegisterOpen(true)}
+                  onInstallPwa={handleInstallAction}
+                />
+              ) : (
+                <section className="rounded-3xl border border-[#E7DFCC] bg-white p-8 text-center">
+                  <h1 className="font-display text-2xl font-semibold text-[#293622]">Tu perfil del Club</h1>
+                  <p className="mt-2 text-sm text-[#5A6353]">Regístrate o consulta tu código de socio en el asistente para ver tus datos.</p>
+                  <button onClick={() => setRegisterOpen(true)} className="mt-5 min-h-11 rounded-xl bg-[#4A5D3F] px-5 text-sm font-semibold text-white">Crear cuenta</button>
+                </section>
+              )
+            )}}
           </motion.div>
         </AnimatePresence>
       </Layout>
