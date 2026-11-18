@@ -26,6 +26,7 @@ export default function App() {
     rewards,
     milestones,
     lookupByCode,
+    refreshMember,
     updateMarketingPreference,
     hasMember,
     loading,
@@ -146,6 +147,7 @@ export default function App() {
                 member={member}
                 history={history}
                 milestones={milestones}
+                onRefresh={refreshMember}
                 language={language}
                 t={t}
               />
@@ -162,7 +164,7 @@ export default function App() {
             )}
 
             {activeTab === 'history' && (
-              <HistoryScreen history={history} language={language} t={t} />
+              <HistoryScreen history={history} language={language} t={t} onRefresh={refreshMember} />
             )}
 
             {activeTab === 'profile' && (
