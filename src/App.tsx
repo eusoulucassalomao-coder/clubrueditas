@@ -69,19 +69,21 @@ export default function App() {
   }, []);
 
   const handleInstallAction = useCallback(async () => {
-    if (isInstallable) {
-      const result = await install();
-      if (result === 'accepted') {
-        showToast(t.pwa.installSuccessToast);
-        return;
-      }
+    if (!isInstallable) {
+      showToast(t.pwa.installUnavailableToast);
+      return;
     }
-    setInstallGateDismissed(false);
-  }, [install, isInstallable, showToast, t.pwa.installSuccessToast]);
+
+    const result = await install();
+    if (result === 'accepted') {
+      showToast(t.pwa.installSuccessToast);
+    } else if (result === 'unavailable') {
+      showToast(t.pwa.installUnavailableToast);
+    }
+  }, [install, isInstallable, showToast, t.pwa.installSuccessToast, t.pwa.installUnavailableToast]);
 
   return (
     <MotionConfig reducedMotion="user">
-      {/* Device-aware initial install screen (suppressed automatically in standalone mode) */}
       <PWAInstallGate
         platform={platform}
         isInstalled={isInstalled}
@@ -94,7 +96,7 @@ export default function App() {
         t={t}
       />
 
-      <NotificationPermissionPrompt isInstalled={isInstalled} />
+      <NotificationPermissionPrompt isInstalled={isInstalled} language={language} />
 
       <Layout
         activeTab={activeTab}
@@ -194,7 +196,6 @@ export default function App() {
         </AnimatePresence>
       </Layout>
 
-      {/* Global Toast Notification */}
       {globalToast && (
         <div
           role="status"
@@ -205,7 +206,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Reward Details & Demo Redemption Modal */}
       <RewardDetailModal
         reward={selectedReward}
         currentPoints={member.points}
@@ -215,7 +215,6 @@ export default function App() {
         onConfirmRedeem={simulateRedeemReward}
       />
 
-      {/* Digital Member Pass Modal */}
       <MemberCardModal
         isOpen={memberCardOpen}
         onClose={() => setMemberCardOpen(false)}
@@ -224,7 +223,6 @@ export default function App() {
         t={t}
       />
 
-      {/* Customer Demo Registration Modal */}
       <RegistrationModal
         isOpen={registerOpen}
         onClose={() => setRegisterOpen(false)}
@@ -232,7 +230,6 @@ export default function App() {
         onRegister={registerDemoAccount}
       />
 
-      {/* Virtual Assistant Drawer (Header Waving Hand Trigger) */}
       <VirtualAssistantDrawer
         isOpen={assistantOpen}
         onClose={() => setAssistantOpen(false)}
@@ -251,7 +248,6 @@ export default function App() {
         <div role="alert" className="fixed bottom-16 left-1/2 z-40 -translate-x-1/2 rounded-xl bg-[#8C3B2D] px-4 py-3 text-sm text-white shadow-lg">{apiError}</div>
       )}
 
-      {/* Offline / Reconnected / App Update Banners */}
       <PWAStatusBanners t={t} />
     </MotionConfig>
   );
