@@ -416,7 +416,7 @@ module.exports = async function handler(req,res) {
         many("ledger",[queryEqual("customer_id",c.id),queryOrderDesc("created_at")],20)
       ]);
       return res.status(200).json({
-        customer:{name:c.name,code:c.code,points:c.points},
+        customer:{name:c.name,code:c.code,points:c.points,lifetime:c.lifetime,createdAt:c.created_at},
         history:history.map(x=>({points:x.points,type:x.type,note:x.note,created_at:x.created_at})),
         redemptions:redemptions.map(x=>({name:x.name,points:x.points,code:x.code,status:x.status,created_at:x.created_at}))
       });
