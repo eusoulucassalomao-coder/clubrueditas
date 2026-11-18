@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ArrowRight, Lock } from 'lucide-react';
-import { REWARDS_CATALOG } from '../data/demoData';
 import {
   formatNumber,
   formatTemplate,
@@ -11,6 +10,7 @@ import { SafeImage } from '../components/SafeImage';
 
 interface RewardsScreenProps {
   currentPoints: number;
+  rewards: RewardDefinition[];
   language: Language;
   t: TranslationDictionary;
   onSelectReward: (reward: RewardDefinition) => void;
@@ -21,6 +21,7 @@ type CategoryFilter = 'all' | RewardCategory;
 
 export const RewardsScreen: React.FC<RewardsScreenProps> = ({
   currentPoints,
+  rewards,
   language,
   t,
   onSelectReward,
@@ -28,7 +29,7 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({
   const [availability, setAvailability] = useState<AvailabilityFilter>('all');
   const [category, setCategory] = useState<CategoryFilter>('all');
 
-  const filteredRewards = REWARDS_CATALOG.filter((reward) => {
+  const filteredRewards = rewards.filter((reward) => {
     const isUnlocked = currentPoints >= reward.pointsRequired;
     if (availability === 'available' && !isUnlocked) return false;
     if (availability === 'locked' && isUnlocked) return false;
@@ -134,7 +135,7 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredRewards.map((reward) => {
-            const copy = t.rewards.items[reward.id];
+            const copy = t.rewards.items[reward.id] ?? { title: reward.title || reward.id, shortDesc: reward.shortDesc || '', fullDesc: reward.fullDesc || '' };
             const unlocked = currentPoints >= reward.pointsRequired;
             const missing = Math.max(0, reward.pointsRequired - currentPoints);
 
