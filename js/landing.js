@@ -35,7 +35,7 @@
 
     $("rewards").innerHTML = cf.rewards.slice().sort((a, b) => a.pts - b.pts).map(w => `
       <article class="rw rv"><div class="rw-img"><img src="${esc(w.img)}" alt="${esc(w.name)}" loading="lazy"><span class="rw-pts">${fmt(w.pts)} pts</span></div>
-      <div class="rw-body"><h3>${esc(w.name)}</h3><p>${esc(w.note || "")}</p><button class="btn btn-ghost" type="button" data-open-redeem>Canjear</button></div></article>`).join("");
+      <div class="rw-body"><h3>${esc(w.name)}</h3><p>${esc(w.note || "")}</p><button class="btn btn-ghost" type="button" data-open-redeem>${T("redeem")}</button></div></article>`).join("");
     $("rewards").querySelectorAll("[data-open-redeem]").forEach(b => b.onclick = () => { setChat(true); startLookup(); });
 
     const ex = [[`+${fmt(cf.bonus.welcome)}`, "al registrarte"], [`+${fmt(cf.bonus.birthday)}`, "en tu cumpleaños"]];
@@ -167,6 +167,8 @@
       retryCode:"Try another code", notSaved:"Your information was not saved. Please try again."
     }
   };
+  TXT.es.continueHere="Continuar por aquí"; TXT.es.installApp="Instalar la aplicación"; TXT.es.redeem="Canjear";
+  TXT.en.continueHere="Continue here"; TXT.en.installApp="Install the app"; TXT.en.redeem="Redeem";
   TXT.pt = Object.assign({}, TXT.es, {
     assistant:"Assistente Club La Ruedita", subtitle:"Dúvidas sobre o Clube e seus pontos", hello:"Olá! Sou o assistente virtual do Club La Ruedita. O que você gostaria de fazer?",
     points:"Consultar meus pontos", join:"Participar do Clube", questions:"Tenho outras dúvidas", faq:"Perguntas frequentes",
@@ -221,7 +223,7 @@
     const answers={price:T("priceA"),earn:T("earnA")(),redeem:T("redeemA"),expiry:T("expiryA")(),privacy:T("privacyA")};
     addMessage(answers[topic]);showOptions([[T("anotherQuestion"),openWhatsApp],[T("faq"),startFaq],[T("home"),welcome]]);
   }
-  function startJoin(){
+  function startJoin(){const inviteCode=new URLSearchParams(location.search).get("ref")||"";flow={type:"join",step:"name",data:{ref:inviteCode}};const invited=LANG==="en"?"A friend invited you to join La Ruedita Club. What is your name?":LANG==="pt"?"Um amigo convidou você para participar do Club La Ruedita. Qual é seu nome?":"¡Hola! Llegaste por la invitación de un amigo para sumarte al Club Ruedita. ¿Cuál es tu nombre?";ask(inviteCode?invited:T("name"),T("namePlaceholder"));}
     const inviteCode=new URLSearchParams(location.search).get("ref")||"";
     flow={type:"join",step:"name",data:{ref:inviteCode}};
     ask(inviteCode?(LANG==="en"?"A friend invited you to join La Ruedita Club. What is your name?":LANG==="pt"?"Um amigo convidou você para participar do Club La Ruedita. Qual é seu nome?":"¡Hola! Llegaste por la invitación de un amigo para sumarte al Club Ruedita. ¿Cuál es tu nombre?"):T("name"),T("namePlaceholder"));
