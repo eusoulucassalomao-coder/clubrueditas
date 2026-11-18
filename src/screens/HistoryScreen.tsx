@@ -19,6 +19,7 @@ interface HistoryScreenProps {
   history: HistoryEntry[];
   language: Language;
   t: TranslationDictionary;
+  onRefresh: () => Promise<void>;
 }
 
 type HistoryFilter = 'all' | HistoryEntryType;
@@ -27,6 +28,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({
   history,
   language,
   t,
+  onRefresh,
 }) => {
   const [filter, setFilter] = useState<HistoryFilter>('all');
   const [query, setQuery] = useState('');
@@ -68,9 +70,13 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({
     return haystack.includes(q);
   });
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    window.setTimeout(() => setIsRefreshing(false), 450);
+    try {
+      await onRefresh();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const clearFilters = () => {
