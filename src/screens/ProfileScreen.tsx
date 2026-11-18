@@ -1,3 +1,4 @@
+import { BRANCH_OPTIONS } from '../data/demoData';
 import React, { useState } from 'react';
 import {
   Bell,
