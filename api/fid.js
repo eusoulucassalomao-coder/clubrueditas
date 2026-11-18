@@ -385,6 +385,16 @@ async function autoCandidates(r, kind) {
 module.exports = async function handler(req,res) {
   res.setHeader("Cache-Control","no-store");
   res.setHeader("Content-Type","application/json; charset=utf-8");
+  if(req.method==="GET"){
+    const slug=String(req.query?.slug||"laruedita").toLowerCase();
+    if(!/^[a-z0-9_-]{2,40}$/.test(slug)) return res.status(400).json({error:"bad-slug"});
+    try{
+      const restaurant=await restaurantBySlug(slug);
+      return res.status(200).json({name:restaurant.name,config:restaurant.config});
+    }catch(error){
+      return res.status(error.status||500).json({error:error.code||"server",message:error.message||"Error"});
+    }
+  }
   if(req.method!=="POST") return res.status(405).json({error:"method"});
   const body=req.body||{},slug=String(body.slug||"").toLowerCase();
   if(!/^[a-z0-9_-]{2,40}$/.test(slug)) return res.status(400).json({error:"bad-slug"});
