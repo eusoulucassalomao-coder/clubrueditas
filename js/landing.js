@@ -100,7 +100,7 @@
   // ---------- asistente guiado, sin IA/API ----------
   const chat = $("clubChat"), messages = $("chatMessages"), options = $("chatOptions"), chatForm = $("chatForm"), chatInput = $("chatInput");
   let flow = null, greeted = false;
-  let LANG = (() => { try { return localStorage.getItem("clubruedita_lang") === "en" ? "en" : "es"; } catch (_) { return "es"; } })();
+  let LANG = (() => { try { const saved=localStorage.getItem("clubruedita_lang"); return ["es","en","pt"].includes(saved)?saved:"es"; } catch (_) { return "es"; } })();
   const TXT = {
     es: {
       assistant:"Asistente Club Ruedita", subtitle:"Consultas sobre el Club y tus puntos", hello:"¡Hola! Soy el asistente virtual de Club Ruedita. ¿Qué necesitás hacer?",
@@ -167,6 +167,24 @@
       retryCode:"Try another code", notSaved:"Your information was not saved. Please try again."
     }
   };
+  TXT.pt = Object.assign({}, TXT.es, {
+    assistant:"Assistente Club La Ruedita", subtitle:"Dúvidas sobre o Clube e seus pontos", hello:"Olá! Sou o assistente virtual do Club La Ruedita. O que você gostaria de fazer?",
+    points:"Consultar meus pontos", join:"Participar do Clube", questions:"Tenho outras dúvidas", faq:"Perguntas frequentes",
+    code:"Digite seu código do Club La Ruedita para consultar seus pontos.", codePlaceholder:"Ex.: ANA123", name:"Que bom que você quer participar! Qual é o seu nome?", namePlaceholder:"Seu nome",
+    phone:n=>"Obrigado, "+n+". Digite seu telefone completo, incluindo código internacional, código de área e número. Exemplo Brasil: +55 + DDD + número.", phonePlaceholder:"+55 11 99999-9999", invalidPhone:"Digite um telefone válido com código internacional.",
+    birthday:"Qual é sua data de nascimento? Usamos essa informação para oferecer seu benefício de aniversário.", ref:"Você tem o código de um amigo que convidou você? É opcional.", refPlaceholder:"Código de convite", noRef:"Não tenho código",
+    consent:"Ao participar do Club La Ruedita, você concorda em receber pelo WhatsApp comunicações sobre sua associação, pontos, benefícios, aniversário e pesquisas após suas visitas. Também usaremos seu nome, telefone e data de nascimento para administrar sua conta. Para cancelar, responda BAJA.",
+    accept:"Aceito e quero criar minha conta", deny:"Não autorizo", denied:"Entendido. Nenhum cadastro foi salvo.", waConsent:"Você gostaria de receber novidades, promoções e benefícios pelo WhatsApp? É opcional e você pode cancelar quando quiser.",
+    waYes:"Sim, aceito receber mensagens", waNo:"Não, prefiro não receber", saving:"Um momento, estamos salvando sua associação…", registered:n=>"Tudo certo, "+n+"! Seu cadastro no Club La Ruedita foi concluído.",
+    welcomePoints:n=>"Seu código de associado é "+n+". Seus pontos de boas-vindas já foram adicionados.", waAccepted:"Registramos seu consentimento para receber novidades e promoções pelo WhatsApp.", waDeclined:"Registramos que você prefere não receber mensagens promocionais. Sua associação e seus pontos funcionam normalmente.",
+    thanks:"Obrigado por participar! Guarde seu código de associado para consultar seus pontos.", otherIntro:"Para dúvidas mais detalhadas, nossa equipe pode ajudar pelo WhatsApp.", whatsapp:"Falar pelo WhatsApp", whatsappText:"Olá, tenho uma dúvida sobre o Club La Ruedita. Podem me ajudar?",
+    noAnswer:"Não foi possível concluir seu cadastro. Tente novamente.", notFound:"Não encontramos esse código. Confira e tente novamente.", lookupHello:(n,p)=>"Olá, "+n+"! Você tem "+p+" pontos.", memberCode:"Seu código do Clube: ",
+    retry:"Tentar novamente", otherCode:"Consultar outro código", home:"Voltar ao início", anotherQuestion:"Outras dúvidas", priceQ:"Quanto custa?", earnQ:"Como ganho pontos?", redeemQ:"Como resgato prêmios?", expiryQ:"Os pontos vencem?",
+    privacyQ:"Como meus dados são usados?", priceA:"Participar do Club La Ruedita é gratuito.", earnA:()=>"Você ganha pontos a cada compra e também pode ganhar pontos extras por indicações e no aniversário.",
+    redeemA:"Acesse “Meus pontos”, escolha o prêmio e apresente o código no caixa.", expiryA:()=>"Seus pontos vencem após "+Number(CF.expireMonths||12)+" meses, conforme as regras atuais do Clube.",
+    privacyA:"Usamos seu nome, telefone e data de nascimento para administrar sua associação, pontos e benefício de aniversário. Para cancelar mensagens, responda BAJA.", send:"Enviar", input:"Digite sua resposta", faqIntro:"Escolha uma pergunta frequente ou selecione “Outras dúvidas” para falar com nossa equipe.",
+    retryCode:"Tentar outro código", notSaved:"Seus dados não foram salvos. Tente novamente.", continueHere:"Continuar por aqui", installApp:"Instalar o aplicativo"
+  });
   const T = key => TXT[LANG][key];
   function addMessage(text, who="bot", html=false){
     const item=document.createElement("div"); item.className=`chat-bubble ${who==="user"?"user":"bot"}`;
@@ -183,7 +201,7 @@
   function welcome(){
     flow=null;messages.replaceChildren();greeted=true;addMessage(T("hello"));
     chatForm.hidden=true;
-    showOptions([[LANG==="en"?"Continue here":"Continuar por aquí",showMainOptions],[LANG==="en"?"Install the app":"Instalar la aplicación",installClubApp]]);
+    showOptions([[T("continueHere"),showMainOptions],[T("installApp"),installClubApp]]);
   }
     function openWhatsApp(){
     const text=encodeURIComponent(T("whatsappText"));
@@ -271,14 +289,13 @@
   }
   chatForm.addEventListener("submit",e=>{e.preventDefault();submitAnswer(chatInput.value);});
   $("chatClose").onclick=()=>setChat(false);
-  const openChatButtons=["clubChatLauncher","chatOpenTop","chatOpenAction"];
+  const openChatButtons=["chatOpenTop","chatOpenAction"];
   openChatButtons.forEach(id=>{const b=$(id);if(b)b.onclick=()=>setChat(true);});
   function translatePage(){
     const en=LANG==="en";
     document.documentElement.lang=LANG;
     const set=(selector,value)=>{const el=document.querySelector(selector);if(el)el.textContent=value;};
-    set("#chatOpenTop",en?"🤖 Assistant":"🤖 Asistente");
-    set("#chatOpenAction",en?"🤖 Talk to the assistant":"🤖 Hablar con el asistente");
+    set("#chatOpenAction",en?"Talk to the assistant":LANG==="pt"?"Falar com o assistente":"Hablar con el asistente");
     set("#navClub",en?"Loyalty Club":"Club de clientes");
     const pairs=[
       [".nav-links a:nth-child(1)","How it works","Cómo funciona"],[".nav-links a:nth-child(2)","Rewards","Premios"],[".nav-links a:nth-child(3)","Invite friends","Invitá"],[".nav-links a:nth-child(4)","My points","Mis puntos"],
@@ -303,16 +320,16 @@
       ["#cookiePreferences","Cookie preferences","Preferencias de cookies"]
     ];
     pairs.forEach(([sel,english,spanish])=>set(sel,en?english:spanish));
-    const toggle=en?"Español":"English";$("langToggle").textContent=toggle;$("chatLangToggle").textContent=toggle;
+    $("langToggle").value=LANG;$("chatLangToggle").value=LANG;
     set(".chat-head b",T("assistant"));set(".chat-head small",T("subtitle"));
     const close=$("chatClose");if(close)close.setAttribute("aria-label",en?"Close assistant":"Cerrar asistente");
     const fab=$("clubChatLauncher");if(fab)fab.querySelector("span:nth-child(2)").textContent=en?"Hi! I'm here to help":"¡Hola! Estoy aquí para ayudarte";
   }
-  function changeLanguage(){
-    LANG=LANG==="es"?"en":"es";try{localStorage.setItem("clubruedita_lang",LANG);}catch(_){}
+  function changeLanguage(event){
+    LANG=event && event.target && event.target.value || "es";try{localStorage.setItem("clubruedita_lang",LANG);}catch(_){}
     translatePage();welcome();
   }
-  $("langToggle").onclick=changeLanguage;$("chatLangToggle").onclick=changeLanguage;
+  $("langToggle").onchange=changeLanguage;$("chatLangToggle").onchange=changeLanguage;
   function setChat(open,skipWelcome=false){
     chat.hidden=!open;openChatButtons.forEach(id=>{const b=$(id);if(b)b.setAttribute("aria-expanded",String(open));});
     if(skipWelcome)greeted=true;if(open&&!greeted)welcome();if(open)chatInput.focus();
