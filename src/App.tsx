@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 import { Layout } from './components/Layout';
+import { CookiePreferences } from './components/CookiePreferences';
 import { MemberCardModal } from './components/MemberCardModal';
 import { PWAInstallGate } from './components/PWAInstallGate';
 import { PWAStatusBanners } from './components/PWAStatusBanners';
@@ -22,6 +23,13 @@ export default function App() {
     language,
     member,
     history,
+    rewards,
+    milestones,
+    lookupByCode,
+    updateMarketingPreference,
+    hasMember,
+    loading,
+    apiError,
     setLanguage,
     updateMember,
     simulateRedeemReward,
@@ -104,6 +112,7 @@ export default function App() {
               <HomeScreen
                 member={member}
                 history={history}
+                rewards={rewards}
                 language={language}
                 t={t}
                 isInstalled={isInstalled}
@@ -120,6 +129,7 @@ export default function App() {
               <PointsScreen
                 member={member}
                 history={history}
+                milestones={milestones}
                 language={language}
                 t={t}
               />
@@ -128,6 +138,7 @@ export default function App() {
             {activeTab === 'rewards' && (
               <RewardsScreen
                 currentPoints={member.points}
+                rewards={rewards}
                 language={language}
                 t={t}
                 onSelectReward={setSelectedReward}
@@ -203,7 +214,15 @@ export default function App() {
         t={t}
         onNavigate={handleNavigate}
         onOpenRegister={() => setRegisterOpen(true)}
+        rewards={rewards}
+        onLookupCode={lookupByCode}
       />
+
+      <CookiePreferences onMarketingChange={updateMarketingPreference} />
+
+      {apiError && !loading && (
+        <div role="alert" className="fixed bottom-16 left-1/2 z-40 -translate-x-1/2 rounded-xl bg-[#8C3B2D] px-4 py-3 text-sm text-white shadow-lg">{apiError}</div>
+      )}
 
       {/* Offline / Reconnected / App Update Banners */}
       <PWAStatusBanners t={t} />
