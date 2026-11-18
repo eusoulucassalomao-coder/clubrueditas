@@ -7,7 +7,8 @@
 <meta name="description" content="Sumá puntos en cada visita, invitá a tus amigos y canjeá premios en La Ruedita. ">
 <meta name="theme-color" content="#0e1f15">
 <link rel="manifest" href="/manifest.json">
-<link rel="icon" type="image/webp" href="/assets/logo.webp">\n<link rel="apple-touch-icon" href="/assets/logo.webp">
+<link rel="icon" type="image/webp" href="/assets/logo.webp">
+<link rel="apple-touch-icon" href="/assets/logo.webp">
 <link rel="stylesheet" href="css/app.css">
 
 </head>
@@ -19,7 +20,7 @@
     <nav class="nav-links" aria-label="Secciones">
       <a href="#como">Cómo funciona</a><a href="#premios">Premios</a><a href="#invita">Invitá</a><a href="#puntos">Mis puntos</a>
     </nav>
-    <div class="nav-tools"><label class="sr-only" for="langToggle">Idioma</label><select class="lang-toggle" id="langToggle" aria-label="Idioma"><option value="es">ES</option><option value="en">EN</option><option value="pt">PT</option></select><button class="nav-assistant-btn" id="chatOpenTop" type="button" aria-label="Abrir assistente"><span class="chat-fab-wave" aria-hidden="true">👋</span></button></div>
+    <div class="nav-tools"><label class="sr-only" for="langToggle">Idioma</label><select class="lang-toggle" id="langToggle" aria-label="Idioma"><option value="es">ES</option><option value="en">EN</option><option value="pt">PT</option></select></div>
   </div>
 </header>
 
@@ -139,7 +140,8 @@
   <p class="copy">© <span id="yr"></span> <span id="copyName"></span> · Programa de fidelidad por MK Conecta</p>
 </footer>
 
-\n<section class="cookie-banner" id="cookieBanner" aria-label="Preferencias de privacidad" hidden>
+ 
+<section class="cookie-banner" id="cookieBanner" aria-label="Preferencias de privacidad" hidden>
   <div><b>Tu privacidad importa</b><p>Usamos cookies necesarias para que el Club funcione. Con tu permiso, también podremos usar cookies de análisis y marketing.</p></div>
   <div class="cookie-actions">
     <button type="button" class="cookie-btn cookie-secondary" id="cookieReject">Rechazar opcionales</button>
@@ -167,7 +169,7 @@
   <div class="chat-options" id="chatOptions"></div>
   <form class="chat-input-row" id="chatForm" hidden><input id="chatInput" aria-label="Sua resposta" autocomplete="off"><button class="btn" type="submit" aria-label="Enviar resposta">Enviar</button></form>
 </aside>
-
+<button class="chat-fab" id="chatOpenFloating" type="button" aria-label="Abrir assistente" title="Abrir assistente"><span class="chat-fab-wave" aria-hidden="true">👋</span></button>
 
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
