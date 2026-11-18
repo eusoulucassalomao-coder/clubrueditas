@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Award, Check, RefreshCw } from 'lucide-react';
-import { POINT_MILESTONES } from '../data/demoData';
 import {
   formatDate,
   formatNumber,
@@ -12,6 +11,7 @@ import { HistoryEntry, Language, MemberProfile } from '../types';
 interface PointsScreenProps {
   member: MemberProfile;
   history: HistoryEntry[];
+  milestones: number[];
   language: Language;
   t: TranslationDictionary;
 }
@@ -21,6 +21,7 @@ type PointsFilter = 'all' | 'earned' | 'used';
 export const PointsScreen: React.FC<PointsScreenProps> = ({
   member,
   history,
+  milestones,
   language,
   t,
 }) => {
@@ -172,7 +173,7 @@ export const PointsScreen: React.FC<PointsScreenProps> = ({
             {t.points.milestonesTitle}
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {POINT_MILESTONES.map((milestone) => {
+            {milestones.map((milestone) => {
               const reached = member.points >= milestone;
               const isNext = milestone === member.nextRewardTarget && !reached;
               return (
