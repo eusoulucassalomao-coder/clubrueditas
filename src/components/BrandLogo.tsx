@@ -5,7 +5,7 @@ interface BrandLogoProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-const LOGO_SRC = '/assets/club-la-ruedita.webp';
+const LOGO_SRC = '/assets/club-logo.svg';
 
 export const BrandLogo: React.FC<BrandLogoProps> = ({
   variant = 'default',
