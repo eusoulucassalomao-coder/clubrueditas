@@ -11,7 +11,6 @@ import {
   UserPlus,
   X,
 } from 'lucide-react';
-import { BRANCH_OPTIONS } from '../data/demoData';
 import {
   formatDate,
   formatMonthYear,
@@ -19,7 +18,6 @@ import {
 } from '../i18n/translations';
 import { Language, MemberProfile } from '../types';
 import { SafeImage } from '../components/SafeImage';
-import { ScreenPreviewsSection } from '../components/ScreenPreviewsSection';
 
 interface ProfileScreenProps {
   member: MemberProfile;
@@ -247,30 +245,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               {t.profile.preferencesTitle}
             </h3>
 
-            {/* Favorite branch selector */}
-            <div>
-              <label
-                htmlFor="pref-branch"
-                className="block text-xs font-semibold text-[#5A6353] mb-1.5"
-              >
-                {t.profile.favoriteBranchLabel}
-              </label>
-              <select
-                id="pref-branch"
-                value={member.favoriteBranch}
-                onChange={(e) =>
-                  onUpdateMember({ favoriteBranch: e.target.value })
-                }
-                className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#FAF7F0] border border-[#D8CEB8] text-sm text-[#1F281B] focus:outline-none focus:border-[#4A5D3F]"
-              >
-                {BRANCH_OPTIONS.map((branch) => (
-                  <option key={branch} value={branch}>
-                    {branch}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <p className="text-xs text-[#6B7365]">
               La autorización de campañas y mensajes por WhatsApp se administra en las Preferencias de cookies.
             </p>
@@ -374,9 +348,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </p>
         </section>
       </div>
-
-      {/* Mandatory "Vista previa de pantallas" Interactive Showcase */}
-      <ScreenPreviewsSection t={t} />
 
       {/* Edit Profile Modal */}
       {editModalOpen && (
