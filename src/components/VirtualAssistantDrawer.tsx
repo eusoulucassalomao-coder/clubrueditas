@@ -117,7 +117,7 @@ export const VirtualAssistantDrawer: React.FC<VirtualAssistantDrawerProps> = ({
     setIsTyping(true);
 
     try {
-      const codeMatch = content.toUpperCase().match(/\\b[A-Z]{2,4}\\d{3,5}\\b/);
+      const codeMatch = content.toUpperCase().match(/\b[A-Z]{2,4}\d{3,5}\b/);
       let reply: Omit<AssistantMessage, 'id' | 'sender' | 'timestamp'>;
       if (codeMatch) {
         const customer = await onLookupCode(codeMatch[0]);
