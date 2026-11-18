@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Send, X } from 'lucide-react';
-import { REWARDS_CATALOG, SECONDARY_LOOKUP_MEMBER } from '../data/demoData';
+import { RewardDefinition } from '../types';
 import {
   formatNumber,
   formatTemplate,
@@ -16,6 +16,8 @@ interface VirtualAssistantDrawerProps {
   t: TranslationDictionary;
   onNavigate: (tab: TabId) => void;
   onOpenRegister: () => void;
+  rewards: RewardDefinition[];
+  onLookupCode: (code: string) => Promise<any>;
 }
 
 function getTimeLabel(locale: string): string {
@@ -33,6 +35,8 @@ export const VirtualAssistantDrawer: React.FC<VirtualAssistantDrawerProps> = ({
   t,
   onNavigate,
   onOpenRegister,
+  rewards,
+  onLookupCode,
 }) => {
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -63,144 +67,41 @@ export const VirtualAssistantDrawer: React.FC<VirtualAssistantDrawerProps> = ({
   if (!isOpen) return null;
 
   const generateReply = (rawInput: string): Omit<AssistantMessage, 'id' | 'sender' | 'timestamp'> => {
-    const clean = rawInput.trim();
-    const upper = clean.toUpperCase();
-    const lower = clean.toLowerCase();
+    const lower = rawInput.trim().toLowerCase();
 
-    // Check explicit codes: SOF4821, MAR4821, or active custom demo code
-    if (upper.includes('SOF4821') || lower.includes('sofia') || lower.includes('sofía')) {
-      return {
-        text: formatTemplate(t.assistant.replyPointsUnlocked, {
-          name: SECONDARY_LOOKUP_MEMBER.fullName,
-          code: SECONDARY_LOOKUP_MEMBER.customerCode,
-          points: formatNumber(SECONDARY_LOOKUP_MEMBER.points, language),
-          branch: SECONDARY_LOOKUP_MEMBER.favoriteBranch,
-        }),
-        action: {
-          type: 'navigate-rewards',
-          label: t.assistant.actionViewRewards,
-        },
-      };
-    }
-
-    if (
-      upper.includes('MAR4821') ||
-      upper.includes(member.customerCode.toUpperCase()) ||
-      lower.includes('maría') ||
-      lower.includes('maria') ||
-      lower.includes('mis puntos') ||
-      lower.includes('my points') ||
-      lower.includes('meus pontos') ||
-      lower.includes('saldo')
-    ) {
-      const remaining = Math.max(0, member.nextRewardTarget - member.points);
-      const replyTemplate =
-        member.points >= 1200
-          ? t.assistant.replyPointsUnlocked
-          : t.assistant.replyPointsFound;
-      return {
-        text: formatTemplate(replyTemplate, {
-          name: member.fullName,
-          code: member.customerCode,
-          points: formatNumber(member.points, language),
-          target: formatNumber(member.nextRewardTarget, language),
-          remaining: formatNumber(remaining, language),
-          branch: member.favoriteBranch,
-        }),
-        action: {
-          type: 'lookup-sof',
-          label: t.assistant.actionTrySof,
-        },
-      };
-    }
-
-    // Check if user typed an unknown customer-code-like token (e.g., ABC1234)
-    const unknownCodeMatch = upper.match(/\b[A-Z]{2,4}\d{3,5}\b/);
-    if (unknownCodeMatch) {
-      return {
-        text: formatTemplate(t.assistant.replyCodeNotFound, {
-          code: unknownCodeMatch[0],
-        }),
-        action: {
-          type: 'lookup-mar',
-          label: t.assistant.quickCheckMar,
-        },
-      };
-    }
-
-    // Benefits / rewards questions
-    if (
-      lower.includes('benefic') ||
-      lower.includes('recompen') ||
-      lower.includes('reward') ||
-      lower.includes('canje') ||
-      lower.includes('resgat') ||
-      lower.includes('café') ||
-      lower.includes('coffee') ||
-      lower.includes('premio')
-    ) {
-      const unlockedCount = REWARDS_CATALOG.filter(
-        (r) => member.points >= r.pointsRequired
-      ).length;
+    if (lower.includes('benefic') || lower.includes('recompen') || lower.includes('reward') || lower.includes('canje') || lower.includes('resgat') || lower.includes('premio')) {
+      const unlockedCount = rewards.filter((reward) => member.points >= reward.pointsRequired).length;
       return {
         text: formatTemplate(t.assistant.replyBenefitsSummary, {
           points: formatNumber(member.points, language),
           count: unlockedCount,
         }),
-        action: {
-          type: 'navigate-rewards',
-          label: t.assistant.actionViewRewards,
-        },
+        action: { type: 'navigate-rewards', label: t.assistant.actionViewRewards },
       };
     }
 
-    // Registration questions
-    if (
-      lower.includes('registr') ||
-      lower.includes('cadastr') ||
-      lower.includes('cuenta') ||
-      lower.includes('conta') ||
-      lower.includes('sign up') ||
-      lower.includes('account') ||
-      lower.includes('alta')
-    ) {
+    if (lower.includes('registr') || lower.includes('cadastr') || lower.includes('cuenta') || lower.includes('conta') || lower.includes('sign up') || lower.includes('account') || lower.includes('alta')) {
       return {
         text: t.assistant.replyRegisterGuide,
-        action: {
-          type: 'open-register',
-          label: t.assistant.actionOpenRegister,
-        },
+        action: { type: 'open-register', label: t.assistant.actionOpenRegister },
       };
     }
 
-    // Install PWA questions
-    if (
-      lower.includes('instal') ||
-      lower.includes('app') ||
-      lower.includes('iphone') ||
-      lower.includes('safari') ||
-      lower.includes('android') ||
-      lower.includes('pwa')
-    ) {
+    if (lower.includes('puntos') || lower.includes('points') || lower.includes('saldo') || lower.includes('mis puntos')) {
+      return { text: t.assistant.replyCodeNotFound.replace('{code}', 'tu código de socio') };
+    }
+
+    if (lower.includes('instal') || lower.includes('app') || lower.includes('iphone') || lower.includes('safari') || lower.includes('android') || lower.includes('pwa')) {
       return {
         text: t.assistant.replyInstallGuide,
-        action: {
-          type: 'navigate-profile-previews',
-          label: t.assistant.actionOpenPreviews,
-        },
+        action: { type: 'navigate-profile-previews', label: t.assistant.actionOpenPreviews },
       };
     }
 
-    return {
-      text: t.assistant.replyFallback,
-      action: {
-        type: 'navigate-rewards',
-        label: t.assistant.actionViewRewards,
-      },
-    };
+    return { text: t.assistant.replyFallback };
   };
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const content = (textToSend ?? inputValue).trim();
     if (!content || isTyping) return;
 
@@ -215,18 +116,46 @@ export const VirtualAssistantDrawer: React.FC<VirtualAssistantDrawerProps> = ({
     setInputValue('');
     setIsTyping(true);
 
-    window.setTimeout(() => {
-      const reply = generateReply(content);
-      const assistantMsg: AssistantMessage = {
+    try {
+      const codeMatch = content.toUpperCase().match(/\\b[A-Z]{2,4}\\d{3,5}\\b/);
+      let reply: Omit<AssistantMessage, 'id' | 'sender' | 'timestamp'>;
+      if (codeMatch) {
+        const customer = await onLookupCode(codeMatch[0]);
+        const points = Number(customer.points || 0);
+        const nextTarget = rewards.map((item) => item.pointsRequired).filter((value) => value > points).sort((a, b) => a - b)[0] || points;
+        reply = {
+          text: formatTemplate(points >= nextTarget ? t.assistant.replyPointsUnlocked : t.assistant.replyPointsFound, {
+            name: String(customer.name || ''),
+            code: String(customer.code || codeMatch[0]),
+            points: formatNumber(points, language),
+            target: formatNumber(nextTarget, language),
+            remaining: formatNumber(Math.max(0, nextTarget - points), language),
+            branch: 'La Ruedita',
+          }),
+          action: { type: 'navigate-rewards', label: t.assistant.actionViewRewards },
+        };
+      } else {
+        await new Promise((resolve) => window.setTimeout(resolve, 350));
+        reply = generateReply(content);
+      }
+      setMessages((prev) => [...prev, {
         id: `ast-${Date.now()}`,
         sender: 'assistant',
         text: reply.text,
         action: reply.action,
         timestamp: getTimeLabel(t.locale),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
+      }]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t.assistant.replyCodeNotFound.replace('{code}', content);
+      setMessages((prev) => [...prev, {
+        id: `ast-${Date.now()}`,
+        sender: 'assistant',
+        text: message,
+        timestamp: getTimeLabel(t.locale),
+      }]);
+    } finally {
       setIsTyping(false);
-    }, 420);
+    }
   };
 
   const handleMessageAction = (type: NonNullable<AssistantMessage['action']>['type']) => {
@@ -252,8 +181,7 @@ export const VirtualAssistantDrawer: React.FC<VirtualAssistantDrawerProps> = ({
   };
 
   const quickPrompts = [
-    { label: t.assistant.quickCheckMar, value: 'MAR4821' },
-    { label: t.assistant.quickCheckSof, value: 'SOF4821' },
+    { label: t.assistant.quickCheckMar, value: 'Quiero consultar mis puntos' },
     { label: t.assistant.quickBenefits, value: t.assistant.quickBenefits },
     { label: t.assistant.quickRegister, value: t.assistant.quickRegister },
     { label: t.assistant.quickInstall, value: t.assistant.quickInstall },
@@ -389,7 +317,7 @@ export const VirtualAssistantDrawer: React.FC<VirtualAssistantDrawerProps> = ({
           </form>
 
           <p className="text-[11px] text-[#6B7365] text-center mt-2.5">
-            {t.assistant.demoFooterNote}
+            Escribe tu código de socio para consultar tus puntos reales.
           </p>
         </div>
       </div>
