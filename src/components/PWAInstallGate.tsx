@@ -64,10 +64,10 @@ export const PWAInstallGate: React.FC<PWAInstallGateProps> = ({
         onContinueInBrowser();
         return;
       }
-      if (outcome === 'unavailable') {
+      if (outcome === 'unavailable' && platform !== 'android') {
         setShowManualSteps(true);
       }
-    } else {
+    } else if (platform !== 'android') {
       setShowManualSteps(true);
     }
   };
@@ -163,10 +163,11 @@ export const PWAInstallGate: React.FC<PWAInstallGateProps> = ({
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="w-full min-h-[54px] px-5 py-3.5 rounded-2xl bg-[#FACC15] hover:bg-[#EAB308] text-[#1F281B] font-bold text-base shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2.5"
+                disabled={!isInstallable}
+                className="w-full min-h-[54px] px-5 py-3.5 rounded-2xl bg-[#FACC15] hover:bg-[#EAB308] disabled:opacity-60 disabled:cursor-wait text-[#1F281B] font-bold text-base shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2.5"
               >
                 <Download className="w-5 h-5" strokeWidth={2.2} />
-                <span>{t.pwa.installAppButton}</span>
+                <span>{isInstallable ? t.pwa.installAppButton : 'Preparando instalação...'}</span>
               </button>
 
               {/* Secondary Continue in Browser Button */}
@@ -179,7 +180,7 @@ export const PWAInstallGate: React.FC<PWAInstallGateProps> = ({
               </button>
             </div>
 
-            {showManualSteps && (
+            {showManualSteps && platform !== 'android' && (
               <div className="mt-6 pt-5 border-t border-[#E7DFCC]">
                 <h2 className="font-sans text-sm font-semibold text-[#293622] mb-3">
                   {t.pwa.androidManualTitle}
