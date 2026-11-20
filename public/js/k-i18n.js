@@ -16,7 +16,7 @@
       rConsent: "Acepto que Club La Ruedita use mis datos para administrar mi cuenta y me envíe mensajes por WhatsApp.",
       rBtn: "Crear mi cuenta", backArrow: "← Volver",
       errName: "Escribí tu nombre.", errPhone: "Revisá tu número de WhatsApp (sin el 0 ni el 15).", errBirth: "Ingresá tu fecha de nacimiento.", errConsent: "Para unirte necesitás aceptar los mensajes y el uso de tus datos.",
-      welcome: "¡Bienvenido/a, {name}!", welcomeGeneric: "¡Bienvenido/a!", yourCode: "Tu código de socio", saveIt: "Guardalo: también podés ingresar con tu WhatsApp.",
+      welcome: "¡Bienvenido/a, {name}!", welcomeM: "¡Bienvenido, {name}!", welcomeF: "¡Bienvenida, {name}!", welcomeGeneric: "¡Bienvenido/a!", yourCode: "Tu código de socio", saveIt: "Guardalo: también podés ingresar con tu WhatsApp.",
       welcomeText: "Ya sos parte del Club. Si estás en el local, volvé al inicio para registrar tu visita.", seeCard: "Ver mi tarjeta del Club",
       idTitle: "Confirmemos que sos vos", idSub: "Escribí tu número de WhatsApp (el que usaste al registrarte) o tu código de socio. Te enviamos un código de 6 dígitos.",
       idLabel: "WhatsApp o código de socio", idPh: "Ej.: 376 4123456  o  ANA123", idBtn: "Enviarme el código por WhatsApp", errId: "Escribí tu WhatsApp con código de área, o tu código de socio.",
@@ -58,7 +58,7 @@
       rConsent: "Aceito que o Club La Ruedita use meus dados para administrar minha conta e me envie mensagens por WhatsApp.",
       rBtn: "Criar minha conta", backArrow: "← Voltar",
       errName: "Escreva seu nome.", errPhone: "Confira seu número de WhatsApp (sem o 0 nem o 15).", errBirth: "Informe sua data de nascimento.", errConsent: "Para entrar, você precisa aceitar as mensagens e o uso dos seus dados.",
-      welcome: "Bem-vindo(a), {name}!", welcomeGeneric: "Bem-vindo(a)!", yourCode: "Seu código de sócio", saveIt: "Guarde: você também pode entrar com seu WhatsApp.",
+      welcome: "Bem-vindo(a), {name}!", welcomeM: "Bem-vindo, {name}!", welcomeF: "Bem-vinda, {name}!", welcomeGeneric: "Bem-vindo(a)!", yourCode: "Seu código de sócio", saveIt: "Guarde: você também pode entrar com seu WhatsApp.",
       welcomeText: "Você já faz parte do Clube. Se estiver no restaurante, volte ao início para registrar sua visita.", seeCard: "Ver meu cartão do Clube",
       idTitle: "Vamos confirmar que é você", idSub: "Escreva seu número de WhatsApp (o que usou ao se cadastrar) ou seu código de sócio. Enviamos um código de 6 dígitos.",
       idLabel: "WhatsApp ou código de sócio", idPh: "Ex.: 376 4123456  ou  ANA123", idBtn: "Enviar o código por WhatsApp", errId: "Escreva seu WhatsApp com DDD, ou seu código de sócio.",
@@ -99,7 +99,7 @@
       rConsent: "I agree that Club La Ruedita may use my data to manage my account and message me on WhatsApp.",
       rBtn: "Create my account", backArrow: "← Back",
       errName: "Enter your name.", errPhone: "Check your WhatsApp number (without the 0 or 15).", errBirth: "Enter your date of birth.", errConsent: "To join you need to accept the messages and the use of your data.",
-      welcome: "Welcome, {name}!", welcomeGeneric: "Welcome!", yourCode: "Your member code", saveIt: "Keep it: you can also sign in with your WhatsApp.",
+      welcome: "Welcome, {name}!", welcomeM: "Welcome, {name}!", welcomeF: "Welcome, {name}!", welcomeGeneric: "Welcome!", yourCode: "Your member code", saveIt: "Keep it: you can also sign in with your WhatsApp.",
       welcomeText: "You're now part of the Club. If you're at the restaurant, go back to the start to log your visit.", seeCard: "See my Club card",
       idTitle: "Let's confirm it's you", idSub: "Enter your WhatsApp number (the one you registered with) or your member code. We'll send you a 6-digit code.",
       idLabel: "WhatsApp or member code", idPh: "E.g.: 376 4123456  or  ANA123", idBtn: "Send me the code on WhatsApp", errId: "Enter your WhatsApp with area code, or your member code.",
@@ -159,6 +159,24 @@
     if(vars) Object.keys(vars).forEach(k => { s = s.replace("{" + k + "}", vars[k]); });
     return s;
   }
+
+  // Palpite de gênero pelo primeiro nome (espanhol/português): "f", "m" ou "u" (indefinido).
+  const FEM_NOT_A = new Set(["carmen","isabel","mercedes","beatriz","raquel","ruth","rocio","ines","luz","soledad","pilar","dolores","miriam","abigail","esther","judith","noemi","maribel","yasmin","jazmin","belen","lourdes","consuelo","amparo","socorro","milagros","nieves","angeles","mar","sol","paz","rosario","guadalupe","araceli","maite","lis","iris","ingrid","edith","elizabeth","jennifer","karen","nicole","sharon","shirley","tamara","vanessa","wendy","yeni","ivonne","yvonne","aylen","ayelen","brenda","brigitte","cecile","charlotte","denise","doris","estefany","gisele","giselle","jacqueline","janet","joyce","kelly","lizbeth","liz","mabel","marisol","maricel","rachel","rebeca","sabrina","stefany","susan","suzan","carol","carolin","caroline","cristal","crystal","daisy","emily","evelyn","gladys","heidi","jessica","jessie","lilian","lilibeth","lidia"]);
+  const MASC_A = new Set(["luca","gianluca","joshua","borja","bautista","nicola","mustafa","jota","moshe","elia","isaia","tobia","matia","zacarias","jeremia","josua"]);
+  const UNDEF = new Set(["alex","sasha","ariel","yael","kim","cris","jean","jordan","dani","ale","sam","taylor","robin","maxi","andy","charlie","nahuel"]);
+  function guessGender(name){
+    const first = String(name || "").trim().split(/\s+/)[0].normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]/g, "");
+    if(first.length < 2) return "u";
+    if(UNDEF.has(first)) return "u";
+    if(FEM_NOT_A.has(first)) return "f";
+    if(MASC_A.has(first)) return "m";
+    if(/a$/.test(first)) return "f";
+    return "m";   // o, consoantes e demais: nomes comuns (Juan, Lucas, Daniel, Martín...) são masculinos
+  }
+  function kWelcome(name){
+    const g = guessGender(name);
+    return kt(g === "f" ? "welcomeF" : g === "m" ? "welcomeM" : "welcome", { name: name });
+  }
   function kerr(err){
     const m = (err && err.message) || "";
     if(lang === "es") return m;
@@ -177,5 +195,5 @@
     apply();
     if(window.__kOnLang) window.__kOnLang(lang);
   }
-  window.kt = kt; window.kerr = kerr; window.kLang = () => lang; window.kLocale = () => LOCALES[lang]; window.kSetLang = setLang; window.kApply = apply;
+  window.kWelcome = kWelcome; window.kGuessGender = guessGender; window.kt = kt; window.kerr = kerr; window.kLang = () => lang; window.kLocale = () => LOCALES[lang]; window.kSetLang = setLang; window.kApply = apply;
 })();

@@ -112,7 +112,7 @@
     }catch(err){ m.textContent = err.status === 429 ? kt("tooMany") : kerr(err); }
     busy($("rgBtn"), false, "rBtn");
   });
-  function renderRegOk(){ $("rokTitle").textContent = regName ? kt("welcome", { name: regName }) : kt("welcomeGeneric"); $("rokCode").textContent = regCode || "—"; }
+  function renderRegOk(){ $("rokTitle").textContent = regName ? window.kWelcome(regName) : kt("welcomeGeneric"); $("rokCode").textContent = regCode || "—"; }
   $("rokVisit").onclick = () => start("visit");
 
   // ---- visita / premio: precisam do QR do tablet (presença no local) ----
