@@ -87,14 +87,12 @@
   }
 
   // ---- visita ----
-  $("vAmount").addEventListener("input", () => { const d = $("vAmount").value.replace(/\D/g, ""); $("vAmount").value = d ? fmt(Number(d)) : ""; });
   $("visitForm").addEventListener("submit", async e => {
     e.preventDefault();
-    const ticket = $("vTicket").value.trim(), amount = $("vAmount").value.replace(/\D/g, "");
-    if(ticket.replace(/[^A-Za-z0-9]/g, "").length < 3){ $("vMsg").textContent = "Revisá el número del ticket."; return; }
-    if(!amount){ $("vMsg").textContent = "Escribí el total de la cuenta."; return; }
+    const ticket = $("vTicket").value.trim();
+    if(ticket.replace(/[^A-Za-z0-9]/g, "").length < 3){ $("vMsg").textContent = "Revisá el código del pago."; return; }
     busy($("vBtn"), true); $("vMsg").textContent = "";
-    try{ await F.kioskVisit(kc, ticket, amount); store.del(KC); show("visit-ok"); }
+    try{ await F.kioskVisit(kc, ticket); store.del(KC); show("visit-ok"); }
     catch(err){ if(err.code === "kc_expired"){ kcLost(); } else $("vMsg").textContent = err.message; }
     busy($("vBtn"), false, "Enviar a la caja");
   });

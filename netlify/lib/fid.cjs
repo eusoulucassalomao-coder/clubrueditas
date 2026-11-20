@@ -573,7 +573,8 @@ module.exports = async function handler(req,res) {
         return res.status(200).json({coupon});
       }
       if(action==="kiosk_visit"){
-        const amount=Number(String(body.amount||"").replace(/\./g,"").replace(",","."));
+        // O cliente informa só o código do pagamento; o valor é confirmado pela caixa.
+        const amount=null;
         await rpc("fid_visit_request",{p_slug:r.slug,p_customer:c.id,p_ticket:String(body.ticket||""),p_amount:amount});
         return res.status(200).json({ok:true});
       }
@@ -697,9 +698,16 @@ module.exports = async function handler(req,res) {
     }
     if(action==="visit_decide"){
       const approve=body.approve===true;
+      let amount=0;
+      if(approve){
+        // Confere o valor ANTES de aprovar, para não deixar o pedido aprovado sem visita.
+        const row=await getDocument("visit_requests",String(body.id||"")).catch(()=>null);
+        if(!row||row.restaurant_id!==r.id) throw Object.assign(new Error("Pedido no encontrado"),{status:404,code:"request"});
+        amount=Number(body.amount)>0?Number(body.amount):Number(row.amount);
+        if(!(amount>0)) throw Object.assign(new Error("Ingresá el total de la cuenta"),{status:400,code:"amount"});
+      }
       const taken=await rpc("fid_visit_take",{p_slug:r.slug,p_id:String(body.id||""),p_approve:approve});
       if(!approve) return res.status(200).json({status:"rechazada"});
-      const amount=Number(body.amount)>0?Number(body.amount):Number(taken.amount);
       try{
         const c=await customerById(r,taken.customerId);
         const done=await addVisit(r,c,amount);

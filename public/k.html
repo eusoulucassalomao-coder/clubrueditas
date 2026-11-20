@@ -108,12 +108,10 @@
 
   <section id="s-visit" hidden>
     <h1 id="vHello">Registrá tu visita</h1>
-    <p class="sub">Copiá el número de tu ticket y el total de la cuenta. La caja lo confirma y se suman tus puntos.</p>
+    <p class="sub">Escribí el código único de tu pago (el que figura en tu ticket). La caja lo confirma y se suman tus puntos.</p>
     <form id="visitForm" novalidate>
-      <label for="vTicket">Número del ticket</label>
+      <label for="vTicket">Código del pago</label>
       <input id="vTicket" autocapitalize="characters" autocomplete="off" placeholder="Ej.: 0001-00012345">
-      <label for="vAmount">Total de la cuenta ($)</label>
-      <input id="vAmount" inputmode="numeric" autocomplete="off" placeholder="Ej.: 28500">
       <p class="msg err" id="vMsg" role="alert"></p>
       <button class="btn" type="submit" id="vBtn">Enviar a la caja</button>
     </form>

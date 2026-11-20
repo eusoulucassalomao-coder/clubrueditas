@@ -43,7 +43,7 @@
     kioskOtpVerify: (session, id, code) => call({ action: "kiosk_otp_verify", session, id, code }),
     kioskMe: kc => call({ action: "kiosk_me", kc }),
     kioskClaim: (kc, reward) => call({ action: "kiosk_claim", kc, reward }),
-    kioskVisit: (kc, ticket, amount) => call({ action: "kiosk_visit", kc, ticket, amount }),
+    kioskVisit: (kc, ticket) => call({ action: "kiosk_visit", kc, ticket }),
     // tablet (equipe)
     kioskQr: t => call({ action: "kiosk_qr" }, t),
     // acesso interno

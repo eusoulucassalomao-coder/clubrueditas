@@ -162,7 +162,7 @@
     try{
       const rows = (await run(() => F.visitRequests(tok))).requests;
       const b = $("qrBadge"); b.hidden = !rows.length; b.textContent = rows.length;
-      $("qrList").innerHTML = rows.map(x => `<div class="rcpt" data-id="${esc(x.id)}"><b>${esc(x.name)}</b> <small>· ${esc(x.code)} · ${hhmm(x.ts)}</small><br>Ticket <b>${esc(x.ticket)}</b><label style="margin-top:8px">Total ($)<input inputmode="numeric" class="qAmt" value="${esc(fmt(x.amount))}"></label><div class="row2" style="margin-top:10px"><button class="btn sm qOk" type="button">Confirmar visita</button><button class="btn ghost sm qNo" type="button">Rechazar</button></div></div>`).join("") || "<p class='sub'>No hay visitas pendientes.</p>";
+      $("qrList").innerHTML = rows.map(x => `<div class="rcpt" data-id="${esc(x.id)}"><b>${esc(x.name)}</b> <small>· ${esc(x.code)} · ${hhmm(x.ts)}</small><br>Código de pago <b>${esc(x.ticket)}</b><label style="margin-top:8px">Total de la cuenta ($)<input inputmode="numeric" class="qAmt" placeholder="Ej.: 28500" value="${x.amount ? esc(fmt(x.amount)) : ""}"></label><div class="row2" style="margin-top:10px"><button class="btn sm qOk" type="button">Confirmar visita</button><button class="btn ghost sm qNo" type="button">Rechazar</button></div></div>`).join("") || "<p class='sub'>No hay visitas pendientes.</p>";
       $("qrList").querySelectorAll(".rcpt").forEach(card => {
         const id = card.dataset.id, amt = card.querySelector(".qAmt");
         amt.addEventListener("input", () => { const d = amt.value.replace(/\D/g, ""); amt.value = d ? fmt(Number(d)) : ""; });
