@@ -62,4 +62,84 @@
   $("off").onclick = () => logout("");
   document.addEventListener("visibilitychange", () => { if(!document.hidden && tok) refresh(); });
   if(tok) start();
+
+  // ---- cupom do cliente: a câmera do tablet lê o QR, o cliente confirma ----
+  const kt = window.kt, $v = id => document.getElementById(id);
+  let stream = null, scanRaf = 0, idle = 0, closeTimer = 0, busyCheck = false, current = null, lastCode = "";
+  const hide = (id, on) => { $v(id).hidden = on; };
+  function stopCam(){
+    cancelAnimationFrame(scanRaf); clearTimeout(idle);
+    if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+    const v = $v("cVideo"); if(v) v.srcObject = null;
+  }
+  function closeOv(){
+    stopCam(); clearTimeout(closeTimer); current = null; busyCheck = false;
+    hide("ov", true); $v("ovMsg").textContent = "";
+  }
+  function showCard(kind, title, sub, name, who){
+    stopCam(); hide("ovScan", true); hide("ovResult", false);
+    $v("ovResult").className = "rcard " + (kind === "ok" ? "ok" : "bad");
+    $v("ovResult").innerHTML = "<div class='big'>" + title + "</div>" + (name ? "<div class='rw'>" + esc(name) + "</div>" : "") + (who ? "<div class='who'>" + esc(kt("tForName", { name: who })) + "</div>" : "") + (sub ? "<div class='who'>" + esc(sub) + "</div>" : "");
+    $v("ovCancel").textContent = kt("tBack");
+  }
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  function renderCurrent(){
+    if(!current) return;
+    const c = current;
+    if(c.status === "valid"){ showCard("ok", "✓ " + esc(kt("tValid")), "", c.name, c.customer); hide("ovConfirm", false); $v("ovConfirm").textContent = kt("tConfirm"); }
+    else if(c.status === "done"){ showCard("ok", "✓ " + esc(kt("tDone")), kt("tDoneSub"), c.name, c.customer); hide("ovConfirm", true); }
+    else if(c.status === "used"){ showCard("bad", "✕ " + esc(kt("tUsed")), kt("tUsedSub"), c.name, c.customer); hide("ovConfirm", true); }
+    else if(c.status === "expired"){ showCard("bad", "✕ " + esc(kt("tExpired")), kt("tExpiredSub"), c.name, c.customer); hide("ovConfirm", true); }
+    else { showCard("bad", "✕ " + esc(kt("tNotFound")), kt("tNotFoundSub")); hide("ovConfirm", true); }
+  }
+  async function checkCode(code){
+    if(busyCheck) return; busyCheck = true; lastCode = code;
+    $v("ovMsg").textContent = kt("tChecking");
+    try{
+      current = await F.kioskCouponCheck(tok, code);
+      $v("ovMsg").textContent = ""; renderCurrent();
+      // se ninguém confirmar, volta sozinho para o QR
+      clearTimeout(closeTimer); closeTimer = setTimeout(closeOv, 40000);
+    }catch(e){
+      if(e.status === 401){ closeOv(); logout("La sesión venció. Ingresá nuevamente."); return; }
+      $v("ovMsg").textContent = e.message; busyCheck = false;
+    }
+  }
+  async function openScan(){
+    current = null; busyCheck = false;
+    hide("ovScan", false); hide("ovResult", true); hide("ovConfirm", true); $v("ovCancel").textContent = kt("tCancel"); $v("ovMsg").textContent = "";
+    hide("ov", false); window.kApply();
+    try{ stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); }
+    catch(e){ try{ stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); }catch(x){ $v("ovMsg").textContent = kt("tNoCam"); return; } }
+    const v = $v("cVideo"), cv = $v("cCanvas"), ctx = cv.getContext("2d", { willReadFrequently: true });
+    v.srcObject = stream; await v.play().catch(() => {});
+    clearTimeout(idle); idle = setTimeout(closeOv, 90000);   // sem uso: fecha a câmera
+    const loop = () => {
+      if(!stream) return;
+      if(!busyCheck && v.readyState >= 2 && v.videoWidth){
+        const w = Math.min(640, v.videoWidth), h = Math.round(w * v.videoHeight / v.videoWidth);
+        cv.width = w; cv.height = h; ctx.drawImage(v, 0, 0, w, h);
+        const hit = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "dontInvert" });
+        const val = hit && hit.data ? String(hit.data).trim().toUpperCase() : "";
+        if(/^P[0-9]{6}$/.test(val)){ if(navigator.vibrate) navigator.vibrate(80); checkCode(val); }
+      }
+      scanRaf = requestAnimationFrame(loop);
+    };
+    loop();
+  }
+  $v("couponBtn").onclick = openScan;
+  $v("ovCancel").onclick = closeOv;
+  $v("ovConfirm").onclick = async () => {
+    if(!current || current.status !== "valid") return;
+    const btn = $v("ovConfirm"); btn.disabled = true;
+    try{
+      current = await F.kioskCouponUse(tok, lastCode);
+      renderCurrent();
+      clearTimeout(closeTimer); closeTimer = setTimeout(closeOv, 15000);
+    }catch(e){ $v("ovMsg").textContent = e.message; }
+    btn.disabled = false;
+  };
+  document.querySelectorAll("#ov .langbtn").forEach(b => b.addEventListener("click", () => { window.kSetLang(b.dataset.lang); }));
+  window.__kOnLang = () => { if(!$v("ov").hidden){ if(current) renderCurrent(); else $v("ovCancel").textContent = kt("tCancel"); } };
+  window.kApply();
 })();

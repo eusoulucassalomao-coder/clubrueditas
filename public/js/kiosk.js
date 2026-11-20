@@ -1,7 +1,7 @@
 (function(){
   const F = window.Fid, $ = id => document.getElementById(id);
   const kt = window.kt, kerr = window.kerr;
-  const fmt = n => Number(n).toLocaleString(window.kLang() === "pt" ? "pt-BR" : "es-AR");
+  const fmt = n => Number(n).toLocaleString(window.kLocale());
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const SS = "mkf_k_session_" + F.slug, KC = "mkf_k_kc_" + F.slug;
   const TOKEN_KEY = "club-la-ruedita-token-v1";          // mesmo lugar onde o app guarda a conta do cliente

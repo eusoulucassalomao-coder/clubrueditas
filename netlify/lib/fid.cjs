@@ -675,6 +675,29 @@ module.exports = async function handler(req,res) {
       if(!verifyToken(slug,token,["tablet"])) return res.status(401).json({error:"unauthorized",message:"La sesión venció. Entrá de nuevo."});
       return res.status(200).json({c:kioskMake(slug),slotMs:KIOSK_SLOT_MS,serverNow:Date.now()});
     }
+    if(action==="kiosk_coupon_check"||action==="kiosk_coupon_use"){
+      // Tablet do caixa lê o QR do cupom do cliente: confere e, ao confirmar, entrega (uso único, atômico no banco).
+      if(!verifyToken(slug,token,["tablet"])) return res.status(401).json({error:"unauthorized",message:"La sesión venció. Entrá de nuevo."});
+      if(tooMany(req,action,40)) return slowDown(res);
+      await expireCoupons(r);
+      const code=String(body.code||"").trim().toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,12);
+      const red=code.length>=4?await one("redemptions",[queryEqual("restaurant_id",r.id),queryEqual("code",code)]):null;
+      if(!red) return res.status(200).json({status:"notfound"});
+      const cu=await getDocument("customers",red.customer_id).catch(()=>null);
+      const who=String(cu?.name||"").trim().split(/\s+/)[0]||"";
+      const expired=red.status==="vencido"||(red.status==="pendiente"&&red.expires_at&&new Date(red.expires_at)<new Date());
+      const state=red.status==="canjeado"?"used":expired?"expired":red.status==="pendiente"?"valid":"notfound";
+      if(action==="kiosk_coupon_check") return res.status(200).json({status:state,name:red.name,customer:who,expiresAt:red.expires_at||null});
+      if(state!=="valid") return res.status(200).json({status:state,name:red.name,customer:who});
+      try{
+        const d=await rpc("fid_deliver",{p_slug:r.slug,p_code:code});
+        return res.status(200).json({status:"done",name:d.name,customer:who});
+      }catch(err){
+        if(/ya fue entregado/i.test(err.message||"")) return res.status(200).json({status:"used",name:red.name,customer:who});
+        if(/venci/i.test(err.message||"")) return res.status(200).json({status:"expired",name:red.name,customer:who});
+        throw err;
+      }
+    }
     const cashier=["search","visit","bonus","find_code","deliver","recent","visit_requests","visit_decide","receipt_create"].includes(action);
     const owner=["stats","customers","export_customers","export_visits","redemptions","surveys","save_config","wa_status","wa_connect","wa_logout"].includes(action);
     if(cashier||owner){

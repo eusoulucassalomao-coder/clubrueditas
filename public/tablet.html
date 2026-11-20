@@ -29,6 +29,24 @@
   .off:hover{opacity:.9}
   .warn{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:#7a2b2b;color:#fff;padding:8px 16px;border-radius:99px;font-size:14px}
   .gate .card{color:var(--text)}
+  .couponbtn{border:2px solid rgba(233,196,106,.7);background:rgba(233,196,106,.12);color:#f4e3b0;font:inherit;font-weight:700;font-size:clamp(15px,2vw,22px);padding:14px 28px;border-radius:99px;cursor:pointer;line-height:1.25}
+  .couponbtn small{display:block;font-weight:400;opacity:.75;font-size:.72em}
+  .ov{position:fixed;inset:0;z-index:50;background:rgba(8,16,11,.97);display:flex;align-items:center;justify-content:center;padding:20px;text-align:center}
+  .ov-in{width:min(560px,100%);display:flex;flex-direction:column;align-items:center;gap:14px}
+  .ov h2{margin:0;font-family:var(--serif);font-weight:400;font-size:clamp(24px,4vw,38px);color:#fff}
+  .ov p{margin:0;opacity:.8}
+  .ov video{width:min(70vh,100%);max-height:52vh;border-radius:22px;background:#000;box-shadow:0 0 0 4px rgba(233,196,106,.35)}
+  .lang{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:rgba(255,255,255,.12)}
+  .langbtn{border:0;background:transparent;color:#fff;font:inherit;font-size:14px;font-weight:700;padding:7px 14px;border-radius:9px;cursor:pointer}
+  .langbtn.on{background:#f4e3b0;color:#14261a}
+  .rcard{width:100%;border-radius:24px;padding:26px 20px;color:#fff}
+  .rcard.ok{background:#1d6b3c}.rcard.bad{background:#8a2a2a}
+  .rcard .big{font-size:clamp(34px,6vw,56px);font-weight:800;letter-spacing:.04em}
+  .rcard .rw{font-size:clamp(22px,3.6vw,32px);margin-top:6px}
+  .rcard .who{opacity:.9;margin-top:4px;font-size:clamp(16px,2.4vw,22px)}
+  .ovbtn{border:0;border-radius:16px;font:inherit;font-weight:800;font-size:clamp(18px,2.6vw,26px);padding:16px 30px;cursor:pointer;width:100%}
+  .ovbtn.go{background:linear-gradient(180deg,#f0d27f,#c9a227);color:#14261a}
+  .ovbtn.ghost{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;font-weight:600;font-size:clamp(15px,2vw,19px);padding:12px 24px;width:auto}
 </style>
 </head>
 <body>
@@ -52,13 +70,31 @@
   <div class="bar" aria-hidden="true"><i id="bar"></i></div>
   <div class="steps"><span>1 · Escaneá el QR<br><small style="opacity:.7">Escaneie o QR</small></span><span>2 · Elegí visita o premio<br><small style="opacity:.7">Escolha visita ou prêmio</small></span><span>3 · Confirmá con el código de WhatsApp<br><small style="opacity:.7">Confirme com o código do WhatsApp</small></span></div>
   <p class="hint">El QR cambia solo cada pocos segundos, por seguridad. · O QR muda sozinho a cada poucos segundos, por segurança.</p>
+  <button class="couponbtn" id="couponBtn" type="button"><span data-i="tCoupon">Tengo un cupón</span><small>Tenho um cupom · I have a coupon</small></button>
   <button class="off" id="off" type="button">Salir</button>
   <div class="warn" id="warn" hidden>Sin conexión… reintentando</div>
 </main>
 
-<script src="js/config.js?v=20261120c"></script>
-<script src="js/api.js?v=20261120c"></script>
-<script src="js/vendor/qrcode.js?v=20261120c"></script>
-<script src="js/tablet.js?v=20261120c"></script>
+<div class="ov" id="ov" hidden role="dialog" aria-modal="true">
+  <div class="ov-in">
+    <div class="lang" role="group" aria-label="Idioma / Language"><button class="langbtn" type="button" data-lang="es">ES</button><button class="langbtn" type="button" data-lang="pt">PT</button><button class="langbtn" type="button" data-lang="en">EN</button></div>
+    <div id="ovScan">
+      <h2 data-i="tScanTitle">Acercá el QR de tu cupón a la cámara</h2>
+      <p data-i="tScanSub">Mostralo de frente, con buena luz.</p>
+      <video id="cVideo" playsinline muted style="margin-top:14px"></video>
+      <canvas id="cCanvas" hidden></canvas>
+    </div>
+    <div id="ovResult" class="rcard" hidden></div>
+    <p id="ovMsg" role="status"></p>
+    <button class="ovbtn go" id="ovConfirm" type="button" hidden data-i="tConfirm">Confirmar canje</button>
+    <button class="ovbtn ghost" id="ovCancel" type="button" data-i="tCancel">Cancelar</button>
+  </div>
+</div>
+<script src="js/config.js?v=20261120e"></script>
+<script src="js/api.js?v=20261120e"></script>
+<script src="js/vendor/qrcode.js?v=20261120e"></script>
+<script src="js/vendor/jsQR.js?v=20261120e"></script>
+<script src="js/k-i18n.js?v=20261120e"></script>
+<script src="js/tablet.js?v=20261120e"></script>
 </body>
 </html>

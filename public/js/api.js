@@ -47,6 +47,8 @@
     kioskVisit: (kc, ticket) => call({ action: "kiosk_visit", kc, ticket }),
     // tablet (equipe)
     kioskQr: t => call({ action: "kiosk_qr" }, t),
+    kioskCouponCheck: (t, code) => call({ action: "kiosk_coupon_check", code }, t),
+    kioskCouponUse: (t, code) => call({ action: "kiosk_coupon_use", code }, t),
     // acesso interno
     async auth(role, email, password){
       const data = await call({
