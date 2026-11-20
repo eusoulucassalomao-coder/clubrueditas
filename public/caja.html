@@ -28,7 +28,6 @@
     <div class="tabs" role="tablist">
       <button class="tab on" data-tab="visita" role="tab">Registrar visita</button>
       <button class="tab" data-tab="canje" role="tab">Validar cupón</button>
-      <button class="tab" data-tab="qr" role="tab">Visitas QR <span id="qrBadge" class="tag" hidden style="background:#a33;color:#fff;margin-left:4px">0</span></button>
       <button class="tab" data-tab="nuevo" role="tab">Cliente nuevo</button>
     </div>
 
@@ -59,12 +58,6 @@
       <p class="msg" id="cMsg" role="status"></p>
       <div id="cBox"></div>
       <button class="btn full" id="doCode" type="button">Validar código</button>
-    </section>
-
-    <section id="p-qr" class="card" hidden>
-      <h2>Visitas pedidas por QR</h2><p class="sub">El cliente envía el ticket y el total desde su celular. Comparalo con el ticket de la caja y confirmá.</p>
-      <div id="qrList"></div>
-      <p class="msg" id="qrMsg" role="status"></p>
     </section>
 
     <section id="p-nuevo" class="card" hidden>

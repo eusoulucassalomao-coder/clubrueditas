@@ -25,7 +25,7 @@
     $("gate").hidden = true; $("app").hidden = false;
     $("logo").src = CF.logo; $("club").textContent = CF.name;
     $("bBirth").textContent = `Cumpleaños +${fmt(CF.bonus.birthday)}`;
-    recent(); loadQr();
+    recent();
   }
   $("loginForm").addEventListener("submit", async e => {
     e.preventDefault(); const m = $("loginMsg"); m.textContent = "";
@@ -37,10 +37,9 @@
 
   document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
-    ["visita", "canje", "qr", "nuevo"].forEach(n => $("p-" + n).hidden = (n !== t.dataset.tab));
+    ["visita", "canje", "nuevo"].forEach(n => $("p-" + n).hidden = (n !== t.dataset.tab));
     if(t.dataset.tab !== "canje") stopScan();
     if(t.dataset.tab === "canje") $("code").focus();
-    if(t.dataset.tab === "qr") loadQr();
   });
 
   // ---- visita ----
@@ -157,31 +156,6 @@
   $("scanBtn").onclick = startScan;
   $("scanStop").onclick = stopScan;
 
-  // ---- visitas pedidas por QR ----
-  async function loadQr(){
-    try{
-      const rows = (await run(() => F.visitRequests(tok))).requests;
-      const b = $("qrBadge"); b.hidden = !rows.length; b.textContent = rows.length;
-      $("qrList").innerHTML = rows.map(x => `<div class="rcpt" data-id="${esc(x.id)}"><b>${esc(x.name)}</b> <small>· ${esc(x.code)} · ${hhmm(x.ts)}</small><br>Código de pago <b>${esc(x.ticket)}</b><label style="margin-top:8px">Total de la cuenta ($)<input inputmode="numeric" class="qAmt" placeholder="Ej.: 28500" value="${x.amount ? esc(fmt(x.amount)) : ""}"></label><div class="row2" style="margin-top:10px"><button class="btn sm qOk" type="button">Confirmar visita</button><button class="btn ghost sm qNo" type="button">Rechazar</button></div></div>`).join("") || "<p class='sub'>No hay visitas pendientes.</p>";
-      $("qrList").querySelectorAll(".rcpt").forEach(card => {
-        const id = card.dataset.id, amt = card.querySelector(".qAmt");
-        amt.addEventListener("input", () => { const d = amt.value.replace(/\D/g, ""); amt.value = d ? fmt(Number(d)) : ""; });
-        const decide = async approve => {
-          const m = $("qrMsg"); m.className = "msg"; card.querySelectorAll("button").forEach(x => x.disabled = true);
-          try{
-            const r = await run(() => F.visitDecide(tok, id, approve, Number(amt.value.replace(/\D/g, ""))));
-            m.className = "msg ok"; m.textContent = approve ? `✓ Visita confirmada: ${r.customer.name} suma ${fmt(r.pts)} puntos.` : "Visita rechazada.";
-            recent();
-          }catch(e){ m.className = "msg err"; m.textContent = e.message; }
-          loadQr();
-        };
-        card.querySelector(".qOk").onclick = () => decide(true);
-        card.querySelector(".qNo").onclick = () => decide(false);
-      });
-    }catch(e){ $("qrList").innerHTML = `<small style="color:var(--bad)">${esc(e.message)}</small>`; }
-  }
-  // avisa na aba quando chega pedido novo
-  setInterval(() => { if(tok && !$("app").hidden && !document.hidden){ run(() => F.visitRequests(tok)).then(j => { const b = $("qrBadge"); b.hidden = !j.requests.length; b.textContent = j.requests.length; }).catch(() => {}); } }, 20000);
 
   // ---- alta rápida ----
   $("newForm").addEventListener("submit", async e => {

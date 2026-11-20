@@ -108,21 +108,27 @@
 
   <section id="s-visit" hidden>
     <h1 id="vHello">Registrá tu visita</h1>
-    <p class="sub">Escribí el código único de tu pago (el que figura en tu ticket). La caja lo confirma y se suman tus puntos.</p>
+    <p class="sub">Escaneá el QR de tu comprobante de pago o escribí su código. Sumamos los puntos según el total de tu cuenta.</p>
+    <button class="btn" id="vScan" type="button" style="margin-top:4px">📷 Escanear QR del comprobante</button>
+    <div id="vScanBox" hidden>
+      <video id="vVideo" playsinline muted style="width:100%;border-radius:16px;margin-top:12px;background:#000"></video>
+      <canvas id="vCanvas" hidden></canvas>
+      <button class="btn ghost" id="vScanStop" type="button">Cerrar cámara</button>
+    </div>
     <form id="visitForm" novalidate>
-      <label for="vTicket">Código del pago</label>
-      <input id="vTicket" autocapitalize="characters" autocomplete="off" placeholder="Ej.: 0001-00012345">
+      <label for="vTicket">O escribí el código del pago</label>
+      <input id="vTicket" autocapitalize="characters" autocomplete="off" placeholder="Ej.: BF8F-AB51">
       <p class="msg err" id="vMsg" role="alert"></p>
-      <button class="btn" type="submit" id="vBtn">Enviar a la caja</button>
+      <button class="btn" type="submit" id="vBtn">Registrar visita</button>
     </form>
   </section>
 
   <section id="s-visit-ok" hidden>
-    <h1>¡Listo!</h1>
-    <p class="sub">Recibimos tu visita. Apenas la caja la confirme, se suman tus puntos. ¡Gracias por venir!</p>
+    <h1>¡Visita registrada!</h1>
+    <div class="card" style="text-align:center"><div class="sub" style="margin:0">Sumaste</div><div class="pts" id="vOkPts">0</div><div class="sub" style="margin:4px 0 0" id="vOkText"></div></div>
+    <p class="sub" id="vOkTotal"></p>
     <a class="btn" style="text-decoration:none" href="/">Ver mis puntos</a>
   </section>
-
   <section id="s-redeem" hidden>
     <h1 id="rHello">Canjeá tu premio</h1>
     <div class="card"><div class="sub" style="margin:0">Tus puntos</div><div class="pts" id="rPts">0</div></div>
@@ -150,6 +156,7 @@
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/vendor/qrcode.js"></script>
+<script src="js/vendor/jsQR.js"></script>
 <script src="js/kiosk.js"></script>
 </body>
 </html>

@@ -548,7 +548,10 @@ module.exports = async function handler(req,res) {
     // ---- Tablet / QR (público, mas protegido pelo QR rotativo e pelo código do WhatsApp) ----
     if(action==="kiosk_enter"){
       if(tooMany(req,"kenter",20)) return slowDown(res);
-      if(!kioskOk(slug,body.c)) return res.status(401).json({error:"qr_expired",message:"Este QR venció. Volvé a escanear el que está en la caja."});
+      // Entra com o QR do tablet OU com o QR de um comprobante válido (a conta paga também prova que a pessoa esteve aqui).
+      let enterOk=!!body.c&&kioskOk(slug,body.c);
+      if(!enterOk&&body.r) enterOk=await rpc("fid_receipt_peek",{p_slug:r.slug,p_code:String(body.r)});
+      if(!enterOk) return res.status(401).json({error:"qr_expired",message:"Este QR venció. Volvé a escanear el que está en la caja."});
       return res.status(200).json({session:mintToken(slug,"kiosk",30*60*1000),name:r.name});
     }
     if(action==="kiosk_otp_request"||action==="kiosk_otp_verify"){
@@ -573,10 +576,16 @@ module.exports = async function handler(req,res) {
         return res.status(200).json({coupon});
       }
       if(action==="kiosk_visit"){
-        // O cliente informa só o código do pagamento; o valor é confirmado pela caixa.
-        const amount=null;
-        await rpc("fid_visit_request",{p_slug:r.slug,p_customer:c.id,p_ticket:String(body.ticket||""),p_amount:amount});
-        return res.status(200).json({ok:true});
+        // O código do comprobante traz o valor: soma os pontos na hora, sem a caixa.
+        const taken=await rpc("fid_receipt_take",{p_slug:r.slug,p_code:String(body.ticket||""),p_customer:c.id});
+        try{
+          const done=await addVisit(r,c,Number(taken.amount));
+          return res.status(200).json({ok:true,amount:Number(taken.amount),pts:done.pts,total:done.customer.points});
+        }catch(err){
+          // Se a visita não foi registrada, devolve o comprobante para a pessoa tentar de novo.
+          await updateDocument("receipts",String(taken.id),{used_at:null,customer_id:null}).catch(()=>{});
+          throw err;
+        }
       }
       const active=await one("redemptions",[queryEqual("customer_id",c.id),queryEqual("status","pendiente"),queryOrderDesc("created_at")]);
       const live=active&&active.expires_at&&new Date(active.expires_at)>new Date()?{code:active.code,name:active.name,pts:active.points,expiresAt:active.expires_at}:null;
@@ -669,7 +678,7 @@ module.exports = async function handler(req,res) {
       if(!verifyToken(slug,token,["tablet"])) return res.status(401).json({error:"unauthorized",message:"La sesión venció. Entrá de nuevo."});
       return res.status(200).json({c:kioskMake(slug),slotMs:KIOSK_SLOT_MS,serverNow:Date.now()});
     }
-    const cashier=["search","visit","bonus","find_code","deliver","recent","visit_requests","visit_decide"].includes(action);
+    const cashier=["search","visit","bonus","find_code","deliver","recent","visit_requests","visit_decide","receipt_create"].includes(action);
     const owner=["stats","customers","export_customers","export_visits","redemptions","surveys","save_config","wa_status","wa_connect","wa_logout"].includes(action);
     if(cashier||owner){
       const roles=owner?["panel"]:["caja","panel"];
@@ -690,6 +699,11 @@ module.exports = async function handler(req,res) {
     if(action==="bonus"){
       const c=await customerById(r,body.customer);
       return res.status(200).json(await addBonus(r,c,String(body.type||"")));
+    }
+    if(action==="receipt_create"){
+      // Caixa de teste (provisório): gera um comprobante com código único e valor. Depois será o sistema do caixa do dono.
+      const rec=await rpc("fid_receipt_create",{p_slug:r.slug,p_amount:Number(String(body.amount||"").replace(/\./g,"").replace(",","."))});
+      return res.status(200).json({receipt:rec});
     }
     if(action==="visit_requests"){
       const rows=await many("visit_requests",[queryEqual("restaurant_id",r.id),queryEqual("status","pendiente"),queryOrderDesc("created_at")],30);

@@ -59,7 +59,7 @@ export default defineConfig(() => {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}'],
           cleanupOutdatedCaches: true,
           // Caixa, painel, pesquisas e a API são páginas/rotas do servidor: o service worker não pode devolver o app (index.html) no lugar delas.
-          navigateFallbackDenylist: [/^\/api\//, /^\/(caja|panel|survey|surveys|tablet|k)(\.html)?\/?$/],
+          navigateFallbackDenylist: [/^\/api\//, /^\/(caja|panel|survey|surveys|tablet|k|pos)(\.html)?\/?$/],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

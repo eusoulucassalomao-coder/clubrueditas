@@ -4,27 +4,34 @@
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const SS = "mkf_k_session_" + F.slug, KC = "mkf_k_kc_" + F.slug;
   const SECTIONS = ["load", "dead", "menu", "id", "otp", "visit", "visit-ok", "redeem", "coupon"];
-  let session = "", kc = "", ident = "", goal = "", first = "", tick = 0, lastSend = 0;
+  let session = "", kc = "", ident = "", goal = "", first = "", tick = 0, lastSend = 0, pendingReceipt = "";
   const store = {
     get: k => { try{ return sessionStorage.getItem(k) || ""; }catch(e){ return ""; } },
     set: (k, v) => { try{ sessionStorage.setItem(k, v); }catch(e){} },
     del: k => { try{ sessionStorage.removeItem(k); }catch(e){} }
   };
-  const show = name => { SECTIONS.forEach(s => $("s-" + s).hidden = (s !== name)); window.scrollTo(0, 0); };
+  const show = name => { if(name !== "visit") stopScan(); SECTIONS.forEach(s => $("s-" + s).hidden = (s !== name)); window.scrollTo(0, 0); };
   const busy = (btn, on, label) => { btn.disabled = on; if(label) btn.textContent = on ? "Un momento…" : label; };
+  const cleanCode = v => String(v || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  // do QR do comprobante (um link .../k?r=CODIGO) ou do que a pessoa digitou, tira só o código
+  function receiptFrom(raw){
+    const m = /[?&]r=([A-Za-z0-9-]{6,16})/.exec(String(raw || ""));
+    return cleanCode(m ? m[1] : raw);
+  }
 
   // kc (prova de identidade) dura 10 min: guardo a hora para não usar um vencido
   const kcGet = () => { const raw = store.get(KC); if(!raw) return ""; const [t, exp] = raw.split("|"); return Number(exp) > Date.now() ? t : ""; };
   const kcSet = t => store.set(KC, t + "|" + (Date.now() + 9 * 60 * 1000));
 
   async function boot(){
-    const q = new URLSearchParams(location.search), c = q.get("c");
+    const q = new URLSearchParams(location.search), c = q.get("c"), r = receiptFrom(q.get("r"));
     session = store.get(SS);
-    if(c){
-      // tira o código do endereço: o QR vale poucos segundos e não deve ficar no histórico
+    if(c || r){
+      // tira o código do endereço: não deve ficar no histórico
       try{ history.replaceState(null, "", "/k"); }catch(e){}
-      try{ const j = await F.kioskEnter(c); session = j.session; store.set(SS, session); store.del(KC); }
-      catch(e){ session = ""; store.del(SS); $("deadMsg").textContent = e.status === 401 ? "Ese QR venció. Escaneá de nuevo el que está en la caja." : e.message; show("dead"); return; }
+      try{ const j = await F.kioskEnter(c || undefined, r || undefined); session = j.session; store.set(SS, session); store.del(KC); }
+      catch(e){ session = ""; store.del(SS); $("deadMsg").textContent = e.status === 401 ? (r ? "Ese comprobante ya fue usado o venció." : "Ese QR venció. Escaneá de nuevo el que está en la caja.") : e.message; show("dead"); return; }
+      if(r){ pendingReceipt = r; start("visit"); return; }   // veio pelo QR do comprobante: vai direto para confirmar quem é
     }
     if(!session){ show("dead"); return; }
     kc = kcGet();
@@ -34,7 +41,6 @@
   function start(g){
     goal = g; kc = kcGet();
     if(kc){ enter(); return; }
-    $("idTitle").textContent = g === "visit" ? "Confirmemos que sos vos" : "Confirmemos que sos vos";
     $("idMsg").textContent = ""; show("id"); $("idIn").focus();
   }
   $("goVisit").onclick = () => start("visit");
@@ -42,7 +48,7 @@
   $("idBack").onclick = () => show("menu");
   $("otpBack").onclick = () => { $("otpMsg").textContent = ""; show("id"); };
 
-  function sessionDied(){ store.del(SS); store.del(KC); session = ""; kc = ""; $("deadMsg").textContent = "Pasó un rato. Escaneá de nuevo el QR de la caja."; show("dead"); }
+  function sessionDied(){ store.del(SS); store.del(KC); session = ""; kc = ""; $("deadMsg").textContent = "Pasó un rato. Escaneá de nuevo el QR."; show("dead"); }
 
   async function sendOtp(){
     try{ await F.kioskOtpRequest(session, ident); lastSend = Date.now(); return true; }
@@ -82,21 +88,69 @@
   });
 
   async function enter(){
-    if(goal === "visit"){ $("vHello").textContent = first ? "Registrá tu visita, " + first : "Registrá tu visita"; $("vMsg").textContent = ""; show("visit"); $("vTicket").focus(); return; }
+    if(goal === "visit"){
+      $("vHello").textContent = first ? "Registrá tu visita, " + first : "Registrá tu visita"; $("vMsg").textContent = "";
+      // se ya escaneó o escribió el comprobante antes, registra directo
+      if(pendingReceipt){ const code = pendingReceipt; pendingReceipt = ""; show("visit"); await sendVisit(code); return; }
+      show("visit"); $("vTicket").focus(); return;
+    }
     await loadRedeem();
   }
 
-  // ---- visita ----
-  $("visitForm").addEventListener("submit", async e => {
+  // ---- visita: código del comprobante (trae el valor de la cuenta) ----
+  async function sendVisit(code){
+    $("vMsg").textContent = ""; busy($("vBtn"), true);
+    try{
+      const j = await F.kioskVisit(kc, code);
+      store.del(KC);
+      $("vOkPts").textContent = "+" + fmt(j.pts) + " puntos";
+      $("vOkText").textContent = "por tu cuenta de $ " + fmt(j.amount);
+      $("vOkTotal").textContent = "Ahora tenés " + fmt(j.total) + " puntos en total. ¡Gracias por venir!";
+      show("visit-ok");
+    }catch(err){
+      if(err.code === "kc_expired"){ kcLost(); }
+      else { $("vMsg").textContent = err.message; show("visit"); }
+    }
+    busy($("vBtn"), false, "Registrar visita");
+  }
+  $("visitForm").addEventListener("submit", e => {
     e.preventDefault();
-    const ticket = $("vTicket").value.trim();
-    if(ticket.replace(/[^A-Za-z0-9]/g, "").length < 3){ $("vMsg").textContent = "Revisá el código del pago."; return; }
-    busy($("vBtn"), true); $("vMsg").textContent = "";
-    try{ await F.kioskVisit(kc, ticket); store.del(KC); show("visit-ok"); }
-    catch(err){ if(err.code === "kc_expired"){ kcLost(); } else $("vMsg").textContent = err.message; }
-    busy($("vBtn"), false, "Enviar a la caja");
+    const code = receiptFrom($("vTicket").value);
+    if(code.length < 6){ $("vMsg").textContent = "Revisá el código del pago."; return; }
+    sendVisit(code);
   });
   function kcLost(){ store.del(KC); kc = ""; $("idMsg").textContent = "Tu verificación venció. Confirmá de nuevo."; show("id"); }
+
+  // ---- cámara para el QR del comprobante ----
+  let stream = null, raf = 0;
+  function stopScan(){
+    cancelAnimationFrame(raf);
+    if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+    const v = $("vVideo"); if(v) v.srcObject = null;
+    const b = $("vScanBox"); if(b) b.hidden = true;
+  }
+  async function startScan(){
+    $("vMsg").textContent = "";
+    if(!navigator.mediaDevices || !window.jsQR){ $("vMsg").textContent = "Este navegador no permite usar la cámara. Escribí el código."; return; }
+    try{ stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }); }
+    catch(e){ $("vMsg").textContent = "No pudimos abrir la cámara. Permití el acceso o escribí el código."; return; }
+    const v = $("vVideo"), cv = $("vCanvas"), ctx = cv.getContext("2d", { willReadFrequently: true });
+    v.srcObject = stream; $("vScanBox").hidden = false; await v.play().catch(() => {});
+    const loop = () => {
+      if(!stream) return;
+      if(v.readyState >= 2 && v.videoWidth){
+        const w = Math.min(640, v.videoWidth), h = Math.round(w * v.videoHeight / v.videoWidth);
+        cv.width = w; cv.height = h; ctx.drawImage(v, 0, 0, w, h);
+        const hit = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "dontInvert" });
+        const code = hit && hit.data ? receiptFrom(hit.data) : "";
+        if(code.length >= 6 && code.length <= 16){ stopScan(); if(navigator.vibrate) navigator.vibrate(80); $("vTicket").value = code; sendVisit(code); return; }
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    loop();
+  }
+  $("vScan").onclick = startScan;
+  $("vScanStop").onclick = stopScan;
 
   // ---- premios ----
   async function loadRedeem(){

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Caja de prueba · Club</title>
+<link rel="icon" href="assets/logo.webp">
+<link rel="stylesheet" href="css/admin.css">
+<style>
+  .sim{background:#7a2b2b;color:#fff;text-align:center;font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:6px}
+  .receipt{max-width:340px;margin:18px auto 0;background:#fff;border:1px dashed #b9b09a;padding:22px 20px;font-family:ui-monospace,Menlo,Consolas,monospace;color:#222;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+  .receipt h3{margin:0;text-align:center;font-size:18px;letter-spacing:.08em}
+  .receipt .c{text-align:center;font-size:12px;color:#666}
+  .receipt hr{border:0;border-top:1px dashed #b9b09a;margin:14px 0}
+  .receipt .tot{display:flex;justify-content:space-between;font-size:20px;font-weight:700}
+  .receipt .qr{width:200px;margin:14px auto 6px}
+  .receipt .qr svg{display:block;width:100%;height:auto}
+  .receipt .code{text-align:center;font-size:24px;font-weight:700;letter-spacing:.16em}
+  .receipt .hint{text-align:center;font-size:11px;color:#777;margin-top:8px}
+  @media print{.noprint,.top,.sim{display:none!important}body{background:#fff}.receipt{box-shadow:none;margin:0 auto}}
+</style>
+</head>
+<body>
+<div class="gate" id="gate">
+  <form class="card" id="loginForm">
+    <h2>Caja de prueba</h2><p class="sub">Ingresá con la cuenta de la caja</p>
+    <label for="pEmail">E-mail</label>
+    <input id="pEmail" type="email" autocomplete="username" aria-label="E-mail">
+    <label for="pPass">Contraseña</label>
+    <input id="pPass" type="password" autocomplete="current-password" aria-label="Contraseña">
+    <p class="msg err" id="loginMsg" role="alert"></p>
+    <button class="btn full" type="submit">Entrar</button>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <div class="sim">Simulador · no es el sistema real del caja</div>
+  <header class="top"><div class="top-in"><img src="assets/logo.webp" alt=""><h1>Caja de prueba<small>Comprobantes con QR</small></h1><button id="out" type="button">Salir</button></div></header>
+  <main class="wrap" style="max-width:640px">
+    <section class="card noprint">
+      <h2>Nuevo comprobante</h2>
+      <p class="sub">Simula el pago en la caja: escribí el total y se genera un comprobante con código único y QR. El cliente lo escanea para registrar su visita.</p>
+      <form id="form" novalidate>
+        <label for="amount">Total de la cuenta ($)</label>
+        <input id="amount" type="tel" inputmode="numeric" autocomplete="off" placeholder="Ej.: 28500">
+        <p class="msg" id="msg" role="status"></p>
+        <button class="btn full" type="submit" id="btn">Generar comprobante</button>
+      </form>
+    </section>
+
+    <div id="out-receipt"></div>
+    <p class="noprint" style="text-align:center"><button class="btn ghost sm" id="print" type="button" hidden>Imprimir</button></p>
+  </main>
+</div>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/vendor/qrcode.js"></script>
+<script src="js/pos.js"></script>
+</body>
+</html>
