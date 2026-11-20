@@ -35,7 +35,7 @@ export default function App() {
     signOut,
   } = useAppState();
 
-  const { platform, isInstallable, isInstalled, install } = usePWAInstall();
+  const { platform, isInstallable, isInstalled, hasApp, install } = usePWAInstall();
   const t = TRANSLATIONS[language];
 
   const [activeTab, setActiveTab] = useState<TabId>('home');
@@ -104,7 +104,7 @@ export default function App() {
       {/* Device-aware initial install screen (suppressed automatically in standalone mode) */}
       <PWAInstallGate
         platform={platform}
-        isInstalled={isInstalled}
+        isInstalled={isInstalled} hasApp={hasApp}
         isInstallable={isInstallable}
         dismissed={installGateDismissed}
         language={language}
@@ -143,7 +143,7 @@ export default function App() {
                 rewards={rewards}
                 language={language}
                 t={t}
-                isInstalled={isInstalled}
+                isInstalled={isInstalled || hasApp}
                 isInstallable={isInstallable}
                 onInstallPwa={handleInstallAction}
                 onNavigate={handleNavigate}
@@ -182,7 +182,7 @@ export default function App() {
                 member={member}
                 language={language}
                 t={t}
-                isInstalled={isInstalled}
+                isInstalled={isInstalled || hasApp}
                 onChangeLanguage={setLanguage}
                 onUpdateMember={updateMember}
                 onOpenRegister={() => setRegisterOpen(true)}

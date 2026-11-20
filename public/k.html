@@ -58,6 +58,13 @@
   .ticket .bot{padding:14px 20px 18px;text-align:center;font-size:14px;color:var(--muted)}
   .ticket .time{display:inline-block;margin-top:6px;padding:6px 14px;border-radius:99px;background:var(--sage);color:var(--green);font-weight:700;font-variant-numeric:tabular-nums}
   .ticket.dead{filter:grayscale(1);opacity:.6}
+  .appbar{display:flex;align-items:center;gap:10px;background:var(--sage);border:1px solid #cfdcc4;color:var(--green-d);border-radius:16px;padding:12px 14px;margin-bottom:16px;font-size:14px}
+  .appbar b{display:block}
+  .appbar a{color:var(--green);font-weight:700}
+  select{font:inherit;font-size:18px;padding:14px 10px;border:1px solid #D8CEB8;border-radius:14px;background:#fff;color:var(--ink)}
+  .phone{display:flex;gap:8px}.phone select{flex:none}
+  .check{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:14px;margin-top:16px}
+  .check input{width:22px;height:22px;margin:2px 0 0;flex:none}
   .tiny{font-size:13px;color:var(--muted);text-align:center;margin-top:18px}
 </style>
 </head>
@@ -67,20 +74,56 @@
 
   <section id="s-load"><p class="sub" style="margin-top:30px">Un momento…</p></section>
 
+  <div id="appBar" class="appbar" hidden></div>
+
   <section id="s-dead" hidden>
-    <h1>Escaneá el QR de la caja</h1>
-    <p class="sub" id="deadMsg">Para registrar tu visita o canjear un premio, escaneá el código QR que está en la caja del local.</p>
-    <a class="btn ghost" style="text-decoration:none" href="/">Ir al Club</a>
+    <h1>Ese QR venció</h1>
+    <p class="sub" id="deadMsg">Escaneá de nuevo el código QR que está en la caja del local.</p>
+    <button class="btn" id="deadBack" type="button">Volver al inicio</button>
   </section>
 
   <section id="s-menu" hidden>
-    <h1>¡Hola! ¿Qué querés hacer?</h1>
-    <p class="sub">Es rápido: te mandamos un código por WhatsApp para confirmar que sos vos.</p>
+    <h1>¿Qué querés hacer?</h1>
+    <p class="sub">Elegí una opción. Es rápido y simple.</p>
+    <button class="big" id="goRegister" type="button"><span class="ic">🎉</span><span><b>Crear mi cuenta</b><small>Sumate al Club y empezá a ganar puntos</small></span></button>
     <button class="big" id="goVisit" type="button"><span class="ic">🧾</span><span><b>Registrar mi visita</b><small>Sumá puntos por tu cuenta de hoy</small></span></button>
     <button class="big" id="goRedeem" type="button"><span class="ic">🎁</span><span><b>Canjear un premio</b><small>Usá tus puntos y recibí tu cupón</small></span></button>
-    <p class="tiny">¿Todavía no sos del Club? <a href="/" style="color:var(--green)">Creá tu cuenta gratis</a></p>
+    <p class="tiny">Para registrar una visita o canjear un premio te mandamos un código por WhatsApp.</p>
   </section>
 
+  <section id="s-needqr" hidden>
+    <h1>Escaneá el QR de la caja</h1>
+    <p class="sub">Para registrar tu visita o canjear un premio, escaneá el código QR que está en el tablet de la caja del local.</p>
+    <button class="btn" id="needBack" type="button">Volver</button>
+  </section>
+
+  <section id="s-register" hidden>
+    <h1>Creá tu cuenta</h1>
+    <p class="sub">Gratis y en un minuto. Te regalamos puntos de bienvenida.</p>
+    <form id="regForm" novalidate>
+      <label for="rName">Nombre y apellido</label>
+      <input id="rName" autocomplete="name" placeholder="Ej.: Ana Pérez">
+      <label for="rPhone">Tu WhatsApp</label>
+      <div class="phone">
+        <select id="rCountry" aria-label="País"><option value="549">AR +54</option><option value="55">BR +55</option><option value="595">PY +595</option><option value="598">UY +598</option></select>
+        <input id="rPhone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Ej.: 376 4123456">
+      </div>
+      <label for="rBirth">Fecha de nacimiento</label>
+      <input id="rBirth" type="date" autocomplete="bday">
+      <label class="check"><input id="rConsent" type="checkbox"><span>Acepto que Club La Ruedita use mis datos para administrar mi cuenta y me envíe mensajes por WhatsApp.</span></label>
+      <p class="msg err" id="rgMsg" role="alert"></p>
+      <button class="btn" type="submit" id="rgBtn">Crear mi cuenta</button>
+    </form>
+    <button class="link" id="rgBack" type="button">← Volver</button>
+  </section>
+
+  <section id="s-register-ok" hidden>
+    <h1 id="rokTitle">¡Bienvenido/a!</h1>
+    <div class="card" style="text-align:center"><div class="sub" style="margin:0">Tu código de socio</div><div class="pts" id="rokCode" style="letter-spacing:.08em">—</div><div class="sub" style="margin:6px 0 0">Guardalo: también podés ingresar con tu WhatsApp.</div></div>
+    <p class="sub">Ya sos parte del Club. Si estás en el local, volvé al inicio para registrar tu visita.</p>
+    <button class="btn" id="rokVisit" type="button">Registrar mi visita</button>
+    <a class="btn ghost" style="text-decoration:none" href="/">Ver mi tarjeta del Club</a>
+  </section>
   <section id="s-id" hidden>
     <h1 id="idTitle">Confirmemos que sos vos</h1>
     <p class="sub">Escribí tu número de WhatsApp (el que usaste al registrarte) o tu código de socio. Te enviamos un código de 6 dígitos.</p>
@@ -153,10 +196,10 @@
   </section>
 
 </main>
-<script src="js/config.js"></script>
-<script src="js/api.js"></script>
-<script src="js/vendor/qrcode.js"></script>
-<script src="js/vendor/jsQR.js"></script>
-<script src="js/kiosk.js"></script>
+<script src="js/config.js?v=20261120c"></script>
+<script src="js/api.js?v=20261120c"></script>
+<script src="js/vendor/qrcode.js?v=20261120c"></script>
+<script src="js/vendor/jsQR.js?v=20261120c"></script>
+<script src="js/kiosk.js?v=20261120c"></script>
 </body>
 </html>

@@ -3,8 +3,10 @@
   const fmt = n => Number(n).toLocaleString("es-AR");
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const SS = "mkf_k_session_" + F.slug, KC = "mkf_k_kc_" + F.slug;
-  const SECTIONS = ["load", "dead", "menu", "id", "otp", "visit", "visit-ok", "redeem", "coupon"];
-  let session = "", kc = "", ident = "", goal = "", first = "", tick = 0, lastSend = 0, pendingReceipt = "";
+  const TOKEN_KEY = "club-la-ruedita-token-v1";          // mesmo lugar onde o app guarda a conta do cliente
+  const APP_KEY = "club-la-ruedita-pwa-installed-v1";    // o app grava isto quando é aberto instalado
+  const SECTIONS = ["load", "dead", "menu", "needqr", "register", "register-ok", "id", "otp", "visit", "visit-ok", "redeem", "coupon"];
+  let session = "", kc = "", ident = "", goal = "", first = "", tick = 0, lastSend = 0;
   const store = {
     get: k => { try{ return sessionStorage.getItem(k) || ""; }catch(e){ return ""; } },
     set: (k, v) => { try{ sessionStorage.setItem(k, v); }catch(e){} },
@@ -13,32 +15,69 @@
   const show = name => { if(name !== "visit") stopScan(); SECTIONS.forEach(s => $("s-" + s).hidden = (s !== name)); window.scrollTo(0, 0); };
   const busy = (btn, on, label) => { btn.disabled = on; if(label) btn.textContent = on ? "Un momento…" : label; };
   const cleanCode = v => String(v || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-  // do QR do comprobante (um link .../k?r=CODIGO) ou do que a pessoa digitou, tira só o código
-  function receiptFrom(raw){
-    const m = /[?&]r=([A-Za-z0-9-]{6,16})/.exec(String(raw || ""));
-    return cleanCode(m ? m[1] : raw);
-  }
+  const receiptFrom = raw => cleanCode(raw);
 
   // kc (prova de identidade) dura 10 min: guardo a hora para não usar um vencido
   const kcGet = () => { const raw = store.get(KC); if(!raw) return ""; const [t, exp] = raw.split("|"); return Number(exp) > Date.now() ? t : ""; };
   const kcSet = t => store.set(KC, t + "|" + (Date.now() + 9 * 60 * 1000));
 
+  // ---- o app já está instalado? então sugere ABRIR (nunca instalar) ----
+  async function appBar(){
+    const bar = $("appBar");
+    const standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+    if(standalone){ try{ localStorage.setItem(APP_KEY, "1"); }catch(e){} return; }   // já está dentro do app
+    let has = false;
+    try{ has = localStorage.getItem(APP_KEY) === "1"; }catch(e){}
+    try{ if(!has && navigator.getInstalledRelatedApps){ has = (await navigator.getInstalledRelatedApps()).length > 0; } }catch(e){}
+    bar.innerHTML = has
+      ? "<span style='font-size:24px'>📲</span><span><b>Ya tenés la app instalada</b>Abrila desde el ícono de La Ruedita para ver tus puntos y tu historial.</span>"
+      : "<span style='font-size:24px'>📲</span><span><b>Llevá el Club en tu celular</b>Instalá la app para ver tus puntos. <a href='/'>Ver cómo</a></span>";
+    bar.hidden = false;
+  }
+
   async function boot(){
-    const q = new URLSearchParams(location.search), c = q.get("c");
+    appBar();
+    const c = new URLSearchParams(location.search).get("c");
     session = store.get(SS);
     if(c){
-      // tira o código do endereço: não deve ficar no histórico
+      // tira o código do endereço: o QR vale poucos segundos e não deve ficar no histórico
       try{ history.replaceState(null, "", "/k"); }catch(e){}
       try{ const j = await F.kioskEnter(c); session = j.session; store.set(SS, session); store.del(KC); }
-      catch(e){ session = ""; store.del(SS); $("deadMsg").textContent = e.status === 401 ? "Ese QR venció. Escaneá de nuevo el que está en la caja." : e.message; show("dead"); return; }
-
+      catch(e){ session = ""; store.del(SS); $("deadMsg").textContent = e.status === 401 ? "Escaneá de nuevo el código QR que está en la caja del local." : e.message; show("dead"); return; }
     }
-    if(!session){ show("dead"); return; }
     kc = kcGet();
     show("menu");
   }
+  $("deadBack").onclick = () => show("menu");
+  $("needBack").onclick = () => show("menu");
 
+  // ---- crear cuenta ----
+  $("goRegister").onclick = () => { $("rgMsg").textContent = ""; show("register"); $("rName").focus(); };
+  $("rgBack").onclick = () => show("menu");
+  $("regForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const m = $("rgMsg"); m.textContent = "";
+    const name = $("rName").value.trim(), national = $("rPhone").value.replace(/\D/g, "").replace(/^0+/, ""), birth = $("rBirth").value;
+    if(name.length < 2){ m.textContent = "Escribí tu nombre."; return; }
+    if(national.length < 8 || national.length > 11){ m.textContent = "Revisá tu número de WhatsApp (sin el 0 ni el 15)."; return; }
+    if(!birth){ m.textContent = "Ingresá tu fecha de nacimiento."; return; }
+    if(!$("rConsent").checked){ m.textContent = "Para unirte necesitás aceptar los mensajes y el uso de tus datos."; return; }
+    busy($("rgBtn"), true);
+    try{
+      const j = await F.register({ name, phone: $("rCountry").value + national, birthday: birth, consent: true, waConsent: true });
+      try{ localStorage.setItem(TOKEN_KEY, j.token); }catch(x){}      // el app reconoce la cuenta sin pedir nada
+      first = name.split(/\s+/)[0];
+      $("rokTitle").textContent = "¡Bienvenido/a, " + first + "!";
+      $("rokCode").textContent = j.customer.code;
+      show("register-ok");
+    }catch(err){ m.textContent = err.status === 429 ? "Demasiados intentos. Esperá un minuto." : err.message; }
+    busy($("rgBtn"), false, "Crear mi cuenta");
+  });
+  $("rokVisit").onclick = () => start("visit");
+
+  // ---- visita / premio: precisan el QR del tablet (presencia en el local) ----
   function start(g){
+    if(!session){ show("needqr"); return; }
     goal = g; kc = kcGet();
     if(kc){ enter(); return; }
     $("idMsg").textContent = ""; show("id"); $("idIn").focus();
@@ -48,7 +87,7 @@
   $("idBack").onclick = () => show("menu");
   $("otpBack").onclick = () => { $("otpMsg").textContent = ""; show("id"); };
 
-  function sessionDied(){ store.del(SS); store.del(KC); session = ""; kc = ""; $("deadMsg").textContent = "Pasó un rato. Escaneá de nuevo el QR."; show("dead"); }
+  function sessionDied(){ store.del(SS); store.del(KC); session = ""; kc = ""; $("deadMsg").textContent = "Pasó un rato. Escaneá de nuevo el QR de la caja."; show("dead"); }
 
   async function sendOtp(){
     try{ await F.kioskOtpRequest(session, ident); lastSend = Date.now(); return true; }
@@ -90,8 +129,6 @@
   async function enter(){
     if(goal === "visit"){
       $("vHello").textContent = first ? "Registrá tu visita, " + first : "Registrá tu visita"; $("vMsg").textContent = "";
-      // se ya escaneó o escribió el comprobante antes, registra directo
-      if(pendingReceipt){ const code = pendingReceipt; pendingReceipt = ""; show("visit"); await sendVisit(code); return; }
       show("visit"); $("vTicket").focus(); return;
     }
     await loadRedeem();

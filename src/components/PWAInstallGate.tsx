@@ -15,6 +15,8 @@ import { BrandLogo } from './BrandLogo';
 interface PWAInstallGateProps {
   platform: DevicePlatform;
   isInstalled: boolean;
+  /** O app já está instalado neste aparelho, mas esta página abriu no navegador. */
+  hasApp?: boolean;
   isInstallable: boolean;
   dismissed: boolean;
   language: Language;
@@ -35,6 +37,7 @@ function resolveInitialMode(platform: DevicePlatform): InstallViewMode {
 export const PWAInstallGate: React.FC<PWAInstallGateProps> = ({
   platform,
   isInstalled,
+  hasApp = false,
   isInstallable,
   dismissed,
   language,
@@ -57,6 +60,37 @@ export const PWAInstallGate: React.FC<PWAInstallGateProps> = ({
     return null;
   }
 
+  // O app já está neste aparelho: em vez de pedir para instalar, sugere abrir o app.
+  if (hasApp) {
+    const copy = {
+      es: { title: 'Ya tenés la app', text: 'Abrila desde el ícono de La Ruedita en tu pantalla de inicio para ver tus puntos y tu historial.', cta: 'Seguir en el navegador' },
+      en: { title: 'You already have the app', text: 'Open it from the La Ruedita icon on your home screen to see your points and history.', cta: 'Continue in browser' },
+      pt: { title: 'Você já tem o app', text: 'Abra pelo ícone da La Ruedita na tela inicial para ver seus pontos e seu histórico.', cta: 'Continuar pelo navegador' },
+    }[language];
+    return (
+      <div className="fixed inset-0 z-50 bg-[#FAF7F0] overflow-y-auto flex flex-col justify-center px-4 sm:px-6 py-8">
+        <div className="max-w-lg w-full mx-auto">
+          <div className="mb-6"><BrandLogo size="md" /></div>
+          <div className="rounded-3xl bg-white border border-[#E7DFCC] p-6 sm:p-8 shadow-sm">
+            <div className="w-12 h-12 rounded-2xl bg-[#EAEFE5] text-[#4A5D3F] flex items-center justify-center mb-5">
+              <CheckCircle2 className="w-6 h-6" strokeWidth={1.8} />
+            </div>
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold text-[#293622] leading-tight text-balance">
+              {copy.title}
+            </h1>
+            <p className="mt-3 text-sm sm:text-base text-[#5A6353] leading-relaxed">{copy.text}</p>
+            <button
+              type="button"
+              onClick={onContinueInBrowser}
+              className="mt-7 w-full min-h-[50px] px-5 py-3 rounded-2xl bg-[#4A5D3F] hover:bg-[#38492F] text-[#FAF7F0] font-semibold text-sm transition-colors"
+            >
+              {copy.cta}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const handleInstallClick = async () => {
     if (isInstallable) {
       const outcome = await onInstall();

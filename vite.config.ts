@@ -33,6 +33,9 @@ export default defineConfig(() => {
           start_url: '/',
           scope: '/',
           lang: 'es',
+          // Permite ao navegador saber se o app já está instalado (Chrome Android) e então sugerir abrir em vez de instalar.
+          prefer_related_applications: false,
+          related_applications: [{ platform: 'webapp', url: 'https://laruedita-club.vercel.app/manifest.webmanifest' }],
           categories: ['food', 'lifestyle', 'shopping'],
           icons: [
             {
@@ -58,6 +61,8 @@ export default defineConfig(() => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}'],
           cleanupOutdatedCaches: true,
+          // Caixa, tablet, comprovantes, painel e a página do cliente (/k) têm scripts e páginas próprios: sempre da rede, nunca de cópia guardada no aparelho.
+          globIgnores: ['**/js/**', '**/css/**', '**/caja.html', '**/panel.html', '**/survey.html', '**/tablet.html', '**/k.html', '**/pos.html'],
           // Caixa, painel, pesquisas e a API são páginas/rotas do servidor: o service worker não pode devolver o app (index.html) no lugar delas.
           navigateFallbackDenylist: [/^\/api\//, /^\/(caja|panel|survey|surveys|tablet|k|pos)(\.html)?\/?$/],
           runtimeCaching: [
