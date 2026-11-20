@@ -451,10 +451,10 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       simulatingRedeem: 'Generando tu código...',
       insufficientPointsBtn: 'Puntos insuficientes',
       voucherTitle: '¡Premio listo!',
-      voucherSubtitle: 'Presenta este vale de ejemplo en barra para vivir la experiencia completa.',
+      voucherSubtitle: 'Acercá este QR a la cámara del tablet de la caja, o mostralo al personal.',
       voucherCodeLabel: 'Código de canje',
       voucherDemoDisclaimer:
-        'Muestra este código en caja para retirar tu premio. También lo guardamos en tu historial.',
+        'Si no podés usar el QR, decí el código en la caja. También lo guardamos en tu historial.',
       voucherDoneBtn: 'Listo, volver al catálogo',
       items: {
         'specialty-coffee': {
@@ -838,10 +838,10 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       simulatingRedeem: 'Generating your code...',
       insufficientPointsBtn: 'Not enough points',
       voucherTitle: 'Reward ready!',
-      voucherSubtitle: 'Show this sample voucher at the bar to preview the full member flow.',
+      voucherSubtitle: 'Hold this QR up to the cashier tablet camera, or show it to our staff.',
       voucherCodeLabel: 'Redemption code',
       voucherDemoDisclaimer:
-        'Show this code at the register to collect your reward. We also keep it in your history.',
+        "If you can\u0027t use the QR, say the code at the register. We also keep it in your history.",
       voucherDoneBtn: 'Done, return to catalog',
       items: {
         'specialty-coffee': {
@@ -1225,10 +1225,10 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       simulatingRedeem: 'Gerando seu código...',
       insufficientPointsBtn: 'Pontos insuficientes',
       voucherTitle: 'Prêmio pronto!',
-      voucherSubtitle: 'Apresente este vale de exemplo no balcão para visualizar a experiência.',
+      voucherSubtitle: 'Aproxime este QR da câmera do tablet do caixa, ou mostre à equipe.',
       voucherCodeLabel: 'Código do resgate',
       voucherDemoDisclaimer:
-        'Mostre este código no caixa para retirar seu prêmio. Também o guardamos no seu histórico.',
+        'Se não puder usar o QR, informe o código no caixa. Também guardamos no seu histórico.',
       voucherDoneBtn: 'Pronto, voltar ao catálogo',
       items: {
         'specialty-coffee': {

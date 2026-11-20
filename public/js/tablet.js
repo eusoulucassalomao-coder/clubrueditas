@@ -121,7 +121,7 @@
         cv.width = w; cv.height = h; ctx.drawImage(v, 0, 0, w, h);
         const hit = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "dontInvert" });
         const val = hit && hit.data ? String(hit.data).trim().toUpperCase() : "";
-        if(/^P[0-9]{6}$/.test(val)){ if(navigator.vibrate) navigator.vibrate(80); checkCode(val); }
+        if(/^P[0-9]{5,6}$/.test(val)){ if(navigator.vibrate) navigator.vibrate(80); checkCode(val); }
       }
       scanRaf = requestAnimationFrame(loop);
     };

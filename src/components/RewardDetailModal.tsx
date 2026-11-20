@@ -7,6 +7,7 @@ import {
 } from '../i18n/translations';
 import { Language, RewardDefinition } from '../types';
 import { SafeImage } from './SafeImage';
+import { VoucherQr } from './VoucherQr';
 import { getRewardCopy } from '../utils/rewardCopy';
 
 interface RewardDetailModalProps {
@@ -126,6 +127,7 @@ export const RewardDetailModal: React.FC<RewardDetailModalProps> = ({
                 {itemCopy.title} · {formatNumber(reward.pointsRequired, language)}{' '}
                 {t.common.pointsShort}
               </p>
+              <VoucherQr code={voucherCode} label={`QR `} />
               <p className="mt-3 text-xs text-[#6B7365]">
                 {t.rewards.voucherCodeLabel}
               </p>

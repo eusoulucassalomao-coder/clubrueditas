@@ -14,6 +14,7 @@ import {
   TranslationDictionary,
 } from '../i18n/translations';
 import { HistoryEntry, HistoryEntryType, Language } from '../types';
+import { VoucherQr } from '../components/VoucherQr';
 
 interface HistoryScreenProps {
   history: HistoryEntry[];
@@ -280,6 +281,9 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({
               <p className="mt-1 text-xs text-[#5A6353]">
                 {formatDate(selectedVoucherEntry.dateIso, language)}
               </p>
+              {selectedVoucherEntry.voucherCode && (
+                <VoucherQr code={selectedVoucherEntry.voucherCode} label={`QR ${selectedVoucherEntry.voucherCode}`} />
+              )}
               <p className="mt-4 text-xs text-[#6B7365]">
                 {t.rewards.voucherCodeLabel}
               </p>
