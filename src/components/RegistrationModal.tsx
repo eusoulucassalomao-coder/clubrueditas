@@ -21,6 +21,26 @@ interface RegistrationModalProps {
 
 type LegalDocKey = 'terms' | 'privacy' | 'cookies';
 
+// Prefixo que o WhatsApp exige. Argentina usa 54 + 9 (celular) + DDD + número.
+const PHONE_COUNTRIES = [
+  { id: 'AR', label: 'AR +54', prefix: '549' },
+  { id: 'BR', label: 'BR +55', prefix: '55' },
+  { id: 'PY', label: 'PY +595', prefix: '595' },
+  { id: 'UY', label: 'UY +598', prefix: '598' },
+] as const;
+
+/** Número só com dígitos, já com o código do país (sem zeros à esquerda). */
+function toInternational(countryId: string, raw: string): string {
+  const prefix = PHONE_COUNTRIES.find((c) => c.id === countryId)?.prefix ?? '549';
+  const digits = raw.replace(/\D/g, '').replace(/^0+/, '');
+  return prefix + digits;
+}
+
+const phoneLooksValid = (raw: string) => {
+  const n = raw.replace(/\D/g, '').replace(/^0+/, '').length;
+  return n >= 8 && n <= 11;
+};
+
 export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   isOpen,
   onClose,
@@ -29,6 +49,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   onRequestCode,
   onVerifyCode,
 }) => {
+  const [country, setCountry] = useState<string>('AR');
   const [mode, setMode] = useState<'register' | 'recover'>('register');
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState('');
@@ -66,15 +87,14 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   };
 
   const handleSendCode = async () => {
-    const phoneDigits = phone.replace(/\D/g, '');
-    if (phoneDigits.length < 8 || phoneDigits.length > 15) {
+    if (!phoneLooksValid(phone)) {
       setRecoverError(t.registration.errorPhoneInvalid);
       return;
     }
     setRecoverError('');
     setRecoverBusy(true);
     try {
-      await onRequestCode(phoneDigits);
+      await onRequestCode(toInternational(country, phone));
       setCodeSent(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
@@ -93,7 +113,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     setRecoverError('');
     setRecoverBusy(true);
     try {
-      await onVerifyCode(phone.replace(/\D/g, ''), code.replace(/\D/g, ''));
+      await onVerifyCode(toInternational(country, phone), code.replace(/\D/g, ''));
       resetAndClose();
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
@@ -113,8 +133,8 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     if (fullName.trim().length < 2) {
       nextErrors.fullName = t.registration.errorNameRequired;
     }
-    const phoneDigits = phone.replace(/\D/g, '');
-    if (phoneDigits.length < 8 || phoneDigits.length > 15) {
+    const phoneDigits = toInternational(country, phone);
+    if (!phoneLooksValid(phone)) {
       nextErrors.phone = t.registration.errorPhoneInvalid;
     }
     if (!birthDate) {
@@ -253,10 +273,16 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 <label htmlFor="rec-phone" className="block text-xs font-semibold text-[#293622] mb-1.5">
                   {t.registration.phoneLabel}
                 </label>
-                <input id="rec-phone" type="tel" inputMode="tel" autoComplete="tel" value={phone}
-                  onChange={(e) => setPhone(e.target.value)} placeholder={t.registration.phonePlaceholder}
-                  disabled={codeSent}
-                  className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-white border border-[#D8CEB8] text-sm text-[#1F281B] placeholder:text-[#8A9184] focus:outline-none focus:border-[#4A5D3F] disabled:opacity-60" />
+                <div className="flex gap-2">
+                  <select aria-label="País" value={country} onChange={(e) => setCountry(e.target.value)} disabled={codeSent}
+                    className="min-h-[46px] px-2 rounded-xl bg-white border border-[#D8CEB8] text-sm text-[#1F281B] focus:outline-none focus:border-[#4A5D3F] disabled:opacity-60">
+                    {PHONE_COUNTRIES.map((c) => (<option key={c.id} value={c.id}>{c.label}</option>))}
+                  </select>
+                  <input id="rec-phone" type="tel" inputMode="tel" autoComplete="tel-national" value={phone}
+                    onChange={(e) => setPhone(e.target.value)} placeholder={t.registration.phonePlaceholder}
+                    disabled={codeSent}
+                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-white border border-[#D8CEB8] text-sm text-[#1F281B] placeholder:text-[#8A9184] focus:outline-none focus:border-[#4A5D3F] disabled:opacity-60" />
+                </div>
               </div>
 
               {!codeSent ? (
@@ -352,9 +378,15 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 <label htmlFor="reg-phone" className="block text-xs font-semibold text-[#293622] mb-1.5">
                   {t.registration.phoneLabel}
                 </label>
-                <input id="reg-phone" type="tel" inputMode="tel" autoComplete="tel" value={phone}
-                  onChange={(e) => setPhone(e.target.value)} placeholder={t.registration.phonePlaceholder}
-                  className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-white border border-[#D8CEB8] text-sm text-[#1F281B] placeholder:text-[#8A9184] focus:outline-none focus:border-[#4A5D3F]" />
+                <div className="flex gap-2">
+                  <select aria-label="País" value={country} onChange={(e) => setCountry(e.target.value)}
+                    className="min-h-[46px] px-2 rounded-xl bg-white border border-[#D8CEB8] text-sm text-[#1F281B] focus:outline-none focus:border-[#4A5D3F]">
+                    {PHONE_COUNTRIES.map((c) => (<option key={c.id} value={c.id}>{c.label}</option>))}
+                  </select>
+                  <input id="reg-phone" type="tel" inputMode="tel" autoComplete="tel-national" value={phone}
+                    onChange={(e) => setPhone(e.target.value)} placeholder={t.registration.phonePlaceholder}
+                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-white border border-[#D8CEB8] text-sm text-[#1F281B] placeholder:text-[#8A9184] focus:outline-none focus:border-[#4A5D3F]" />
+                </div>
                 {errors.phone && <p className="mt-1 text-xs text-[#9E3B2B] font-medium">{errors.phone}</p>}
               </div>
 
