@@ -1,4 +1,15 @@
 (function(){
+  // Se o aparelho guardou uma página antiga (sem o botão do cupom), limpa o que ficou guardado e recarrega uma vez.
+  if(!document.getElementById("couponBtn")){
+    let healed = false; try{ healed = sessionStorage.getItem("tabletHealed") === "1"; sessionStorage.setItem("tabletHealed", "1"); }catch(e){}
+    if(!healed){
+      (async () => {
+        try{ if(navigator.serviceWorker){ const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r => r.unregister())); } if(window.caches){ const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); } }catch(e){}
+        location.reload();
+      })();
+    }
+    return;
+  }
   const F = window.Fid, $ = id => document.getElementById(id);
   const TK = "mkf_tablet_" + F.slug;
   let tok = "", timer = 0, offset = 0, slotMs = 15000, fails = 0, raf = 0, endsAt = 0;

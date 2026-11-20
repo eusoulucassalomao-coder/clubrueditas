@@ -9,29 +9,37 @@
 <link rel="icon" href="assets/logo.webp">
 <link rel="stylesheet" href="css/admin.css">
 <style>
-  html,body{height:100%}
-  body{background:radial-gradient(1200px 700px at 50% -10%,#1f3a27,#0b170f);color:var(--cream);overflow:hidden;user-select:none;-webkit-user-select:none}
-  .stage{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(14px,3vh,28px);padding:20px;text-align:center}
+  html,body{min-height:100%}
+  body{background:radial-gradient(1200px 700px at 50% -10%,#1f3a27,#0b170f) fixed;color:var(--cream);overflow-x:hidden;user-select:none;-webkit-user-select:none}
+  /* A coluna cabe na altura da tela; se não couber, a página rola (nada fica escondido). */
+  .stage{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;gap:clamp(8px,1.8vh,20px);padding:clamp(10px,2vh,22px) 20px;text-align:center}
+  .stage > :first-child{margin-top:auto}
+  .stage > :last-child{margin-bottom:auto}
   .brand{display:flex;align-items:center;gap:12px}
-  .brand img{width:52px;height:52px;border-radius:50%}
-  .brand b{font-family:var(--serif);font-weight:400;font-size:clamp(22px,3.4vw,34px);color:#f4e3b0;letter-spacing:.02em}
-  .lead{margin:0;font-family:var(--serif);font-weight:400;font-size:clamp(24px,4.4vw,46px);line-height:1.15;color:#fff}
+  .brand img{width:clamp(36px,6vh,52px);height:clamp(36px,6vh,52px);border-radius:50%}
+  .brand b{font-family:var(--serif);font-weight:400;font-size:clamp(20px,3.2vw,32px);color:#f4e3b0;letter-spacing:.02em}
+  .lead{margin:0;font-family:var(--serif);font-weight:400;font-size:clamp(22px,3.8vw,42px);line-height:1.15;color:#fff}
   .lead em{font-style:normal;color:var(--gold2)}
-  .qrbox{background:#fff;border-radius:28px;padding:clamp(14px,2.4vw,26px);box-shadow:0 20px 60px rgba(0,0,0,.45),0 0 0 6px rgba(233,196,106,.35);width:min(62vh,78vw);aspect-ratio:1}
+  .lead-pt{margin:-4px 0 0;font-size:clamp(15px,2.2vw,22px);color:#f4e3b0;opacity:.9}
+  .qrbox{background:#fff;border-radius:26px;padding:clamp(10px,1.8vh,22px);box-shadow:0 20px 60px rgba(0,0,0,.45),0 0 0 6px rgba(233,196,106,.35);width:min(44vh,78vw);aspect-ratio:1}
   .qrbox svg{display:block;width:100%;height:100%}
-  .bar{width:min(62vh,78vw);height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
+  .bar{width:min(44vh,78vw);height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
   .bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#c9a227,#f0d27f);transform-origin:left center}
-  .lead-pt{margin:-6px 0 0;font-size:clamp(16px,2.4vw,24px);color:#f4e3b0;opacity:.9}
-  .hint{margin:0;font-size:clamp(14px,1.9vw,20px);opacity:.8}
-  .steps{display:flex;gap:clamp(10px,2vw,28px);flex-wrap:wrap;justify-content:center;font-size:clamp(13px,1.7vw,18px)}
+  /* Botão do cupom: logo abaixo do QR, grande e sempre à vista */
+  .couponbtn{width:min(44vh,78vw);min-width:260px;border:0;background:linear-gradient(180deg,#f0d27f,#c9a227);color:#14261a;font:inherit;font-weight:800;font-size:clamp(18px,2.6vw,28px);padding:clamp(12px,2vh,18px) 26px;border-radius:18px;cursor:pointer;line-height:1.2;box-shadow:0 10px 30px rgba(201,162,39,.3)}
+  .couponbtn:active{transform:scale(.98)}
+  .couponbtn small{display:block;font-weight:600;opacity:.75;font-size:.58em;margin-top:3px}
+  .hint{margin:0;font-size:clamp(13px,1.7vw,18px);opacity:.8}
+  .steps{display:flex;gap:clamp(10px,2vw,28px);flex-wrap:wrap;justify-content:center;font-size:clamp(12px,1.5vw,17px)}
   .steps span{padding:8px 16px;border-radius:99px;background:rgba(255,255,255,.08);border:1px solid rgba(233,196,106,.25)}
-  .off{position:fixed;top:10px;right:12px;opacity:.25;font-size:12px;background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:99px;padding:5px 12px;cursor:pointer}
+  /* telas baixas (computador, tablet deitado): tira o que é secundário para o essencial caber */
+  @media (max-height:820px){.lead-pt,.steps,.hint{display:none}}
+  @media (max-height:640px){.lead{font-size:clamp(18px,3vw,28px)}.brand b{font-size:18px}}
+  .off{position:fixed;top:10px;right:12px;opacity:.25;font-size:12px;background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:99px;padding:5px 12px;cursor:pointer;z-index:5}
   .off:hover{opacity:.9}
-  .warn{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:#7a2b2b;color:#fff;padding:8px 16px;border-radius:99px;font-size:14px}
+  .warn{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:#7a2b2b;color:#fff;padding:8px 16px;border-radius:99px;font-size:14px;z-index:5}
   .gate .card{color:var(--text)}
-  .couponbtn{border:2px solid rgba(233,196,106,.7);background:rgba(233,196,106,.12);color:#f4e3b0;font:inherit;font-weight:700;font-size:clamp(15px,2vw,22px);padding:14px 28px;border-radius:99px;cursor:pointer;line-height:1.25}
-  .couponbtn small{display:block;font-weight:400;opacity:.75;font-size:.72em}
-  .ov{position:fixed;inset:0;z-index:50;background:rgba(8,16,11,.97);display:flex;align-items:center;justify-content:center;padding:20px;text-align:center}
+  .ov{position:fixed;inset:0;z-index:50;background:rgba(8,16,11,.97);display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;overflow-y:auto}
   .ov-in{width:min(560px,100%);display:flex;flex-direction:column;align-items:center;gap:14px}
   .ov h2{margin:0;font-family:var(--serif);font-weight:400;font-size:clamp(24px,4vw,38px);color:#fff}
   .ov p{margin:0;opacity:.8}
@@ -68,9 +76,9 @@
   <p class="lead-pt">Escaneie e <b>some pontos</b> ou resgate seu prêmio</p>
   <div class="qrbox" id="qr" role="img" aria-label="Código QR para registrar tu visita o canjear tu premio"></div>
   <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+  <button class="couponbtn" id="couponBtn" type="button"><span data-i="tCoupon">Tengo un cupón</span><small>Tenho um cupom · I have a coupon</small></button>
   <div class="steps"><span>1 · Escaneá el QR<br><small style="opacity:.7">Escaneie o QR</small></span><span>2 · Elegí visita o premio<br><small style="opacity:.7">Escolha visita ou prêmio</small></span><span>3 · Confirmá con el código de WhatsApp<br><small style="opacity:.7">Confirme com o código do WhatsApp</small></span></div>
   <p class="hint">El QR cambia solo cada pocos segundos, por seguridad. · O QR muda sozinho a cada poucos segundos, por segurança.</p>
-  <button class="couponbtn" id="couponBtn" type="button"><span data-i="tCoupon">Tengo un cupón</span><small>Tenho um cupom · I have a coupon</small></button>
   <button class="off" id="off" type="button">Salir</button>
   <div class="warn" id="warn" hidden>Sin conexión… reintentando</div>
 </main>
@@ -90,11 +98,11 @@
     <button class="ovbtn ghost" id="ovCancel" type="button" data-i="tCancel">Cancelar</button>
   </div>
 </div>
-<script src="js/config.js?v=20261120h"></script>
-<script src="js/api.js?v=20261120h"></script>
-<script src="js/vendor/qrcode.js?v=20261120h"></script>
-<script src="js/vendor/jsQR.js?v=20261120h"></script>
-<script src="js/k-i18n.js?v=20261120h"></script>
-<script src="js/tablet.js?v=20261120h"></script>
+<script src="js/config.js?v=20261120i"></script>
+<script src="js/api.js?v=20261120i"></script>
+<script src="js/vendor/qrcode.js?v=20261120i"></script>
+<script src="js/vendor/jsQR.js?v=20261120i"></script>
+<script src="js/k-i18n.js?v=20261120i"></script>
+<script src="js/tablet.js?v=20261120i"></script>
 </body>
 </html>
