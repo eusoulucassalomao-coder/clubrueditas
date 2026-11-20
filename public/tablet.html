@@ -21,6 +21,7 @@
   .qrbox svg{display:block;width:100%;height:100%}
   .bar{width:min(62vh,78vw);height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
   .bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#c9a227,#f0d27f);transform-origin:left center}
+  .lead-pt{margin:-6px 0 0;font-size:clamp(16px,2.4vw,24px);color:#f4e3b0;opacity:.9}
   .hint{margin:0;font-size:clamp(14px,1.9vw,20px);opacity:.8}
   .steps{display:flex;gap:clamp(10px,2vw,28px);flex-wrap:wrap;justify-content:center;font-size:clamp(13px,1.7vw,18px)}
   .steps span{padding:8px 16px;border-radius:99px;background:rgba(255,255,255,.08);border:1px solid rgba(233,196,106,.25)}
@@ -46,10 +47,11 @@
 <main class="stage" id="stage" hidden>
   <div class="brand"><img src="assets/logo.webp" alt=""><b>Club La Ruedita</b></div>
   <h1 class="lead">Escaneá y <em>sumá puntos</em><br>o canjeá tu premio</h1>
+  <p class="lead-pt">Escaneie e <b>some pontos</b> ou resgate seu prêmio</p>
   <div class="qrbox" id="qr" role="img" aria-label="Código QR para registrar tu visita o canjear tu premio"></div>
   <div class="bar" aria-hidden="true"><i id="bar"></i></div>
-  <div class="steps"><span>1 · Escaneá el QR</span><span>2 · Elegí visita o premio</span><span>3 · Confirmá con el código de WhatsApp</span></div>
-  <p class="hint">El QR cambia solo cada pocos segundos, por seguridad.</p>
+  <div class="steps"><span>1 · Escaneá el QR<br><small style="opacity:.7">Escaneie o QR</small></span><span>2 · Elegí visita o premio<br><small style="opacity:.7">Escolha visita ou prêmio</small></span><span>3 · Confirmá con el código de WhatsApp<br><small style="opacity:.7">Confirme com o código do WhatsApp</small></span></div>
+  <p class="hint">El QR cambia solo cada pocos segundos, por seguridad. · O QR muda sozinho a cada poucos segundos, por segurança.</p>
   <button class="off" id="off" type="button">Salir</button>
   <div class="warn" id="warn" hidden>Sin conexión… reintentando</div>
 </main>
