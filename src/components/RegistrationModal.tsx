@@ -15,6 +15,8 @@ interface RegistrationModalProps {
     consent: boolean;
     ref?: string;
   }) => Promise<MemberProfile>;
+  onRequestCode: (phone: string) => Promise<void>;
+  onVerifyCode: (phone: string, code: string) => Promise<MemberProfile>;
 }
 
 type LegalDocKey = 'terms' | 'privacy' | 'cookies';
@@ -24,7 +26,14 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   onClose,
   t,
   onRegister,
+  onRequestCode,
+  onVerifyCode,
 }) => {
+  const [mode, setMode] = useState<'register' | 'recover'>('register');
+  const [codeSent, setCodeSent] = useState(false);
+  const [code, setCode] = useState('');
+  const [recoverError, setRecoverError] = useState('');
+  const [recoverBusy, setRecoverBusy] = useState(false);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -48,7 +57,53 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     setSubmitting(false);
     setCreatedProfile(null);
     setActiveLegalDoc(null);
+    setMode('register');
+    setCodeSent(false);
+    setCode('');
+    setRecoverError('');
+    setRecoverBusy(false);
     onClose();
+  };
+
+  const handleSendCode = async () => {
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (phoneDigits.length < 8 || phoneDigits.length > 15) {
+      setRecoverError(t.registration.errorPhoneInvalid);
+      return;
+    }
+    setRecoverError('');
+    setRecoverBusy(true);
+    try {
+      await onRequestCode(phoneDigits);
+      setCodeSent(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      setRecoverError(
+        message && message !== 'server' && message !== 'network'
+          ? message
+          : t.registration.errorGeneric
+      );
+    } finally {
+      setRecoverBusy(false);
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRecoverError('');
+    setRecoverBusy(true);
+    try {
+      await onVerifyCode(phone.replace(/\D/g, ''), code.replace(/\D/g, ''));
+      resetAndClose();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      setRecoverError(
+        message && message !== 'server' && message !== 'network'
+          ? message
+          : t.registration.recErr
+      );
+      setRecoverBusy(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -172,6 +227,81 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
               {t.registration.successContinueBtn}
             </button>
           </div>
+        ) : mode === 'recover' ? (
+          /* RECOVER ACCOUNT BY WHATSAPP CODE */
+          <>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <BrandLogo size="sm" />
+                <h2 className="mt-4 font-display text-2xl font-semibold text-[#293622] leading-tight">
+                  {t.registration.recTitle}
+                </h2>
+                <p className="mt-1.5 text-sm text-[#5A6353]">{t.registration.recSub}</p>
+              </div>
+              <button
+                type="button"
+                onClick={resetAndClose}
+                aria-label={t.common.close}
+                className="min-h-[44px] min-w-[44px] -mr-2 -mt-2 rounded-xl flex items-center justify-center text-[#5A6353] hover:bg-[#F3EDE0] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleVerifyCode} noValidate className="mt-6 space-y-4">
+              <div>
+                <label htmlFor="rec-phone" className="block text-xs font-semibold text-[#293622] mb-1.5">
+                  {t.registration.phoneLabel}
+                </label>
+                <input id="rec-phone" type="tel" inputMode="tel" autoComplete="tel" value={phone}
+                  onChange={(e) => setPhone(e.target.value)} placeholder={t.registration.phonePlaceholder}
+                  disabled={codeSent}
+                  className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-white border border-[#D8CEB8] text-sm text-[#1F281B] placeholder:text-[#8A9184] focus:outline-none focus:border-[#4A5D3F] disabled:opacity-60" />
+              </div>
+
+              {!codeSent ? (
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  disabled={recoverBusy}
+                  className="w-full min-h-[50px] px-5 py-3 rounded-2xl bg-[#4A5D3F] hover:bg-[#38492F] disabled:opacity-60 text-[#FAF7F0] font-semibold text-sm active:scale-[0.98] transition-all"
+                >
+                  {t.registration.recSend}
+                </button>
+              ) : (
+                <>
+                  <p className="text-xs text-[#4D5647] leading-relaxed">{t.registration.recSent}</p>
+                  <div>
+                    <label htmlFor="rec-code" className="block text-xs font-semibold text-[#293622] mb-1.5">
+                      {t.registration.recCodeLabel}
+                    </label>
+                    <input id="rec-code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                      value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                      className="w-full min-h-[50px] px-3.5 py-2.5 rounded-xl bg-white border border-[#D8CEB8] text-lg font-mono tracking-[0.4em] text-center text-[#1F281B] focus:outline-none focus:border-[#4A5D3F]" />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={recoverBusy || code.length !== 6}
+                    className="w-full min-h-[50px] px-5 py-3 rounded-2xl bg-[#4A5D3F] hover:bg-[#38492F] disabled:opacity-60 text-[#FAF7F0] font-semibold text-sm active:scale-[0.98] transition-all"
+                  >
+                    {t.registration.recVerify}
+                  </button>
+                </>
+              )}
+
+              {recoverError && (
+                <p role="alert" className="text-xs text-[#9E3B2B] font-medium">{recoverError}</p>
+              )}
+
+              <button
+                type="button"
+                onClick={() => { setMode('register'); setCodeSent(false); setCode(''); setRecoverError(''); }}
+                className="w-full text-xs text-[#5A6353] underline hover:text-[#293622]"
+              >
+                {t.registration.recBack}
+              </button>
+            </form>
+          </>
         ) : (
           /* SIMPLE MODERN REGISTRATION FORM */
           <>
@@ -309,6 +439,13 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 .
               </p>
 
+              <button
+                type="button"
+                onClick={() => setMode('recover')}
+                className="w-full text-sm font-medium text-[#4A5D3F] underline hover:text-[#293622]"
+              >
+                {t.registration.recHave}
+              </button>
             </form>
           </>
         )}

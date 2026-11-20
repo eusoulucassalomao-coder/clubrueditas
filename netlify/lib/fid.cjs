@@ -316,6 +316,37 @@ async function notifySurveyWebhook(r, surveyToken, rating, comment, result) {
   }
 }
 
+const otpHash = (customerId, code) =>
+  crypto.createHash("sha256").update(`${process.env.FID_TOKEN_SECRET || ""}:${customerId}:${code}`).digest("hex");
+
+// Envia o código de acesso pelo n8n (hoje via Evolution; quando houver número oficial, só o último nó do n8n muda).
+async function notifyOtpWebhook(r, customer, code) {
+  const visitWebhookUrl = process.env.N8N_VISIT_WEBHOOK_URL || "";
+  const apiKey = process.env.N8N_VISIT_WEBHOOK_API_KEY || "";
+  if (!visitWebhookUrl || !apiKey) return { state: "not_configured" };
+  const url = visitWebhookUrl.replace(/\/webhook\/la-ruedita\/visit-review-campaign\/?$/, "/webhook/la-ruedita/otp-send");
+  if (url === visitWebhookUrl) return { state: "invalid_webhook_config" };
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", apikey: apiKey },
+      body: JSON.stringify({
+        event: "otp.requested",
+        restaurantSlug: r.slug,
+        customerName: String(customer.name || "").trim().split(/\s+/)[0] || "",
+        phone: customer.phone,
+        code,
+        expiresInMinutes: 10
+      }),
+      signal: AbortSignal.timeout(8000)
+    });
+    return { state: response.ok ? "sent" : "failed", status: response.status };
+  } catch (error) {
+    console.error("otp-webhook", error.message);
+    return { state: "failed" };
+  }
+}
+
 async function addVisit(r, customer, amount) {
   const value = Number(amount);
   if (!Number.isFinite(value) || value <= 0 || value > 100000000) {
@@ -431,6 +462,37 @@ module.exports = async function handler(req,res) {
       return res.status(200).json({
         customer:{name:String(c.name||"").trim().split(/\s+/)[0]||"",code:c.code,points:c.points}
       });
+    }
+    if(action==="otp_request"||action==="otp_verify"){
+      // Recuperar a conta num aparelho novo: código de 6 dígitos enviado por WhatsApp ao telefone cadastrado.
+      if(tooMany(req,action,6)) return slowDown(res);
+      const phoneKey=digits(body.phone).slice(-8);
+      if(phoneKey.length<8) return res.status(400).json({error:"phone",message:"Ingresá tu teléfono."});
+      const c=await one("customers",[queryEqual("restaurant_id",r.id),queryEqual("phone_key",phoneKey)]);
+      if(action==="otp_request"){
+        // Resposta sempre igual, exista ou não a conta (não revela quem é cliente).
+        if(c&&!c.opted_out){
+          const recent=(await many("otp_codes",[queryEqual("customer_id",c.id),queryOrderDesc("created_at")],5));
+          const lastMs=recent[0]?Date.now()-new Date(recent[0].created_at):Infinity;
+          const lastHour=recent.filter(x=>Date.now()-new Date(x.created_at)<3600000).length;
+          if(lastMs>30000&&lastHour<3){
+            const code=String(crypto.randomInt(0,1000000)).padStart(6,"0");
+            await commitOperations([transactionCreate("otp_codes",crypto.randomUUID(),{restaurant_id:r.id,customer_id:c.id,code_hash:otpHash(c.id,code),expires_at:new Date(Date.now()+600000).toISOString()})]);
+            await notifyOtpWebhook(r,c,code);
+          }
+        }
+        return res.status(200).json({ok:true,message:"Si ese teléfono tiene cuenta, te enviamos un código por WhatsApp."});
+      }
+      const code=digits(body.code);
+      const bad=()=>res.status(401).json({error:"invalid_code",message:"Código incorrecto o vencido."});
+      if(!c||code.length!==6) return bad();
+      const rows=await many("otp_codes",[queryEqual("customer_id",c.id),queryOrderDesc("created_at")],1);
+      const row=rows[0];
+      if(!row||row.used_at||row.attempts>=5||new Date(row.expires_at)<new Date()) return bad();
+      await updateDocument("otp_codes",row.id,{attempts:row.attempts+1});
+      if(!sameSecret(otpHash(c.id,code),row.code_hash)) return bad();
+      await updateDocument("otp_codes",row.id,{used_at:isoNow()});
+      return res.status(200).json({customer:publicCustomer(c),token:c.access_token});
     }
     if(action==="login") return res.status(200).json({ok:true,channel:false});
     if(action==="auth"){

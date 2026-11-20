@@ -105,6 +105,9 @@ export const fidApi = {
       token,
       reward,
     }),
+  otpRequest: (phone: string) => call<{ ok: boolean }>({ action: 'otp_request', phone }),
+  otpVerify: (phone: string, code: string) =>
+    call<{ customer: ApiCustomer; token: string }>({ action: 'otp_verify', phone, code }),
   lookupCode: (code: string) =>
     call<{
       customer: { name: string; code: string; points: number };

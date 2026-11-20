@@ -311,6 +311,23 @@ export function useAppState() {
     [applyMe, prefs]
   );
 
+  /** Recuperar a conta: pede o código por WhatsApp e, ao confirmar, entra com a mesma conta. */
+  const requestLoginCode = useCallback(async (phone: string): Promise<void> => {
+    await fidApi.otpRequest(phone);
+  }, []);
+
+  const verifyLoginCode = useCallback(
+    async (phone: string, code: string): Promise<MemberProfile> => {
+      const result = await fidApi.otpVerify(phone, code);
+      tokenRef.current = result.token;
+      writeStorage(TOKEN_KEY, result.token);
+      const me = await fidApi.me(result.token);
+      applyMe(me);
+      return toMember(me.customer, rewardsRef.current, prefs);
+    },
+    [applyMe, prefs]
+  );
+
   /** Sai da conta neste aparelho (os dados continuam no banco). */
   const signOut = useCallback(() => {
     tokenRef.current = '';
@@ -330,6 +347,8 @@ export function useAppState() {
     updateMember,
     redeemReward,
     registerAccount,
+    requestLoginCode,
+    verifyLoginCode,
     signOut,
     refresh,
   };

@@ -260,6 +260,15 @@ export interface TranslationDictionary {
     consentLabel: string;
     errorConsentRequired: string;
     errorGeneric: string;
+    recHave: string;
+    recTitle: string;
+    recSub: string;
+    recSend: string;
+    recCodeLabel: string;
+    recVerify: string;
+    recSent: string;
+    recErr: string;
+    recBack: string;
     legalDocs: {
       terms: { title: string; body: string[] };
       privacy: { title: string; body: string[] };
@@ -622,6 +631,15 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       consentLabel: 'Acepto que Club La Ruedita use mis datos para administrar mi cuenta y me envíe mensajes por WhatsApp.',
       errorConsentRequired: 'Para unirte al club necesitas aceptar este permiso.',
       errorGeneric: 'No pudimos completar tu registro. Inténtalo de nuevo.',
+      recHave: '¿Ya tenés cuenta? Ingresá',
+      recTitle: 'Recuperá tu cuenta',
+      recSub: 'Te enviamos un código por WhatsApp al teléfono con el que te registraste.',
+      recSend: 'Enviar código',
+      recCodeLabel: 'Código de 6 dígitos',
+      recVerify: 'Ingresar',
+      recSent: 'Si ese teléfono tiene cuenta, te enviamos un código por WhatsApp. Vale 10 minutos.',
+      recErr: 'Código incorrecto o vencido.',
+      recBack: 'Volver a crear cuenta',
       legalDocs: {
         terms: {
           title: 'Términos de Uso',
@@ -1000,6 +1018,15 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       consentLabel: 'I agree that Club La Ruedita may use my data to manage my account and message me on WhatsApp.',
       errorConsentRequired: 'You need to accept this to join the club.',
       errorGeneric: 'We could not complete your registration. Please try again.',
+      recHave: 'Already have an account? Sign in',
+      recTitle: 'Recover your account',
+      recSub: 'We will send a code by WhatsApp to the phone you registered with.',
+      recSend: 'Send code',
+      recCodeLabel: '6-digit code',
+      recVerify: 'Sign in',
+      recSent: 'If that phone has an account, we sent a code by WhatsApp. It is valid for 10 minutes.',
+      recErr: 'Wrong or expired code.',
+      recBack: 'Back to create account',
       legalDocs: {
         terms: {
           title: 'Terms of Use',
@@ -1378,6 +1405,15 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       consentLabel: 'Aceito que o Club La Ruedita use meus dados para administrar minha conta e me envie mensagens pelo WhatsApp.',
       errorConsentRequired: 'Para entrar no clube é preciso aceitar esta autorização.',
       errorGeneric: 'Não foi possível concluir seu cadastro. Tente novamente.',
+      recHave: 'Já tem conta? Entrar',
+      recTitle: 'Recupere sua conta',
+      recSub: 'Enviaremos um código por WhatsApp ao telefone do seu cadastro.',
+      recSend: 'Enviar código',
+      recCodeLabel: 'Código de 6 dígitos',
+      recVerify: 'Entrar',
+      recSent: 'Se esse telefone tiver conta, enviamos um código por WhatsApp. Vale 10 minutos.',
+      recErr: 'Código incorreto ou vencido.',
+      recBack: 'Voltar a criar conta',
       legalDocs: {
         terms: {
           title: 'Termos de Uso',

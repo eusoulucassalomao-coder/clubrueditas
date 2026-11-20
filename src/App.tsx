@@ -30,6 +30,8 @@ export default function App() {
     status,
     redeemReward,
     registerAccount,
+    requestLoginCode,
+    verifyLoginCode,
     signOut,
   } = useAppState();
 
@@ -248,6 +250,8 @@ export default function App() {
         onClose={() => setRegisterOpen(false)}
         t={t}
         onRegister={registerAccount}
+        onRequestCode={requestLoginCode}
+        onVerifyCode={verifyLoginCode}
       />
 
       {/* Virtual Assistant Drawer (Header Waving Hand Trigger) */}
