@@ -71,6 +71,8 @@
     newCustomer: (t, d) => call(Object.assign({ action: "new_customer" }, d), t),
     recent: t => call({ action: "recent" }, t),
     visitRequests: t => call({ action: "visit_requests" }, t),
+    pendingDeliveries: t => call({ action: "pending_deliveries" }, t),
+    deliveryDone: (t, id) => call({ action: "delivery_done", id }, t),
     visitDecide: (t, id, approve, amount) => call({ action: "visit_decide", id, approve, amount }, t),
     // painel
     stats: t => call({ action: "stats" }, t),

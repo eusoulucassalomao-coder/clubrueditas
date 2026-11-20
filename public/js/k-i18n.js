@@ -39,7 +39,7 @@
       appNoTitle: "Llevá el Club en tu celular", appNoText: "Instalá la app para ver tus puntos.", appHow: "Ver cómo", appOpen: "Abrir la app", appOpenHint: "Si no se abrió, buscá el ícono de La Ruedita en tu pantalla de inicio.",
       // tablet
       tCoupon: "Tengo un cupón", tScanTitle: "Acercá el QR de tu cupón a la cámara", tScanSub: "Mostralo de frente, con buena luz.",
-      tCancel: "Cancelar", tValid: "VÁLIDO", tForName: "Para {name}", tConfirm: "Confirmar canje", tDone: "¡Listo!", tDoneSub: "Canje confirmado. El personal te entrega tu premio.",
+      tCancel: "Cancelar", tValid: "VÁLIDO", tForName: "Para {name}", tConfirm: "Confirmar canje", tDone: "¡Listo!", tDoneSub: "Canje confirmado. Avisamos a la caja: el personal te entrega tu premio.",
       tUsed: "YA USADO", tUsedSub: "Este cupón ya fue canjeado.", tExpired: "VENCIDO", tExpiredSub: "Este cupón venció. Tus puntos volvieron a tu cuenta.",
       tModeCam: "Escanear QR", tModeType: "Escribir código", tTypeTitle: "Escribí el código de tu cupón", tTypeSub: "Es el que aparece debajo del QR (ej.: P12345).", tCheck: "Validar código", tBadCode: "Revisá el código (ej.: P12345).", tNotFound: "NO VÁLIDO", tNotFoundSub: "Ese código no corresponde a ningún cupón del Club.", tNoCam: "No se pudo abrir la cámara. Permití el acceso en el navegador.", tBack: "Volver", tChecking: "Verificando…"
     },
@@ -80,7 +80,7 @@
       appHasTitle: "Você já tem o app instalado", appHasText: "Abra para ver seus pontos e seu histórico.",
       appNoTitle: "Leve o Clube no seu celular", appNoText: "Instale o app para ver seus pontos.", appHow: "Ver como", appOpen: "Abrir o app", appOpenHint: "Se não abriu, procure o ícone da La Ruedita na tela inicial.",
       tCoupon: "Tenho um cupom", tScanTitle: "Aproxime o QR do seu cupom da câmera", tScanSub: "Mostre de frente, com boa luz.",
-      tCancel: "Cancelar", tValid: "VÁLIDO", tForName: "Para {name}", tConfirm: "Confirmar resgate", tDone: "Pronto!", tDoneSub: "Resgate confirmado. A equipe entrega seu prêmio.",
+      tCancel: "Cancelar", tValid: "VÁLIDO", tForName: "Para {name}", tConfirm: "Confirmar resgate", tDone: "Pronto!", tDoneSub: "Resgate confirmado. Avisamos o caixa: a equipe entrega seu prêmio.",
       tUsed: "JÁ USADO", tUsedSub: "Este cupom já foi resgatado.", tExpired: "VENCIDO", tExpiredSub: "Este cupom venceu. Seus pontos voltaram para sua conta.",
       tModeCam: "Escanear QR", tModeType: "Digitar código", tTypeTitle: "Digite o código do seu cupom", tTypeSub: "É o que aparece embaixo do QR (ex.: P12345).", tCheck: "Validar código", tBadCode: "Confira o código (ex.: P12345).", tNotFound: "NÃO VÁLIDO", tNotFoundSub: "Esse código não corresponde a nenhum cupom do Clube.", tNoCam: "Não foi possível abrir a câmera. Permita o acesso no navegador.", tBack: "Voltar", tChecking: "Verificando…"
     },
@@ -121,7 +121,7 @@
       appHasTitle: "You already have the app installed", appHasText: "Open it to see your points and history.",
       appNoTitle: "Take the Club on your phone", appNoText: "Install the app to see your points.", appHow: "See how", appOpen: "Open the app", appOpenHint: "If it did not open, look for the La Ruedita icon on your home screen.",
       tCoupon: "I have a coupon", tScanTitle: "Hold your coupon's QR up to the camera", tScanSub: "Show it face-on, with good light.",
-      tCancel: "Cancel", tValid: "VALID", tForName: "For {name}", tConfirm: "Confirm redemption", tDone: "Done!", tDoneSub: "Redemption confirmed. Our staff will bring your reward.",
+      tCancel: "Cancel", tValid: "VALID", tForName: "For {name}", tConfirm: "Confirm redemption", tDone: "Done!", tDoneSub: "Redemption confirmed. We notified the cashier: our staff will bring your reward.",
       tUsed: "ALREADY USED", tUsedSub: "This coupon was already redeemed.", tExpired: "EXPIRED", tExpiredSub: "This coupon expired. Your points went back to your account.",
       tModeCam: "Scan QR", tModeType: "Type code", tTypeTitle: "Type your coupon code", tTypeSub: "It is the one shown under the QR (e.g. P12345).", tCheck: "Check code", tBadCode: "Check the code (e.g. P12345).", tNotFound: "NOT VALID", tNotFoundSub: "That code doesn't match any Club coupon.", tNoCam: "Couldn't open the camera. Allow access in the browser.", tBack: "Back", tChecking: "Checking…"
     }

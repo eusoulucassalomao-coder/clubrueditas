@@ -700,7 +700,7 @@ module.exports = async function handler(req,res) {
         throw err;
       }
     }
-    const cashier=["search","visit","bonus","find_code","deliver","recent","visit_requests","visit_decide","receipt_create"].includes(action);
+    const cashier=["search","visit","bonus","find_code","deliver","recent","visit_requests","visit_decide","receipt_create","pending_deliveries","delivery_done"].includes(action);
     const owner=["stats","customers","export_customers","export_visits","redemptions","surveys","save_config","wa_status","wa_connect","wa_logout"].includes(action);
     if(cashier||owner){
       const roles=owner?["panel"]:["caja","panel"];
@@ -721,6 +721,14 @@ module.exports = async function handler(req,res) {
     if(action==="bonus"){
       const c=await customerById(r,body.customer);
       return res.status(200).json(await addBonus(r,c,String(body.type||"")));
+    }
+    if(action==="pending_deliveries"){
+      // Resgates já validados (no tablet ou na caixa) que a equipe ainda precisa entregar.
+      return res.status(200).json({deliveries:await rpc("fid_pending_deliveries",{p_slug:r.slug})});
+    }
+    if(action==="delivery_done"){
+      await rpc("fid_delivery_done",{p_slug:r.slug,p_id:String(body.id||"")});
+      return res.status(200).json({ok:true});
     }
     if(action==="receipt_create"){
       // Caixa de teste (provisório): gera um comprobante com código único e valor. Depois será o sistema do caixa do dono.
@@ -765,6 +773,7 @@ module.exports = async function handler(req,res) {
     if(action==="deliver"){
       await expireCoupons(r);
       const result=await rpc("fid_deliver",{p_slug:r.slug,p_code:String(body.code||"").trim().toUpperCase()});
+      try{ const rd=await one("redemptions",[queryEqual("restaurant_id",r.id),queryEqual("code",String(result.code||""))]); if(rd) await updateDocument("redemptions",rd.id,{delivered_at:isoNow()}); }catch(_){}
       return res.status(200).json({
         code:result.code,name:result.name,pts:result.pts,status:result.status,customer:result.customer
       });

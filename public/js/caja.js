@@ -16,7 +16,7 @@
   }) : null;
   try{ tok = sessionStorage.getItem(TK) || ""; }catch(e){}
 
-  function logout(msg){ try{ sessionStorage.removeItem(TK); }catch(e){} tok = ""; $("app").hidden = true; $("gate").hidden = false; $("loginMsg").textContent = msg || ""; }
+  function logout(msg){ try{ sessionStorage.removeItem(TK); }catch(e){} tok = ""; clearInterval(entTimer); $("app").hidden = true; $("gate").hidden = false; $("loginMsg").textContent = msg || ""; }
   // toda chamada passa por aqui: se a sessão venceu, volta ao PIN
   async function run(fn){ try{ return await fn(); }catch(e){ if(e.code === "unauthorized" || e.code === "forbidden"){ logout("La sesión venció. Ingresá nuevamente."); } throw e; } }
 
@@ -25,7 +25,7 @@
     $("gate").hidden = true; $("app").hidden = false;
     $("logo").src = CF.logo; $("club").textContent = CF.name;
     $("bBirth").textContent = `Cumpleaños +${fmt(CF.bonus.birthday)}`;
-    recent();
+    recent(); startEntregas();
   }
   $("loginForm").addEventListener("submit", async e => {
     e.preventDefault(); const m = $("loginMsg"); m.textContent = "";
@@ -37,9 +37,10 @@
 
   document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
-    ["visita", "canje", "nuevo"].forEach(n => $("p-" + n).hidden = (n !== t.dataset.tab));
+    ["visita", "canje", "entregas", "nuevo"].forEach(n => $("p-" + n).hidden = (n !== t.dataset.tab));
     if(t.dataset.tab !== "canje") stopScan();
     if(t.dataset.tab === "canje") $("code").focus();
+    if(t.dataset.tab === "entregas") pollEntregas();
   });
 
   // ---- visita ----
@@ -176,4 +177,47 @@
       $("recent").innerHTML = r.length ? r.map(v => `<li><span>${esc(v.name)}<br><small>${new Date(v.ts).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</small></span><span style="text-align:right">$${fmt(v.amount)}<br><small>+${fmt(v.pts)} pts</small></span></li>`).join("") : "<li><small>Todavía no hay visitas.</small></li>";
     }catch(e){}
   }
+
+  // ---- premios por entregar: o cliente valida no tablet e a equipe é avisada aqui ----
+  let entTimer = 0, entLast = -1, entItems = [], audioCtx = null;
+  const unlockAudio = () => { try{ audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if(audioCtx.state === "suspended") audioCtx.resume(); }catch(e){} };
+  document.addEventListener("click", unlockAudio, { once: false });
+  function beep(){
+    try{
+      unlockAudio(); if(!audioCtx) return;
+      [0, 0.28].forEach((d, i) => {
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t0 = audioCtx.currentTime + d;
+        o.type = "sine"; o.frequency.value = i ? 1175 : 880;
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.4);
+        o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0 + 0.42);
+      });
+    }catch(e){}
+  }
+  const since = ts => { const m = Math.max(0, Math.round((Date.now() - new Date(ts).getTime()) / 60000)); return m < 1 ? "ahora" : m === 1 ? "hace 1 min" : "hace " + m + " min"; };
+  function renderEntregas(){
+    const n = entItems.length, b = $("entBadge"), a = $("entAlert");
+    b.hidden = !n; b.textContent = n;
+    a.hidden = !n;
+    a.textContent = n ? (n === 1 ? "🎁 1 premio por entregar: tocá para verlo" : "🎁 " + n + " premios por entregar: tocá para verlos") : "";
+    document.title = (n ? "(" + n + ") " : "") + "Caja · Club";
+    $("entList").innerHTML = n ? entItems.map(x => `<div class="rcpt" data-id="${esc(x.id)}"><b>${esc(x.name)}</b><br>Para ${esc(x.customer || "—")} · ${esc(x.code)} · <small>${since(x.usedAt)}</small><button class="btn full qDone" type="button" style="margin-top:12px">Entregado</button></div>`).join("") : "<p class='sub'>No hay premios por entregar.</p>";
+    $("entList").querySelectorAll(".rcpt").forEach(card => {
+      card.querySelector(".qDone").onclick = async ev => {
+        const btn = ev.currentTarget; btn.disabled = true;
+        try{ await run(() => F.deliveryDone(tok, card.dataset.id)); $("entMsg").className = "msg ok"; $("entMsg").textContent = "✓ Premio marcado como entregado."; }
+        catch(e){ $("entMsg").className = "msg err"; $("entMsg").textContent = e.message; }
+        pollEntregas();
+      };
+    });
+  }
+  async function pollEntregas(){
+    if(!tok) return;
+    try{
+      const rows = (await run(() => F.pendingDeliveries(tok))).deliveries || [];
+      if(entLast >= 0 && rows.length > entLast) beep();   // chegou um novo: avisa com som
+      entLast = rows.length; entItems = rows; renderEntregas();
+    }catch(e){}
+  }
+  function startEntregas(){ clearInterval(entTimer); entLast = -1; pollEntregas(); entTimer = setInterval(() => { if(!document.hidden || entItems.length) pollEntregas(); }, 8000); }
+  $("entAlert").onclick = () => document.querySelector('.tab[data-tab="entregas"]').click();
 })();
