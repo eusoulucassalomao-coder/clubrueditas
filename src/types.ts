@@ -75,8 +75,9 @@ export interface AssistantMessage {
   sender: 'assistant' | 'user';
   text: string;
   timestamp: string;
-  action?: {
-    type: 'navigate-rewards' | 'open-register' | 'navigate-profile-previews';
+  actions?: {
+    type: 'navigate-rewards' | 'navigate-points' | 'open-register' | 'open-url';
     label: string;
-  };
+    url?: string;
+  }[];
 }
