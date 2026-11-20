@@ -24,14 +24,14 @@
   const kcSet = t => store.set(KC, t + "|" + (Date.now() + 9 * 60 * 1000));
 
   async function boot(){
-    const q = new URLSearchParams(location.search), c = q.get("c"), r = receiptFrom(q.get("r"));
+    const q = new URLSearchParams(location.search), c = q.get("c");
     session = store.get(SS);
-    if(c || r){
+    if(c){
       // tira o código do endereço: não deve ficar no histórico
       try{ history.replaceState(null, "", "/k"); }catch(e){}
-      try{ const j = await F.kioskEnter(c || undefined, r || undefined); session = j.session; store.set(SS, session); store.del(KC); }
-      catch(e){ session = ""; store.del(SS); $("deadMsg").textContent = e.status === 401 ? (r ? "Ese comprobante ya fue usado o venció." : "Ese QR venció. Escaneá de nuevo el que está en la caja.") : e.message; show("dead"); return; }
-      if(r){ pendingReceipt = r; start("visit"); return; }   // veio pelo QR do comprobante: vai direto para confirmar quem é
+      try{ const j = await F.kioskEnter(c); session = j.session; store.set(SS, session); store.del(KC); }
+      catch(e){ session = ""; store.del(SS); $("deadMsg").textContent = e.status === 401 ? "Ese QR venció. Escaneá de nuevo el que está en la caja." : e.message; show("dead"); return; }
+
     }
     if(!session){ show("dead"); return; }
     kc = kcGet();

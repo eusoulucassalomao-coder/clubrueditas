@@ -548,10 +548,7 @@ module.exports = async function handler(req,res) {
     // ---- Tablet / QR (público, mas protegido pelo QR rotativo e pelo código do WhatsApp) ----
     if(action==="kiosk_enter"){
       if(tooMany(req,"kenter",20)) return slowDown(res);
-      // Entra com o QR do tablet OU com o QR de um comprobante válido (a conta paga também prova que a pessoa esteve aqui).
-      let enterOk=!!body.c&&kioskOk(slug,body.c);
-      if(!enterOk&&body.r) enterOk=await rpc("fid_receipt_peek",{p_slug:r.slug,p_code:String(body.r)});
-      if(!enterOk) return res.status(401).json({error:"qr_expired",message:"Este QR venció. Volvé a escanear el que está en la caja."});
+      if(!kioskOk(slug,body.c)) return res.status(401).json({error:"qr_expired",message:"Este QR venció. Volvé a escanear el que está en la caja."});
       return res.status(200).json({session:mintToken(slug,"kiosk",30*60*1000),name:r.name});
     }
     if(action==="kiosk_otp_request"||action==="kiosk_otp_verify"){

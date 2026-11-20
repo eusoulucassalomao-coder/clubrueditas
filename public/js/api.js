@@ -38,7 +38,7 @@
     login: phone => call({ action: "login", phone }),
     lookupCode: code => call({ action: "lookup_code", code }),
     // tablet / QR (cliente)
-    kioskEnter: (c, r) => call({ action: "kiosk_enter", c, r }),
+    kioskEnter: c => call({ action: "kiosk_enter", c }),
     receiptCreate: (t, amount) => call({ action: "receipt_create", amount }, t),
     kioskOtpRequest: (session, id) => call({ action: "kiosk_otp_request", session, id }),
     kioskOtpVerify: (session, id, code) => call({ action: "kiosk_otp_verify", session, id, code }),

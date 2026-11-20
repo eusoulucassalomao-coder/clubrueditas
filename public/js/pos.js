@@ -33,8 +33,8 @@
   });
 
   function draw(r){
-    // O QR é um link: se o cliente escanear com a câmera do celular, abre a página de registrar visita já com o código.
-    const url = location.origin + "/k?r=" + r.code;
+    // O QR leva só o código do comprobante: o cliente o lê dentro de "Registrar mi visita".
+    const url = r.code;
     const qr = window.qrcode(0, "M"); qr.addData(url); qr.make();
     const code = r.code.slice(0, 4) + "-" + r.code.slice(4);
     const when = new Date(r.createdAt).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
@@ -43,7 +43,7 @@
       <div class="tot"><span>TOTAL</span><span>$ ${fmt(r.amount)}</span></div><hr>
       <div class="qr">${qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true })}</div>
       <div class="code">${code}</div>
-      <div class="hint">Escaneá el QR o ingresá el código en el Club para sumar tus puntos.<br>Vale una sola vez.</div></div>`;
+      <div class="hint">En el Club, elegí “Registrar mi visita” y escaneá este QR para sumar tus puntos.<br>Vale una sola vez.</div></div>`;
     $("out-receipt").scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
   $("print").onclick = () => window.print();
