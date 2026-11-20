@@ -17,6 +17,8 @@ interface PWAInstallGateProps {
   isInstalled: boolean;
   /** O app já está instalado neste aparelho, mas esta página abriu no navegador. */
   hasApp?: boolean;
+  /** "Já não tenho o app": esquece a marca de instalado e volta a oferecer instalar. */
+  onForgetApp?: () => void;
   isInstallable: boolean;
   dismissed: boolean;
   language: Language;
@@ -38,6 +40,7 @@ export const PWAInstallGate: React.FC<PWAInstallGateProps> = ({
   platform,
   isInstalled,
   hasApp = false,
+  onForgetApp,
   isInstallable,
   dismissed,
   language,
@@ -50,6 +53,7 @@ export const PWAInstallGate: React.FC<PWAInstallGateProps> = ({
     resolveInitialMode(platform)
   );
   const [installMessage, setInstallMessage] = useState(false);
+  const [openHint, setOpenHint] = useState(false);
 
   useEffect(() => {
     setViewMode(resolveInitialMode(platform));
@@ -60,13 +64,25 @@ export const PWAInstallGate: React.FC<PWAInstallGateProps> = ({
     return null;
   }
 
-  // O app já está neste aparelho: em vez de pedir para instalar, sugere abrir o app.
+  // O app já está neste aparelho: oferece ABRIR o app (e não instalar). Se a marca estiver errada, dá uma saída.
   if (hasApp) {
     const copy = {
-      es: { title: 'Ya tenés la app', text: 'Abrila desde el ícono de La Ruedita en tu pantalla de inicio para ver tus puntos y tu historial.', cta: 'Seguir en el navegador' },
-      en: { title: 'You already have the app', text: 'Open it from the La Ruedita icon on your home screen to see your points and history.', cta: 'Continue in browser' },
-      pt: { title: 'Você já tem o app', text: 'Abra pelo ícone da La Ruedita na tela inicial para ver seus pontos e seu histórico.', cta: 'Continuar pelo navegador' },
+      es: { title: 'Ya tenés la app', text: 'Abrila para ver tus puntos y tu historial. Si no se abre, buscá el ícono de La Ruedita en tu pantalla de inicio.', open: 'Abrir la app', web: 'Seguir en el navegador', gone: 'Ya no tengo la app', hint: 'Si no se abrió, buscá el ícono de La Ruedita en tu pantalla de inicio.' },
+      en: { title: 'You already have the app', text: 'Open it to see your points and history. If it does not open, look for the La Ruedita icon on your home screen.', open: 'Open the app', web: 'Continue in browser', gone: 'I no longer have the app', hint: 'If it did not open, look for the La Ruedita icon on your home screen.' },
+      pt: { title: 'Você já tem o app', text: 'Abra para ver seus pontos e seu histórico. Se não abrir, procure o ícone da La Ruedita na tela inicial.', open: 'Abrir o app', web: 'Continuar pelo navegador', gone: 'Não tenho mais o app', hint: 'Se não abriu, procure o ícone da La Ruedita na tela inicial.' },
     }[language];
+
+    const handleOpenApp = () => {
+      // Android: pede ao sistema para abrir o endereço; se o app estiver instalado, é ele que atende.
+      if (/android/i.test(navigator.userAgent)) {
+        const here = new URL(window.location.href);
+        window.location.href =
+          `intent://${here.host}${here.pathname}${here.search}#Intent;scheme=https;` +
+          `S.browser_fallback_url=${encodeURIComponent(here.href)};end`;
+      }
+      window.setTimeout(() => setOpenHint(true), 1500);
+    };
+
     return (
       <div className="fixed inset-0 z-50 bg-[#FAF7F0] overflow-y-auto flex flex-col justify-center px-4 sm:px-6 py-8">
         <div className="max-w-lg w-full mx-auto">
@@ -79,13 +95,34 @@ export const PWAInstallGate: React.FC<PWAInstallGateProps> = ({
               {copy.title}
             </h1>
             <p className="mt-3 text-sm sm:text-base text-[#5A6353] leading-relaxed">{copy.text}</p>
-            <button
-              type="button"
-              onClick={onContinueInBrowser}
-              className="mt-7 w-full min-h-[50px] px-5 py-3 rounded-2xl bg-[#4A5D3F] hover:bg-[#38492F] text-[#FAF7F0] font-semibold text-sm transition-colors"
-            >
-              {copy.cta}
-            </button>
+            <div className="mt-7 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={handleOpenApp}
+                className="w-full min-h-[54px] px-5 py-3.5 rounded-2xl bg-[#4A5D3F] hover:bg-[#38492F] text-[#FAF7F0] font-bold text-base shadow-sm active:scale-[0.98] transition-all"
+              >
+                {copy.open}
+              </button>
+              <button
+                type="button"
+                onClick={onContinueInBrowser}
+                className="w-full min-h-[48px] px-5 py-3 rounded-2xl bg-transparent border border-[#D8CEB8] text-[#293622] font-semibold text-sm hover:bg-[#F3EDE0] transition-colors"
+              >
+                {copy.web}
+              </button>
+            </div>
+            {openHint && (
+              <p role="status" className="mt-4 text-center text-xs text-[#6B7365]">{copy.hint}</p>
+            )}
+            {onForgetApp && (
+              <button
+                type="button"
+                onClick={onForgetApp}
+                className="mt-5 w-full text-center text-xs text-[#5A6353] underline underline-offset-2 min-h-[40px]"
+              >
+                {copy.gone}
+              </button>
+            )}
           </div>
         </div>
       </div>

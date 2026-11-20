@@ -55,21 +55,37 @@
   async function appBar(){
     const standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
     if(standalone){ try{ localStorage.setItem(APP_KEY, "1"); }catch(e){} appState = "standalone"; return; }   // já está dentro do app
-    let has = false;
-    try{ has = localStorage.getItem(APP_KEY) === "1"; }catch(e){}
-    try{ if(!has && navigator.getInstalledRelatedApps){ has = (await navigator.getInstalledRelatedApps()).length > 0; } }catch(e){}
+    let flag = false;
+    try{ flag = localStorage.getItem(APP_KEY) === "1"; }catch(e){}
+    let has = flag;
+    // Quem sabe se o app está instalado é o navegador; a marca guardada fica para trás quando a pessoa desinstala.
+    if(typeof navigator.getInstalledRelatedApps === "function"){
+      try{
+        has = (await navigator.getInstalledRelatedApps()).length > 0;
+        try{ if(has) localStorage.setItem(APP_KEY, "1"); else localStorage.removeItem(APP_KEY); }catch(e){}
+      }catch(e){ has = flag; }
+    }
+    // O navegador só oferece instalar quando o app NÃO está instalado.
+    window.addEventListener("beforeinstallprompt", () => { appState = "no"; try{ localStorage.removeItem(APP_KEY); }catch(e){} renderAppBar(); });
     appState = has ? "has" : "no";
     renderAppBar();
+  }
+  // Android: pede ao sistema para abrir o endereço; se o app estiver instalado, é ele que atende.
+  function openApp(){
+    if(/android/i.test(navigator.userAgent)){
+      location.href = "intent://" + location.host + "/#Intent;scheme=https;S.browser_fallback_url=" + encodeURIComponent(location.origin + "/") + ";end";
+    }
+    const b = $("appBar"); if(b && !b.querySelector("[data-hint]")){ setTimeout(() => { const h = document.createElement("div"); h.setAttribute("data-hint", "1"); h.style.cssText = "flex-basis:100%;font-size:13px;margin-top:6px"; h.textContent = kt("appOpenHint"); b.appendChild(h); b.style.flexWrap = "wrap"; }, 1500); }
   }
   function renderAppBar(){
     const bar = $("appBar");
     if(!appState || appState === "standalone"){ bar.hidden = true; return; }
     bar.innerHTML = appState === "has"
-      ? "<span style='font-size:24px'>📲</span><span><b>" + esc(kt("appHasTitle")) + "</b>" + esc(kt("appHasText")) + "</span>"
+      ? "<span style='font-size:24px'>📲</span><span><b>" + esc(kt("appHasTitle")) + "</b>" + esc(kt("appHasText")) + " <a href='#' data-open-app='1'>" + esc(kt("appOpen")) + "</a></span>"
       : "<span style='font-size:24px'>📲</span><span><b>" + esc(kt("appNoTitle")) + "</b>" + esc(kt("appNoText")) + " <a href='/'>" + esc(kt("appHow")) + "</a></span>";
     bar.hidden = false;
   }
-
+  $("appBar").addEventListener("click", e => { const a = e.target.closest && e.target.closest("[data-open-app]"); if(a){ e.preventDefault(); openApp(); } });
   async function boot(){
     window.kApply();
     appBar();

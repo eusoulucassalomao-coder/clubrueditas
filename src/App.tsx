@@ -35,7 +35,7 @@ export default function App() {
     signOut,
   } = useAppState();
 
-  const { platform, isInstallable, isInstalled, hasApp, install } = usePWAInstall();
+  const { platform, isInstallable, isInstalled, hasApp, forgetApp, install } = usePWAInstall();
   const t = TRANSLATIONS[language];
 
   const [activeTab, setActiveTab] = useState<TabId>('home');
@@ -104,7 +104,7 @@ export default function App() {
       {/* Device-aware initial install screen (suppressed automatically in standalone mode) */}
       <PWAInstallGate
         platform={platform}
-        isInstalled={isInstalled} hasApp={hasApp}
+        isInstalled={isInstalled} hasApp={hasApp} onForgetApp={forgetApp}
         isInstallable={isInstallable}
         dismissed={installGateDismissed}
         language={language}

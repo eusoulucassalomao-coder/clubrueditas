@@ -45,14 +45,26 @@ export function usePWAInstall() {
         true;
 
     setIsInstalled(standalone);
-    try {
-      if (standalone) window.localStorage.setItem(PWA_INSTALLED_KEY, '1');
-      else if (window.localStorage.getItem(PWA_INSTALLED_KEY) === '1') setHasApp(true);
-    } catch { /* sem armazenamento: segue sem lembrar */ }
+    // Quem sabe se o app está instalado é o navegador (getInstalledRelatedApps). A marca guardada só vale quando o navegador não sabe responder,
+    // porque ela fica para trás quando a pessoa desinstala o app.
+    const rememberedByFlag = () => {
+      try { return window.localStorage.getItem(PWA_INSTALLED_KEY) === '1'; } catch { return false; }
+    };
     const nav = window.navigator as unknown as { getInstalledRelatedApps?: () => Promise<unknown[]> };
-    nav.getInstalledRelatedApps?.().then((apps) => {
-      if (apps.length > 0 && !standalone) setHasApp(true);
-    }).catch(() => undefined);
+    if (standalone) {
+      try { window.localStorage.setItem(PWA_INSTALLED_KEY, '1'); } catch { /* ignore */ }
+    } else if (typeof nav.getInstalledRelatedApps === 'function') {
+      nav.getInstalledRelatedApps().then((apps) => {
+        const installed = apps.length > 0;
+        setHasApp(installed);
+        try {
+          if (installed) window.localStorage.setItem(PWA_INSTALLED_KEY, '1');
+          else window.localStorage.removeItem(PWA_INSTALLED_KEY);
+        } catch { /* ignore */ }
+      }).catch(() => setHasApp(rememberedByFlag()));
+    } else if (rememberedByFlag()) {
+      setHasApp(true);
+    }
     setPlatform(detectPlatform());
 
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
@@ -63,6 +75,9 @@ export function usePWAInstall() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      // O navegador só oferece instalar quando o app NÃO está instalado: esquece a marca antiga.
+      setHasApp(false);
+      try { window.localStorage.removeItem(PWA_INSTALLED_KEY); } catch { /* ignore */ }
     };
 
     const handleAppInstalled = () => {
@@ -85,6 +100,12 @@ export function usePWAInstall() {
     };
   }, []);
 
+  // "Já não tenho o app": esquece a marca e volta a oferecer a instalação.
+  const forgetApp = useCallback(() => {
+    try { window.localStorage.removeItem(PWA_INSTALLED_KEY); } catch { /* ignore */ }
+    setHasApp(false);
+  }, []);
+
   const install = useCallback(async (): Promise<'accepted' | 'dismissed' | 'unavailable'> => {
     if (!deferredPrompt) return 'unavailable';
     try {
@@ -105,6 +126,7 @@ export function usePWAInstall() {
     isInstallable: Boolean(deferredPrompt),
     isInstalled,
     hasApp: hasApp && !isInstalled,
+    forgetApp,
     install,
   };
 }
