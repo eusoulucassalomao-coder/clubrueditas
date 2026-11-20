@@ -41,7 +41,7 @@
       tCoupon: "Tengo un cupón", tScanTitle: "Acercá el QR de tu cupón a la cámara", tScanSub: "Mostralo de frente, con buena luz.",
       tCancel: "Cancelar", tValid: "VÁLIDO", tForName: "Para {name}", tConfirm: "Confirmar canje", tDone: "¡Listo!", tDoneSub: "Canje confirmado. El personal te entrega tu premio.",
       tUsed: "YA USADO", tUsedSub: "Este cupón ya fue canjeado.", tExpired: "VENCIDO", tExpiredSub: "Este cupón venció. Tus puntos volvieron a tu cuenta.",
-      tNotFound: "NO VÁLIDO", tNotFoundSub: "Ese QR no es un cupón del Club.", tNoCam: "No se pudo abrir la cámara. Permití el acceso en el navegador.", tBack: "Volver", tChecking: "Verificando…"
+      tModeCam: "Escanear QR", tModeType: "Escribir código", tTypeTitle: "Escribí el código de tu cupón", tTypeSub: "Es el que aparece debajo del QR (ej.: P12345).", tCheck: "Validar código", tBadCode: "Revisá el código (ej.: P12345).", tNotFound: "NO VÁLIDO", tNotFoundSub: "Ese código no corresponde a ningún cupón del Club.", tNoCam: "No se pudo abrir la cámara. Permití el acceso en el navegador.", tBack: "Volver", tChecking: "Verificando…"
     },
     pt: {
       loading: "Um momento…", busy: "Um momento…",
@@ -82,7 +82,7 @@
       tCoupon: "Tenho um cupom", tScanTitle: "Aproxime o QR do seu cupom da câmera", tScanSub: "Mostre de frente, com boa luz.",
       tCancel: "Cancelar", tValid: "VÁLIDO", tForName: "Para {name}", tConfirm: "Confirmar resgate", tDone: "Pronto!", tDoneSub: "Resgate confirmado. A equipe entrega seu prêmio.",
       tUsed: "JÁ USADO", tUsedSub: "Este cupom já foi resgatado.", tExpired: "VENCIDO", tExpiredSub: "Este cupom venceu. Seus pontos voltaram para sua conta.",
-      tNotFound: "NÃO VÁLIDO", tNotFoundSub: "Esse QR não é um cupom do Clube.", tNoCam: "Não foi possível abrir a câmera. Permita o acesso no navegador.", tBack: "Voltar", tChecking: "Verificando…"
+      tModeCam: "Escanear QR", tModeType: "Digitar código", tTypeTitle: "Digite o código do seu cupom", tTypeSub: "É o que aparece embaixo do QR (ex.: P12345).", tCheck: "Validar código", tBadCode: "Confira o código (ex.: P12345).", tNotFound: "NÃO VÁLIDO", tNotFoundSub: "Esse código não corresponde a nenhum cupom do Clube.", tNoCam: "Não foi possível abrir a câmera. Permita o acesso no navegador.", tBack: "Voltar", tChecking: "Verificando…"
     },
     en: {
       loading: "One moment…", busy: "One moment…",
@@ -123,7 +123,7 @@
       tCoupon: "I have a coupon", tScanTitle: "Hold your coupon's QR up to the camera", tScanSub: "Show it face-on, with good light.",
       tCancel: "Cancel", tValid: "VALID", tForName: "For {name}", tConfirm: "Confirm redemption", tDone: "Done!", tDoneSub: "Redemption confirmed. Our staff will bring your reward.",
       tUsed: "ALREADY USED", tUsedSub: "This coupon was already redeemed.", tExpired: "EXPIRED", tExpiredSub: "This coupon expired. Your points went back to your account.",
-      tNotFound: "NOT VALID", tNotFoundSub: "That QR isn't a Club coupon.", tNoCam: "Couldn't open the camera. Allow access in the browser.", tBack: "Back", tChecking: "Checking…"
+      tModeCam: "Scan QR", tModeType: "Type code", tTypeTitle: "Type your coupon code", tTypeSub: "It is the one shown under the QR (e.g. P12345).", tCheck: "Check code", tBadCode: "Check the code (e.g. P12345).", tNotFound: "NOT VALID", tNotFoundSub: "That code doesn't match any Club coupon.", tNoCam: "Couldn't open the camera. Allow access in the browser.", tBack: "Back", tChecking: "Checking…"
     }
   };
 

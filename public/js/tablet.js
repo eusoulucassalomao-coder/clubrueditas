@@ -88,7 +88,7 @@
     hide("ov", true); $v("ovMsg").textContent = "";
   }
   function showCard(kind, title, sub, name, who){
-    stopCam(); hide("ovScan", true); hide("ovResult", false);
+    stopCam(); hide("ovScan", true); hide("ovType", true); hide("ovTabs", true); hide("ovResult", false);
     $v("ovResult").className = "rcard " + (kind === "ok" ? "ok" : "bad");
     $v("ovResult").innerHTML = "<div class='big'>" + title + "</div>" + (name ? "<div class='rw'>" + esc(name) + "</div>" : "") + (who ? "<div class='who'>" + esc(kt("tForName", { name: who })) + "</div>" : "") + (sub ? "<div class='who'>" + esc(sub) + "</div>" : "");
     $v("ovCancel").textContent = kt("tBack");
@@ -116,15 +116,22 @@
       $v("ovMsg").textContent = e.message; busyCheck = false;
     }
   }
-  async function openScan(){
-    current = null; busyCheck = false;
-    hide("ovScan", false); hide("ovResult", true); hide("ovConfirm", true); $v("ovCancel").textContent = kt("tCancel"); $v("ovMsg").textContent = "";
-    hide("ov", false); window.kApply();
+  // Dois jeitos de resgatar: escanear o QR (câmera) ou digitar o código do cupom.
+  let mode = "cam";
+  function setMode(m){
+    mode = m; current = null; busyCheck = false; hide("ovResult", true); hide("ovConfirm", true); $v("ovMsg").textContent = "";
+    hide("ovTabs", false); $v("ovCancel").textContent = kt("tCancel");
+    $v("modeCam").classList.toggle("on", m === "cam"); $v("modeType").classList.toggle("on", m === "type");
+    clearTimeout(idle); idle = setTimeout(closeOv, 90000);   // sem uso: fecha
+    if(m === "type"){ stopCam(); hide("ovScan", true); hide("ovType", false); $v("typeIn").value = ""; setTimeout(() => $v("typeIn").focus(), 100); }
+    else { hide("ovType", true); hide("ovScan", false); startCam(); }
+  }
+  async function startCam(){
+    stopCam(); clearTimeout(idle); idle = setTimeout(closeOv, 90000);
     try{ stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); }
     catch(e){ try{ stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); }catch(x){ $v("ovMsg").textContent = kt("tNoCam"); return; } }
     const v = $v("cVideo"), cv = $v("cCanvas"), ctx = cv.getContext("2d", { willReadFrequently: true });
     v.srcObject = stream; await v.play().catch(() => {});
-    clearTimeout(idle); idle = setTimeout(closeOv, 90000);   // sem uso: fecha a câmera
     const loop = () => {
       if(!stream) return;
       if(!busyCheck && v.readyState >= 2 && v.videoWidth){
@@ -138,7 +145,19 @@
     };
     loop();
   }
-  $v("couponBtn").onclick = openScan;
+  function openScan(){
+    hide("ov", false); window.kApply();
+    setMode("cam");
+  }
+  $v("modeCam").onclick = () => { if(mode !== "cam") setMode("cam"); };
+  $v("modeType").onclick = () => { if(mode !== "type") setMode("type"); };
+  $v("typeForm").addEventListener("submit", e => {
+    e.preventDefault();
+    let code = String($v("typeIn").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if(/^[0-9]{5,6}$/.test(code)) code = "P" + code;   // aceita só os números
+    if(!/^P[0-9]{5,6}$/.test(code)){ $v("ovMsg").textContent = kt("tBadCode"); return; }
+    $v("ovMsg").textContent = ""; checkCode(code);
+  });  $v("couponBtn").onclick = openScan;
   $v("ovCancel").onclick = closeOv;
   $v("ovConfirm").onclick = async () => {
     if(!current || current.status !== "valid") return;
@@ -151,6 +170,6 @@
     btn.disabled = false;
   };
   document.querySelectorAll("#ov .langbtn").forEach(b => b.addEventListener("click", () => { window.kSetLang(b.dataset.lang); }));
-  window.__kOnLang = () => { if(!$v("ov").hidden){ if(current) renderCurrent(); else $v("ovCancel").textContent = kt("tCancel"); } };
+  window.__kOnLang = () => { if(!$v("ov").hidden){ if(current) renderCurrent(); else { $v("ovCancel").textContent = kt("tCancel"); } } };
   window.kApply();
 })();
