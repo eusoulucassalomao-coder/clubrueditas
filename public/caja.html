@@ -27,7 +27,8 @@
   <main class="wrap" style="max-width:640px">
     <div class="tabs" role="tablist">
       <button class="tab on" data-tab="visita" role="tab">Registrar visita</button>
-      <button class="tab" data-tab="canje" role="tab">Entregar premio</button>
+      <button class="tab" data-tab="canje" role="tab">Validar cupón</button>
+      <button class="tab" data-tab="qr" role="tab">Visitas QR <span id="qrBadge" class="tag" hidden style="background:#a33;color:#fff;margin-left:4px">0</span></button>
       <button class="tab" data-tab="nuevo" role="tab">Cliente nuevo</button>
     </div>
 
@@ -47,11 +48,23 @@
     </section>
 
     <section id="p-canje" class="card" hidden>
-      <h2>Entregar premio</h2><p class="sub">Pedile el código del premio generado en “Mis puntos” (empieza con P, por ejemplo P48213). No ingreses el código de socio.</p>
-      <input id="code" autocomplete="off" placeholder="Código (ej.: P48213)" autocapitalize="characters" aria-label="Código de premio">
+      <h2>Validar cupón</h2><p class="sub">Escaneá el QR del cupón con la cámara o con el lector, o escribí el código (empieza con P). El sistema dice si es válido.</p>
+      <button class="btn full" id="scanBtn" type="button">📷 Escanear con la cámara</button>
+      <div id="scanBox" hidden style="margin-top:12px;position:relative">
+        <video id="scanVideo" playsinline muted style="width:100%;border-radius:14px;background:#000"></video>
+        <canvas id="scanCanvas" hidden></canvas>
+        <button class="btn ghost sm" id="scanStop" type="button" style="margin-top:8px">Cerrar cámara</button>
+      </div>
+      <input id="code" autocomplete="off" placeholder="Código (ej.: P482130)" autocapitalize="characters" aria-label="Código de premio" style="margin-top:12px">
       <p class="msg" id="cMsg" role="status"></p>
       <div id="cBox"></div>
-      <button class="btn full" id="doCode" type="button">Buscar código</button>
+      <button class="btn full" id="doCode" type="button">Validar código</button>
+    </section>
+
+    <section id="p-qr" class="card" hidden>
+      <h2>Visitas pedidas por QR</h2><p class="sub">El cliente envía el ticket y el total desde su celular. Comparalo con el ticket de la caja y confirmá.</p>
+      <div id="qrList"></div>
+      <p class="msg" id="qrMsg" role="status"></p>
     </section>
 
     <section id="p-nuevo" class="card" hidden>
@@ -73,6 +86,7 @@
 </div>
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
+<script src="js/vendor/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/intlTelInput.min.js"></script>
 <script src="js/caja.js"></script>
 </body>

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#4A5D3F">
+<title>Club La Ruedita</title>
+<link rel="icon" href="assets/logo.webp">
+<style>
+  :root{--green:#4A5D3F;--green-d:#38492F;--ink:#1F281B;--cream:#FAF7F0;--line:#E7DFCC;--muted:#5A6353;--sage:#EAEFE5;--bad:#9E3B2B;--ok:#2E6B3F;--gold:#C9A227}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--cream);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh}
+  [hidden]{display:none!important}
+  header{background:var(--green);color:var(--cream);padding:16px 20px;display:flex;align-items:center;gap:12px}
+  header img{width:40px;height:40px;border-radius:50%;background:#fff}
+  header b{font-family:Georgia,serif;font-weight:600;font-size:19px}
+  main{max-width:460px;margin:0 auto;padding:22px 18px 60px}
+  h1{font-family:Georgia,serif;font-size:27px;line-height:1.15;margin:6px 0 6px;font-weight:600}
+  p{margin:0 0 14px}
+  .sub{color:var(--muted)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:20px;margin-bottom:14px}
+  .big{display:flex;width:100%;align-items:center;gap:14px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:12px;font:inherit;color:inherit;cursor:pointer;min-height:84px}
+  .big:active{transform:scale(.99)}
+  .big .ic{flex:none;width:52px;height:52px;border-radius:16px;background:var(--sage);display:flex;align-items:center;justify-content:center;font-size:26px}
+  .big b{display:block;font-size:18px}
+  .big small{color:var(--muted);font-size:14px}
+  label{display:block;font-size:14px;font-weight:600;margin:14px 0 6px}
+  input{width:100%;font:inherit;font-size:18px;padding:14px 16px;border:1px solid #D8CEB8;border-radius:14px;background:#fff;color:var(--ink)}
+  input:focus{outline:2px solid var(--green);outline-offset:1px}
+  .code{letter-spacing:.5em;text-align:center;font-size:28px;font-weight:700}
+  .btn{display:flex;width:100%;align-items:center;justify-content:center;min-height:52px;border:0;border-radius:16px;background:var(--green);color:var(--cream);font:inherit;font-weight:700;font-size:17px;cursor:pointer;margin-top:16px}
+  .btn:disabled{opacity:.5}
+  .btn.ghost{background:transparent;color:var(--green);border:1px solid var(--green)}
+  .link{background:none;border:0;color:var(--green);font:inherit;text-decoration:underline;cursor:pointer;padding:10px 0}
+  .msg{min-height:22px;margin:10px 0 0;font-size:15px}
+  .err{color:var(--bad)} .ok{color:var(--ok);font-weight:600}
+  .pts{font-family:Georgia,serif;font-size:44px;color:var(--green);line-height:1}
+  .rw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+  .rw:first-child{border-top:0}
+  .rw b{display:block}
+  .rw small{color:var(--muted)}
+  .rw button{flex:none;min-width:104px;padding:11px 14px;border-radius:12px;border:0;background:var(--green);color:var(--cream);font:inherit;font-weight:700;cursor:pointer}
+  .rw button:disabled{background:#d9d3c2;color:#7b7566;cursor:not-allowed}
+  /* cupom */
+  .ticket{position:relative;background:#fff;border-radius:24px;border:2px solid var(--green);overflow:hidden;box-shadow:0 14px 40px rgba(56,73,47,.18)}
+  .ticket .top{background:var(--green);color:var(--cream);padding:16px 20px;text-align:center}
+  .ticket .top small{display:block;letter-spacing:.28em;text-transform:uppercase;font-size:11px;color:#e9c46a}
+  .ticket .top b{display:block;font-family:Georgia,serif;font-size:24px;margin-top:2px}
+  .ticket .mid{padding:20px;text-align:center}
+  .ticket .qr{width:min(64vw,240px);margin:6px auto 10px}
+  .ticket .qr svg{display:block;width:100%;height:auto}
+  .ticket .num{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:30px;font-weight:700;letter-spacing:.14em}
+  .ticket .cut{position:relative;border-top:2px dashed #cfc7ae;margin:0 14px}
+  .ticket .cut:before,.ticket .cut:after{content:"";position:absolute;top:-13px;width:24px;height:24px;border-radius:50%;background:var(--cream);border:2px solid var(--green)}
+  .ticket .cut:before{left:-27px}.ticket .cut:after{right:-27px}
+  .ticket .bot{padding:14px 20px 18px;text-align:center;font-size:14px;color:var(--muted)}
+  .ticket .time{display:inline-block;margin-top:6px;padding:6px 14px;border-radius:99px;background:var(--sage);color:var(--green);font-weight:700;font-variant-numeric:tabular-nums}
+  .ticket.dead{filter:grayscale(1);opacity:.6}
+  .tiny{font-size:13px;color:var(--muted);text-align:center;margin-top:18px}
+</style>
+</head>
+<body>
+<header><img src="assets/logo.webp" alt=""><b>Club La Ruedita</b></header>
+<main>
+
+  <section id="s-load"><p class="sub" style="margin-top:30px">Un momento…</p></section>
+
+  <section id="s-dead" hidden>
+    <h1>Escaneá el QR de la caja</h1>
+    <p class="sub" id="deadMsg">Para registrar tu visita o canjear un premio, escaneá el código QR que está en la caja del local.</p>
+    <a class="btn ghost" style="text-decoration:none" href="/">Ir al Club</a>
+  </section>
+
+  <section id="s-menu" hidden>
+    <h1>¡Hola! ¿Qué querés hacer?</h1>
+    <p class="sub">Es rápido: te mandamos un código por WhatsApp para confirmar que sos vos.</p>
+    <button class="big" id="goVisit" type="button"><span class="ic">🧾</span><span><b>Registrar mi visita</b><small>Sumá puntos por tu cuenta de hoy</small></span></button>
+    <button class="big" id="goRedeem" type="button"><span class="ic">🎁</span><span><b>Canjear un premio</b><small>Usá tus puntos y recibí tu cupón</small></span></button>
+    <p class="tiny">¿Todavía no sos del Club? <a href="/" style="color:var(--green)">Creá tu cuenta gratis</a></p>
+  </section>
+
+  <section id="s-id" hidden>
+    <h1 id="idTitle">Confirmemos que sos vos</h1>
+    <p class="sub">Escribí tu número de WhatsApp (el que usaste al registrarte) o tu código de socio. Te enviamos un código de 6 dígitos.</p>
+    <form id="idForm" novalidate>
+      <label for="idIn">WhatsApp o código de socio</label>
+      <input id="idIn" autocomplete="tel" autocapitalize="characters" inputmode="text" placeholder="Ej.: 376 4123456  o  ANA123">
+      <p class="msg err" id="idMsg" role="alert"></p>
+      <button class="btn" type="submit" id="idBtn">Enviarme el código por WhatsApp</button>
+    </form>
+    <button class="link" id="idBack" type="button">← Volver</button>
+  </section>
+
+  <section id="s-otp" hidden>
+    <h1>Revisá tu WhatsApp</h1>
+    <p class="sub">Si la cuenta existe, te enviamos un código de 6 dígitos. Puede tardar unos segundos.</p>
+    <form id="otpForm" novalidate>
+      <label for="otpIn">Código</label>
+      <input id="otpIn" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······">
+      <p class="msg err" id="otpMsg" role="alert"></p>
+      <button class="btn" type="submit" id="otpBtn">Confirmar</button>
+    </form>
+    <button class="link" id="otpResend" type="button">Reenviar código</button>
+    <button class="link" id="otpBack" type="button">← Cambiar número</button>
+  </section>
+
+  <section id="s-visit" hidden>
+    <h1 id="vHello">Registrá tu visita</h1>
+    <p class="sub">Copiá el número de tu ticket y el total de la cuenta. La caja lo confirma y se suman tus puntos.</p>
+    <form id="visitForm" novalidate>
+      <label for="vTicket">Número del ticket</label>
+      <input id="vTicket" autocapitalize="characters" autocomplete="off" placeholder="Ej.: 0001-00012345">
+      <label for="vAmount">Total de la cuenta ($)</label>
+      <input id="vAmount" inputmode="numeric" autocomplete="off" placeholder="Ej.: 28500">
+      <p class="msg err" id="vMsg" role="alert"></p>
+      <button class="btn" type="submit" id="vBtn">Enviar a la caja</button>
+    </form>
+  </section>
+
+  <section id="s-visit-ok" hidden>
+    <h1>¡Listo!</h1>
+    <p class="sub">Recibimos tu visita. Apenas la caja la confirme, se suman tus puntos. ¡Gracias por venir!</p>
+    <a class="btn" style="text-decoration:none" href="/">Ver mis puntos</a>
+  </section>
+
+  <section id="s-redeem" hidden>
+    <h1 id="rHello">Canjeá tu premio</h1>
+    <div class="card"><div class="sub" style="margin:0">Tus puntos</div><div class="pts" id="rPts">0</div></div>
+    <div class="card" id="rList"></div>
+    <p class="msg err" id="rMsg" role="alert"></p>
+    <p class="tiny">Al canjear, se descuentan los puntos y recibís un cupón con QR para mostrar en la caja. Vale por poco tiempo.</p>
+  </section>
+
+  <section id="s-coupon" hidden>
+    <div class="ticket" id="ticket">
+      <div class="top"><small>Cupón de premio</small><b id="cName">—</b></div>
+      <div class="mid">
+        <div class="qr" id="cQr"></div>
+        <div class="num" id="cCode">—</div>
+        <div class="sub" style="margin-top:6px" id="cWho"></div>
+      </div>
+      <div class="cut"></div>
+      <div class="bot">Mostrá este cupón en la caja.<br><span class="time" id="cTime">—</span></div>
+    </div>
+    <p class="tiny" id="cNote">Este cupón se puede usar una sola vez. Si no lo usás a tiempo, tus puntos vuelven a tu cuenta.</p>
+    <a class="btn ghost" style="text-decoration:none" href="/">Volver al Club</a>
+  </section>
+
+</main>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/vendor/qrcode.js"></script>
+<script src="js/kiosk.js"></script>
+</body>
+</html>

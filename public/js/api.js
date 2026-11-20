@@ -37,6 +37,15 @@
     claimByCode: (code, reward) => call({ action: "claim_by_code", code, reward }),
     login: phone => call({ action: "login", phone }),
     lookupCode: code => call({ action: "lookup_code", code }),
+    // tablet / QR (cliente)
+    kioskEnter: c => call({ action: "kiosk_enter", c }),
+    kioskOtpRequest: (session, id) => call({ action: "kiosk_otp_request", session, id }),
+    kioskOtpVerify: (session, id, code) => call({ action: "kiosk_otp_verify", session, id, code }),
+    kioskMe: kc => call({ action: "kiosk_me", kc }),
+    kioskClaim: (kc, reward) => call({ action: "kiosk_claim", kc, reward }),
+    kioskVisit: (kc, ticket, amount) => call({ action: "kiosk_visit", kc, ticket, amount }),
+    // tablet (equipe)
+    kioskQr: t => call({ action: "kiosk_qr" }, t),
     // acesso interno
     async auth(role, email, password){
       const data = await call({
@@ -58,6 +67,8 @@
     deliver: (t, code) => call({ action: "deliver", code }, t),
     newCustomer: (t, d) => call(Object.assign({ action: "new_customer" }, d), t),
     recent: t => call({ action: "recent" }, t),
+    visitRequests: t => call({ action: "visit_requests" }, t),
+    visitDecide: (t, id, approve, amount) => call({ action: "visit_decide", id, approve, amount }, t),
     // painel
     stats: t => call({ action: "stats" }, t),
     waStatus: t => call({ action: "wa_status" }, t),

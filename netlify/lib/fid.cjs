@@ -319,8 +319,73 @@ async function notifySurveyWebhook(r, surveyToken, rating, comment, result) {
 const otpHash = (customerId, code) =>
   crypto.createHash("sha256").update(`${process.env.FID_TOKEN_SECRET || ""}:${customerId}:${code}`).digest("hex");
 
+// ---- QR do tablet ----
+// O QR muda a cada KIOSK_SLOT_MS. Cada código é assinado (HMAC) com o segredo do servidor: não dá para inventar nem adivinhar.
+// Vale o código atual e os 3 anteriores (≈1 minuto), para quem escaneou e demorou um pouco.
+const KIOSK_SLOT_MS = 15000;
+const kioskKey = () => "fid-kiosk:" + (process.env.FID_TOKEN_SECRET || "");
+const kioskSig = (slug, slot) => crypto.createHmac("sha256", kioskKey()).update(slug + ":" + slot).digest("base64url").slice(0, 16);
+function kioskMake(slug, now = Date.now()) {
+  const slot = Math.floor(now / KIOSK_SLOT_MS);
+  return slot.toString(36) + "-" + kioskSig(slug, slot);
+}
+function kioskOk(slug, code, now = Date.now()) {
+  if (!process.env.FID_TOKEN_SECRET) return false;
+  const m = /^([a-z0-9]{4,10})-([A-Za-z0-9_-]{16})$/.exec(String(code || ""));
+  if (!m) return false;
+  const slot = parseInt(m[1], 36), cur = Math.floor(now / KIOSK_SLOT_MS);
+  if (!Number.isFinite(slot) || slot > cur + 1 || slot < cur - 3) return false;
+  return sameSecret(m[2], kioskSig(slug, slot));
+}
+// "Já provou que é o dono da conta" (código do WhatsApp): vale 10 minutos, só neste restaurante e só para este cliente.
+const custSig = body => crypto.createHmac("sha256", "fid-kcust:" + (process.env.FID_TOKEN_SECRET || "")).update(body).digest("base64url");
+function custTokenMake(slug, customerId, ttlMs = 600000) {
+  const body = ["kc", slug, customerId, Date.now() + ttlMs].join(".");
+  return body + "." + custSig(body);
+}
+function custTokenCheck(slug, token) {
+  const parts = String(token || "").split(".");
+  if (parts.length !== 5 || parts[0] !== "kc" || parts[1] !== slug) return null;
+  const body = parts.slice(0, 4).join(".");
+  if (!process.env.FID_TOKEN_SECRET || !sameSecret(parts[4], custSig(body))) return null;
+  if (!(Number(parts[3]) > Date.now())) return null;
+  return parts[2];
+}
+// Acha o cliente por telefone (8+ dígitos) ou por código de sócio. Nunca devolve erro para quem consulta.
+async function findCustomerLoose(r, value) {
+  const raw = String(value || "").trim();
+  const d = digits(raw);
+  if (d.length >= 8) return await one("customers", [queryEqual("restaurant_id", r.id), queryEqual("phone_key", d.slice(-8))]);
+  const code = raw.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 20);
+  if (code.length < 3) return null;
+  return await one("customers", [queryEqual("restaurant_id", r.id), queryEqual("code", code)]);
+}
+// Emite e envia um código de 6 dígitos (no máximo 1 a cada 30 s e 3 por hora por cliente).
+async function issueOtp(r, c, purpose) {
+  if (!c || c.opted_out) return false;
+  const recent = await many("otp_codes", [queryEqual("customer_id", c.id), queryOrderDesc("created_at")], 5);
+  const lastMs = recent[0] ? Date.now() - new Date(recent[0].created_at) : Infinity;
+  const lastHour = recent.filter(x => Date.now() - new Date(x.created_at) < 3600000).length;
+  if (lastMs <= 30000 || lastHour >= 3) return false;
+  const code = String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+  await commitOperations([transactionCreate("otp_codes", crypto.randomUUID(), { restaurant_id: r.id, customer_id: c.id, code_hash: otpHash(c.id, code), expires_at: new Date(Date.now() + 600000).toISOString() })]);
+  await notifyOtpWebhook(r, c, code, purpose);
+  return true;
+}
+// Confere o código (5 tentativas por código, vence em 10 min, uso único).
+async function checkOtp(c, code) {
+  if (!c || digits(code).length !== 6) return false;
+  const row = (await many("otp_codes", [queryEqual("customer_id", c.id), queryOrderDesc("created_at")], 1))[0];
+  if (!row || row.used_at || row.attempts >= 5 || new Date(row.expires_at) < new Date()) return false;
+  await updateDocument("otp_codes", row.id, { attempts: row.attempts + 1 });
+  if (!sameSecret(otpHash(c.id, digits(code)), row.code_hash)) return false;
+  await updateDocument("otp_codes", row.id, { used_at: isoNow() });
+  return true;
+}
+const expireCoupons = async r => { try { await rpc("fid_expire_coupons", { p_slug: r.slug }); } catch (_) {} };
+
 // Envia o código de acesso pelo n8n (hoje via Evolution; quando houver número oficial, só o último nó do n8n muda).
-async function notifyOtpWebhook(r, customer, code) {
+async function notifyOtpWebhook(r, customer, code, purpose) {
   const visitWebhookUrl = process.env.N8N_VISIT_WEBHOOK_URL || "";
   const apiKey = process.env.N8N_VISIT_WEBHOOK_API_KEY || "";
   if (!visitWebhookUrl || !apiKey) return { state: "not_configured" };
@@ -336,6 +401,7 @@ async function notifyOtpWebhook(r, customer, code) {
         customerName: String(customer.name || "").trim().split(/\s+/)[0] || "",
         phone: customer.phone,
         code,
+        purpose: purpose || "recovery",
         expiresInMinutes: 10
       }),
       signal: AbortSignal.timeout(8000)
@@ -448,6 +514,7 @@ module.exports = async function handler(req,res) {
       return res.status(200).json({customer:publicCustomer(c),token:c.access_token});
     }
     if(action==="me"){
+      await expireCoupons(r);
       const c=await customerByToken(r,body.token);
       const [history,redemptions]=await Promise.all([
         many("ledger",[queryEqual("customer_id",c.id),queryOrderDesc("created_at")],8),
@@ -471,33 +538,54 @@ module.exports = async function handler(req,res) {
       const c=await one("customers",[queryEqual("restaurant_id",r.id),queryEqual("phone_key",phoneKey)]);
       if(action==="otp_request"){
         // Resposta sempre igual, exista ou não a conta (não revela quem é cliente).
-        if(c&&!c.opted_out){
-          const recent=(await many("otp_codes",[queryEqual("customer_id",c.id),queryOrderDesc("created_at")],5));
-          const lastMs=recent[0]?Date.now()-new Date(recent[0].created_at):Infinity;
-          const lastHour=recent.filter(x=>Date.now()-new Date(x.created_at)<3600000).length;
-          if(lastMs>30000&&lastHour<3){
-            const code=String(crypto.randomInt(0,1000000)).padStart(6,"0");
-            await commitOperations([transactionCreate("otp_codes",crypto.randomUUID(),{restaurant_id:r.id,customer_id:c.id,code_hash:otpHash(c.id,code),expires_at:new Date(Date.now()+600000).toISOString()})]);
-            await notifyOtpWebhook(r,c,code);
-          }
-        }
+        await issueOtp(r,c,"recovery");
         return res.status(200).json({ok:true,message:"Si ese teléfono tiene cuenta, te enviamos un código por WhatsApp."});
       }
-      const code=digits(body.code);
-      const bad=()=>res.status(401).json({error:"invalid_code",message:"Código incorrecto o vencido."});
-      if(!c||code.length!==6) return bad();
-      const rows=await many("otp_codes",[queryEqual("customer_id",c.id),queryOrderDesc("created_at")],1);
-      const row=rows[0];
-      if(!row||row.used_at||row.attempts>=5||new Date(row.expires_at)<new Date()) return bad();
-      await updateDocument("otp_codes",row.id,{attempts:row.attempts+1});
-      if(!sameSecret(otpHash(c.id,code),row.code_hash)) return bad();
-      await updateDocument("otp_codes",row.id,{used_at:isoNow()});
+      if(!(await checkOtp(c,body.code))) return res.status(401).json({error:"invalid_code",message:"Código incorrecto o vencido."});
       return res.status(200).json({customer:publicCustomer(c),token:c.access_token});
+    }
+
+    // ---- Tablet / QR (público, mas protegido pelo QR rotativo e pelo código do WhatsApp) ----
+    if(action==="kiosk_enter"){
+      if(tooMany(req,"kenter",20)) return slowDown(res);
+      if(!kioskOk(slug,body.c)) return res.status(401).json({error:"qr_expired",message:"Este QR venció. Volvé a escanear el que está en la caja."});
+      return res.status(200).json({session:mintToken(slug,"kiosk",30*60*1000),name:r.name});
+    }
+    if(action==="kiosk_otp_request"||action==="kiosk_otp_verify"){
+      if(tooMany(req,action,8)) return slowDown(res);
+      if(!verifyToken(slug,body.session,["kiosk"])) return res.status(401).json({error:"qr_expired",message:"La sesión venció. Volvé a escanear el QR de la caja."});
+      const c=await findCustomerLoose(r,body.id);
+      if(action==="kiosk_otp_request"){
+        await issueOtp(r,c,"kiosk");
+        return res.status(200).json({ok:true,message:"Si la cuenta existe, te enviamos un código por WhatsApp."});
+      }
+      if(!(await checkOtp(c,body.code))) return res.status(401).json({error:"invalid_code",message:"Código incorrecto o vencido."});
+      return res.status(200).json({kc:custTokenMake(slug,c.id),firstName:String(c.name||"").trim().split(/\s+/)[0]||""});
+    }
+    if(action==="kiosk_me"||action==="kiosk_claim"||action==="kiosk_visit"){
+      if(tooMany(req,action,20)) return slowDown(res);
+      const cid=custTokenCheck(slug,body.kc);
+      if(!cid) return res.status(401).json({error:"kc_expired",message:"Tu verificación venció. Volvé a empezar."});
+      await expireCoupons(r);
+      const c=await customerById(r,cid);
+      if(action==="kiosk_claim"){
+        const coupon=await rpc("fid_kiosk_claim",{p_slug:r.slug,p_customer:c.id,p_reward:String(body.reward||"")});
+        return res.status(200).json({coupon});
+      }
+      if(action==="kiosk_visit"){
+        const amount=Number(String(body.amount||"").replace(/\./g,"").replace(",","."));
+        await rpc("fid_visit_request",{p_slug:r.slug,p_customer:c.id,p_ticket:String(body.ticket||""),p_amount:amount});
+        return res.status(200).json({ok:true});
+      }
+      const active=await one("redemptions",[queryEqual("customer_id",c.id),queryEqual("status","pendiente"),queryOrderDesc("created_at")]);
+      const live=active&&active.expires_at&&new Date(active.expires_at)>new Date()?{code:active.code,name:active.name,pts:active.points,expiresAt:active.expires_at}:null;
+      const rewards=(r.config.rewards||[]).map(x=>({id:x.id,name:x.name,pts:x.pts})).sort((a,b)=>a.pts-b.pts);
+      return res.status(200).json({customer:{name:String(c.name||"").trim().split(/\s+/)[0]||"",points:c.points},rewards,coupon:live});
     }
     if(action==="login") return res.status(200).json({ok:true,channel:false});
     if(action==="auth"){
       if(tooMany(req,"auth",10)) return slowDown(res);
-      const role = body.role === "panel" ? "panel" : body.role === "caja" ? "caja" : "";
+      const role = body.role === "panel" ? "panel" : body.role === "caja" ? "caja" : body.role === "tablet" ? "tablet" : "";
       const email = String(body.email || "").trim().toLowerCase();
       const password = String(body.password || "");
       if (!role || !email || !password) {
@@ -522,11 +610,13 @@ module.exports = async function handler(req,res) {
         console.error("staff-access", staffError.message);
         return res.status(500).json({ error: "auth_unavailable", message: "No se pudo validar el acceso." });
       }
-      if (!staff || staff.role !== role) {
+      // O tablet entra com a conta da caixa (ou do painel); o token dele só serve para mostrar o QR.
+      const allowed = role === "tablet" ? ["caja", "panel"].includes(staff?.role) : staff?.role === role;
+      if (!staff || !allowed) {
         return res.status(403).json({ error: "role_not_authorized", message: "Esta cuenta no tiene permiso para este panel." });
       }
 
-      return res.status(200).json({ token: mintToken(slug, role), role });
+      return res.status(200).json({ token: mintToken(slug, role, role === "tablet" ? 7 * 24 * 60 * 60 * 1000 : undefined), role });
     }
 
     if(action==="wa_optout"||action==="wa_optin"){
@@ -573,7 +663,12 @@ module.exports = async function handler(req,res) {
     }
 
     const token=bearer(req);
-    const cashier=["search","visit","bonus","find_code","deliver","recent"].includes(action);
+    if(action==="kiosk_qr"){
+      // Tablet: devolve o código atual do QR (a página pede de novo antes de cada troca).
+      if(!verifyToken(slug,token,["tablet"])) return res.status(401).json({error:"unauthorized",message:"La sesión venció. Entrá de nuevo."});
+      return res.status(200).json({c:kioskMake(slug),slotMs:KIOSK_SLOT_MS,serverNow:Date.now()});
+    }
+    const cashier=["search","visit","bonus","find_code","deliver","recent","visit_requests","visit_decide"].includes(action);
     const owner=["stats","customers","export_customers","export_visits","redemptions","surveys","save_config","wa_status","wa_connect","wa_logout"].includes(action);
     if(cashier||owner){
       const roles=owner?["panel"]:["caja","panel"];
@@ -595,14 +690,36 @@ module.exports = async function handler(req,res) {
       const c=await customerById(r,body.customer);
       return res.status(200).json(await addBonus(r,c,String(body.type||"")));
     }
+    if(action==="visit_requests"){
+      const rows=await many("visit_requests",[queryEqual("restaurant_id",r.id),queryEqual("status","pendiente"),queryOrderDesc("created_at")],30);
+      const out=await Promise.all(rows.map(async x=>{const cu=await getDocument("customers",x.customer_id).catch(()=>null);return {id:x.id,ticket:x.ticket,amount:x.amount,ts:x.created_at,name:cu?.name||"—",code:cu?.code||"",phone:cu?.phone||""};}));
+      return res.status(200).json({requests:out});
+    }
+    if(action==="visit_decide"){
+      const approve=body.approve===true;
+      const taken=await rpc("fid_visit_take",{p_slug:r.slug,p_id:String(body.id||""),p_approve:approve});
+      if(!approve) return res.status(200).json({status:"rechazada"});
+      const amount=Number(body.amount)>0?Number(body.amount):Number(taken.amount);
+      try{
+        const c=await customerById(r,taken.customerId);
+        const done=await addVisit(r,c,amount);
+        return res.status(200).json({status:"aprobada",...done});
+      }catch(err){
+        // Não deixa o pedido "aprovado" sem visita registrada: volta para pendente.
+        await updateDocument("visit_requests",String(body.id),{status:"pendiente",decided_at:null}).catch(()=>{});
+        throw err;
+      }
+    }
     if(action==="find_code"){
+      await expireCoupons(r);
       const code=String(body.code||"").trim().toUpperCase();
       const red=await one("redemptions",[queryEqual("restaurant_id",r.id),queryEqual("code",code)]);
       if(!red) throw Object.assign(new Error("Código de canje no encontrado. Ingresá el código del premio que empieza con P y que el cliente ve en “Mis puntos”; no el código de socio."),{status:404,code:"redemption-not-found"});
       const c=await customerById(r,red.customer_id);
-      return res.status(200).json({status:red.status,name:red.name,customer:c.name,pts:red.points,code:red.code});
+      return res.status(200).json({status:red.status,name:red.name,customer:c.name,pts:red.points,code:red.code,expiresAt:red.expires_at||null,usedAt:red.used_at||null});
     }
     if(action==="deliver"){
+      await expireCoupons(r);
       const result=await rpc("fid_deliver",{p_slug:r.slug,p_code:String(body.code||"").trim().toUpperCase()});
       return res.status(200).json({
         code:result.code,name:result.name,pts:result.pts,status:result.status,customer:result.customer

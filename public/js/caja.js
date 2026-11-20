@@ -25,7 +25,7 @@
     $("gate").hidden = true; $("app").hidden = false;
     $("logo").src = CF.logo; $("club").textContent = CF.name;
     $("bBirth").textContent = `Cumpleaños +${fmt(CF.bonus.birthday)}`;
-    recent();
+    recent(); loadQr();
   }
   $("loginForm").addEventListener("submit", async e => {
     e.preventDefault(); const m = $("loginMsg"); m.textContent = "";
@@ -37,7 +37,10 @@
 
   document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
-    ["visita", "canje", "nuevo"].forEach(n => $("p-" + n).hidden = (n !== t.dataset.tab));
+    ["visita", "canje", "qr", "nuevo"].forEach(n => $("p-" + n).hidden = (n !== t.dataset.tab));
+    if(t.dataset.tab !== "canje") stopScan();
+    if(t.dataset.tab === "canje") $("code").focus();
+    if(t.dataset.tab === "qr") loadQr();
   });
 
   // ---- visita ----
@@ -94,23 +97,91 @@
   });
 
   // ---- premios ----
+  const hhmm = ts => new Date(ts).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+  const verdict = (ok, title, detail) => `<div class="rcpt" style="text-align:center;background:${ok ? "#e6f4ea" : "#fbeaea"};border-color:${ok ? "#9fd0ae" : "#e3b0b0"}"><div style="font-size:30px;font-weight:800;color:${ok ? "#2e7d4f" : "#a33"}">${ok ? "✓ VÁLIDO" : "✕ " + title}</div>${detail}</div>`;
   async function lookCode(){
     const m = $("cMsg"), box = $("cBox"); m.className = "msg"; m.textContent = ""; box.innerHTML = "";
-    const code = $("code").value.trim();
+    const code = $("code").value.trim().toUpperCase();
     if(!code) return;
     try{
       const r = await run(() => F.findCode(tok, code));
-      if(r.status === "canjeado"){ m.textContent = "Este premio ya fue entregado"; m.className = "msg err"; return; }
-      if(r.status !== "pendiente"){ m.textContent = "Código no válido"; m.className = "msg err"; return; }
-      box.innerHTML = `<div class="rcpt"><b>${esc(r.name)}</b><br>Para ${esc(r.customer || "—")} · ${fmt(r.pts)} puntos<br><button class="btn full" id="doDeliver" type="button" style="margin-top:12px">Entregar premio</button></div>`;
+      if(r.status === "canjeado"){ box.innerHTML = verdict(false, "YA USADO", `<p style="margin:6px 0 0">${esc(r.name)} · ${esc(r.customer || "—")}${r.usedAt ? `<br>Entregado a las ${hhmm(r.usedAt)}` : ""}</p>`); return; }
+      if(r.status === "vencido" || (r.expiresAt && new Date(r.expiresAt) < new Date())){ box.innerHTML = verdict(false, "VENCIDO", `<p style="margin:6px 0 0">${esc(r.name)} · ${esc(r.customer || "—")}<br>Los puntos ya volvieron al cliente.</p>`); return; }
+      if(r.status !== "pendiente"){ box.innerHTML = verdict(false, "NO VÁLIDO", ""); return; }
+      box.innerHTML = verdict(true, "", `<p style="margin:6px 0 0;font-size:18px"><b>${esc(r.name)}</b><br>Para ${esc(r.customer || "—")} · ${fmt(r.pts)} puntos${r.expiresAt ? `<br><small>vence a las ${hhmm(r.expiresAt)}</small>` : ""}</p><button class="btn full" id="doDeliver" type="button" style="margin-top:12px">Entregar premio</button>`);
       $("doDeliver").onclick = async () => {
-        try{ await run(() => F.deliver(tok, r.code)); box.innerHTML = ""; m.textContent = `✓ Premio entregado: ${r.name}`; m.className = "msg ok"; $("code").value = ""; }
-        catch(e){ m.textContent = e.message; m.className = "msg err"; }
+        try{ await run(() => F.deliver(tok, r.code)); box.innerHTML = ""; m.textContent = `✓ Premio entregado: ${r.name}`; m.className = "msg ok"; $("code").value = ""; $("code").focus(); }
+        catch(e){ box.innerHTML = ""; m.textContent = e.message; m.className = "msg err"; }
       };
-    }catch(e){ m.textContent = e.message; m.className = "msg err"; }
+    }catch(e){
+      if(e.status === 404){ box.innerHTML = verdict(false, "NO EXISTE", `<p style="margin:6px 0 0">Ese código no es de ningún cupón.</p>`); return; }
+      m.textContent = e.message; m.className = "msg err";
+    }
   }
   $("doCode").onclick = lookCode;
+  // el lector USB escribe el código y manda Enter: valida solo
   $("code").addEventListener("keydown", e => { if(e.key === "Enter") lookCode(); });
+
+  // ---- cámara (QR) ----
+  let stream = null, scanRaf = 0;
+  function stopScan(){
+    cancelAnimationFrame(scanRaf);
+    if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+    const v = $("scanVideo"); if(v) v.srcObject = null;
+    $("scanBox").hidden = true;
+  }
+  async function startScan(){
+    const m = $("cMsg"); m.className = "msg"; m.textContent = "";
+    if(!navigator.mediaDevices || !window.jsQR){ m.textContent = "Este navegador no permite usar la cámara."; m.className = "msg err"; return; }
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+    }catch(e){ m.textContent = "No se pudo abrir la cámara. Permití el acceso en el navegador."; m.className = "msg err"; return; }
+    const v = $("scanVideo"), cv = $("scanCanvas"), ctx = cv.getContext("2d", { willReadFrequently: true });
+    v.srcObject = stream; $("scanBox").hidden = false;
+    await v.play().catch(() => {});
+    const loop = () => {
+      if(!stream) return;
+      if(v.readyState >= 2 && v.videoWidth){
+        const w = Math.min(640, v.videoWidth), h = Math.round(w * v.videoHeight / v.videoWidth);
+        cv.width = w; cv.height = h; ctx.drawImage(v, 0, 0, w, h);
+        const hit = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "dontInvert" });
+        if(hit && hit.data){
+          const val = String(hit.data).trim().toUpperCase();
+          if(/^[A-Z0-9-]{3,30}$/.test(val)){ stopScan(); $("code").value = val; if(navigator.vibrate) navigator.vibrate(80); lookCode(); return; }
+        }
+      }
+      scanRaf = requestAnimationFrame(loop);
+    };
+    loop();
+  }
+  $("scanBtn").onclick = startScan;
+  $("scanStop").onclick = stopScan;
+
+  // ---- visitas pedidas por QR ----
+  async function loadQr(){
+    try{
+      const rows = (await run(() => F.visitRequests(tok))).requests;
+      const b = $("qrBadge"); b.hidden = !rows.length; b.textContent = rows.length;
+      $("qrList").innerHTML = rows.map(x => `<div class="rcpt" data-id="${esc(x.id)}"><b>${esc(x.name)}</b> <small>· ${esc(x.code)} · ${hhmm(x.ts)}</small><br>Ticket <b>${esc(x.ticket)}</b><label style="margin-top:8px">Total ($)<input inputmode="numeric" class="qAmt" value="${esc(fmt(x.amount))}"></label><div class="row2" style="margin-top:10px"><button class="btn sm qOk" type="button">Confirmar visita</button><button class="btn ghost sm qNo" type="button">Rechazar</button></div></div>`).join("") || "<p class='sub'>No hay visitas pendientes.</p>";
+      $("qrList").querySelectorAll(".rcpt").forEach(card => {
+        const id = card.dataset.id, amt = card.querySelector(".qAmt");
+        amt.addEventListener("input", () => { const d = amt.value.replace(/\D/g, ""); amt.value = d ? fmt(Number(d)) : ""; });
+        const decide = async approve => {
+          const m = $("qrMsg"); m.className = "msg"; card.querySelectorAll("button").forEach(x => x.disabled = true);
+          try{
+            const r = await run(() => F.visitDecide(tok, id, approve, Number(amt.value.replace(/\D/g, ""))));
+            m.className = "msg ok"; m.textContent = approve ? `✓ Visita confirmada: ${r.customer.name} suma ${fmt(r.pts)} puntos.` : "Visita rechazada.";
+            recent();
+          }catch(e){ m.className = "msg err"; m.textContent = e.message; }
+          loadQr();
+        };
+        card.querySelector(".qOk").onclick = () => decide(true);
+        card.querySelector(".qNo").onclick = () => decide(false);
+      });
+    }catch(e){ $("qrList").innerHTML = `<small style="color:var(--bad)">${esc(e.message)}</small>`; }
+  }
+  // avisa na aba quando chega pedido novo
+  setInterval(() => { if(tok && !$("app").hidden && !document.hidden){ run(() => F.visitRequests(tok)).then(j => { const b = $("qrBadge"); b.hidden = !j.requests.length; b.textContent = j.requests.length; }).catch(() => {}); } }, 20000);
 
   // ---- alta rápida ----
   $("newForm").addEventListener("submit", async e => {

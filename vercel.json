@@ -6,6 +6,8 @@
   "rewrites": [
     { "source": "/caja", "destination": "/caja.html" },
     { "source": "/panel", "destination": "/panel.html" },
+    { "source": "/tablet", "destination": "/tablet.html" },
+    { "source": "/k", "destination": "/k.html" },
     { "source": "/survey", "destination": "/survey.html" },
     { "source": "/surveys", "destination": "/survey.html" }
   ],
@@ -21,6 +23,18 @@
     {
       "source": "/api/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    },
+    {
+      "source": "/(tablet|k)(.html)?",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+        }
+      ]
     },
     {
       "source": "/(caja|panel|survey|surveys)(.html)?",
