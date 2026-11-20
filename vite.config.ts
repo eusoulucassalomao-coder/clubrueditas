@@ -61,6 +61,9 @@ export default defineConfig(() => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}'],
           cleanupOutdatedCaches: true,
+          // Versão nova do app assume na hora: ninguém fica preso a páginas antigas guardadas no aparelho.
+          skipWaiting: true,
+          clientsClaim: true,
           // Caixa, tablet, comprovantes, painel e a página do cliente (/k) têm scripts e páginas próprios: sempre da rede, nunca de cópia guardada no aparelho.
           globIgnores: ['**/js/**', '**/css/**', '**/caja.html', '**/panel.html', '**/survey.html', '**/tablet.html', '**/k.html', '**/pos.html'],
           // Caixa, painel, pesquisas e a API são páginas/rotas do servidor: o service worker não pode devolver o app (index.html) no lugar delas.

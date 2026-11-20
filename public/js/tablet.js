@@ -1,4 +1,15 @@
 (function(){
+  // Se o aparelho guardou uma página antiga (sem o botão do cupom), limpa o que ficou guardado e recarrega uma vez.
+  if(!document.getElementById("couponBtn")){
+    let healed = false; try{ healed = sessionStorage.getItem("tabletHealed") === "1"; sessionStorage.setItem("tabletHealed", "1"); }catch(e){}
+    if(!healed){
+      (async () => {
+        try{ if(navigator.serviceWorker){ const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r => r.unregister())); } if(window.caches){ const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); } }catch(e){}
+        location.reload();
+      })();
+    }
+    return;
+  }
   const F = window.Fid, $ = id => document.getElementById(id);
   const TK = "mkf_tablet_" + F.slug;
   let tok = "", timer = 0, offset = 0, slotMs = 15000, fails = 0, raf = 0, endsAt = 0;
@@ -121,7 +132,7 @@
         cv.width = w; cv.height = h; ctx.drawImage(v, 0, 0, w, h);
         const hit = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "dontInvert" });
         const val = hit && hit.data ? String(hit.data).trim().toUpperCase() : "";
-        if(/^P[0-9]{6}$/.test(val)){ if(navigator.vibrate) navigator.vibrate(80); checkCode(val); }
+        if(/^P[0-9]{5,6}$/.test(val)){ if(navigator.vibrate) navigator.vibrate(80); checkCode(val); }
       }
       scanRaf = requestAnimationFrame(loop);
     };
