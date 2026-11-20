@@ -128,7 +128,15 @@ export default function App() {
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
           >
-            {activeTab === 'home' && (
+            {activeTab === 'home' && status === 'loading' && (
+              <div
+                className="rounded-3xl bg-[#4A5D3F]/90 min-h-[260px] animate-pulse"
+                role="status"
+                aria-busy="true"
+              />
+            )}
+
+            {activeTab === 'home' && status !== 'loading' && (
               <HomeScreen
                 member={member}
                 history={history}
