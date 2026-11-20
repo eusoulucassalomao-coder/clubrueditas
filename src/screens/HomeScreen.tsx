@@ -84,6 +84,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Greeting & Focal Olive Membership Pass */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Left: Dominant Focal Anchor — Olive Loyalty Card */}
+        {member.isGuest ? (
+          <div className="lg:col-span-7 rounded-3xl bg-[#4A5D3F] text-[#FAF7F0] p-6 sm:p-8 flex flex-col justify-between gap-8 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight text-balance">
+                {t.home.guestTitle}
+              </h1>
+              <BrandLogo variant="icon-only" size="md" />
+            </div>
+            <p className="text-base text-[#FAF7F0]/85 max-w-md">{t.home.guestText}</p>
+            <button
+              type="button"
+              onClick={onOpenRegister}
+              className="min-h-[52px] px-6 py-3 rounded-2xl bg-[#FACC15] hover:bg-[#EAB908] text-[#293622] text-base font-semibold inline-flex items-center justify-center gap-2 transition-colors self-start"
+            >
+              <UserPlus className="w-5 h-5" />
+              <span>{t.home.guestCta}</span>
+            </button>
+          </div>
+        ) : (
         <div className="lg:col-span-7 rounded-3xl bg-[#4A5D3F] text-[#FAF7F0] p-6 sm:p-8 flex flex-col justify-between shadow-sm">
           <div>
             <div className="flex items-start justify-between gap-4">
@@ -171,6 +190,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
           </div>
         </div>
+        )}
 
         {/* Right: Quick Access Grid + Discreet Desktop Install Option */}
         <div className="lg:col-span-5 flex flex-col justify-between gap-4">

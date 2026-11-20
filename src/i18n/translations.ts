@@ -73,6 +73,9 @@ export interface TranslationDictionary {
     actionRegister: string;
     actionMenu: string;
     actionOrder: string;
+    guestTitle: string;
+    guestText: string;
+    guestCta: string;
     featuredRewardsTitle: string;
     featuredRewardsSub: string;
     recentActivityTitle: string;
@@ -377,6 +380,9 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       actionRegister: 'Crear cuenta',
       actionMenu: 'Ver la carta',
       actionOrder: 'Pedir delivery',
+      guestTitle: '¡Bienvenido a Club La Ruedita!',
+      guestText: 'Creá tu cuenta gratis para tener tu tarjeta, tu código de socio y sumar puntos en cada visita.',
+      guestCta: 'Crear mi cuenta',
       featuredRewardsTitle: 'Beneficios destacados',
       featuredRewardsSub: 'Canjea tus puntos por experiencias artesanales en tienda.',
       recentActivityTitle: 'Actividad reciente',
@@ -752,6 +758,9 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       actionRegister: 'Sign up',
       actionMenu: 'View the menu',
       actionOrder: 'Order delivery',
+      guestTitle: 'Welcome to Club La Ruedita!',
+      guestText: 'Create your free account to get your card, your member code and earn points on every visit.',
+      guestCta: 'Create my account',
       featuredRewardsTitle: 'Featured benefits',
       featuredRewardsSub: 'Redeem your points for handcrafted café & bakery treats.',
       recentActivityTitle: 'Recent activity',
@@ -1127,6 +1136,9 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       actionRegister: 'Criar conta',
       actionMenu: 'Ver o cardápio',
       actionOrder: 'Pedir delivery',
+      guestTitle: 'Bem-vindo ao Club La Ruedita!',
+      guestText: 'Crie sua conta grátis para ter seu cartão, seu código de sócio e somar pontos a cada visita.',
+      guestCta: 'Criar minha conta',
       featuredRewardsTitle: 'Benefícios em destaque',
       featuredRewardsSub: 'Troque seus pontos por experiências artesanais na loja.',
       recentActivityTitle: 'Últimas atividades',
