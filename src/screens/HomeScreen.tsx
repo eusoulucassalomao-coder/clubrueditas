@@ -199,9 +199,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <h2 className="font-display text-xl font-semibold text-[#293622]">
                 {t.home.quickActionsTitle}
               </h2>
-              <p className="mt-1 text-xs text-[#5A6353]">
-                {member.fullName} · {member.favoriteBranch}
-              </p>
+              {member.fullName && (
+                <p className="mt-1 text-xs text-[#5A6353]">{member.fullName}</p>
+              )}
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-3">

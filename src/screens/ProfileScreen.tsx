@@ -5,11 +5,8 @@ import {
   Edit3,
   Globe,
   RotateCcw,
-  UserCheck,
-  UserPlus,
   X,
 } from 'lucide-react';
-import { BRANCH_OPTIONS } from '../data/demoData';
 import {
   formatDate,
   formatMonthYear,
@@ -46,7 +43,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [editName, setEditName] = useState(member.fullName);
   const [editEmail, setEditEmail] = useState(member.email);
   const [editBirth, setEditBirth] = useState(member.birthDate);
-  const [editBranch, setEditBranch] = useState(member.favoriteBranch);
   const [editError, setEditError] = useState('');
   const [saving, setSaving] = useState(false);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
@@ -62,14 +58,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setEditName(member.fullName);
     setEditEmail(member.email);
     setEditBirth(member.birthDate);
-    setEditBranch(member.favoriteBranch);
     setEditError('');
     setEditModalOpen(true);
   };
 
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Nome e nascimento ficam no banco do clube (só a equipe altera); aqui só e-mail e unidade.
+    // Nome e nascimento ficam no banco do clube (só a equipe altera); aqui só o e-mail.
     if (editEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail.trim())) {
       setEditError(t.profile.validationError);
       return;
@@ -79,7 +74,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setSaving(true);
     onUpdateMember({
       email: editEmail.trim(),
-      favoriteBranch: editBranch,
     });
     setSaving(false);
     setEditModalOpen(false);
@@ -163,7 +157,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </div>
         </div>
 
-        <dl className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <dl className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <dt className="text-xs font-medium text-[#5A6353]">
               {t.profile.emailLabel}
@@ -178,14 +172,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </dt>
             <dd className="mt-1 text-sm font-semibold text-[#293622] tabular-nums">
               {formatDate(member.birthDate, language)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium text-[#5A6353]">
-              {t.profile.favoriteBranchLabel}
-            </dt>
-            <dd className="mt-1 text-sm font-semibold text-[#293622]">
-              {member.favoriteBranch}
             </dd>
           </div>
         </dl>
@@ -234,27 +220,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
           </div>
 
-          {/* Preferred branch */}
-          <div className="pt-6 border-t border-[#F0E9D8]">
-            <label
-              htmlFor="pref-branch"
-              className="block text-xs font-semibold text-[#5A6353] mb-1.5"
-            >
-              {t.profile.favoriteBranchLabel}
-            </label>
-            <select
-              id="pref-branch"
-              value={member.favoriteBranch}
-              onChange={(e) => onUpdateMember({ favoriteBranch: e.target.value })}
-              className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#FAF7F0] border border-[#D8CEB8] text-sm text-[#1F281B] focus:outline-none focus:border-[#4A5D3F]"
-            >
-              {BRANCH_OPTIONS.map((branch) => (
-                <option key={branch} value={branch}>
-                  {branch}
-                </option>
-              ))}
-            </select>
-          </div>
         </section>
 
         {/* Account & App Settings */}
@@ -291,26 +256,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 </div>
               </button>
 
-              {/* Try Customer Registration Flow */}
-              <button
-                type="button"
-                onClick={onOpenRegister}
-                className="w-full py-4 flex items-center justify-between gap-4 text-left hover:opacity-85 transition-opacity"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#FAF7F0] border border-[#E7DFCC] text-[#4A5D3F] flex items-center justify-center shrink-0">
-                    <UserPlus className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#293622]">
-                      {t.profile.registerNewAccount}
-                    </p>
-                    <p className="text-xs text-[#5A6353] mt-0.5">
-                      {t.profile.registerNewAccountDesc}
-                    </p>
-                  </div>
-                </div>
-              </button>
+              {/* Só para quem ainda não tem conta */}
+              {member.isGuest && (
+                <button
+                  type="button"
+                  onClick={onOpenRegister}
+                  className="w-full py-4 flex items-center justify-between gap-4 text-left hover:opacity-85 transition-opacity"
+                >
+                  <p className="text-sm font-semibold text-[#4A5D3F] underline">
+                    {t.home.guestCta}
+                  </p>
+                </button>
+              )}
 
               {/* Sair da conta neste aparelho (os dados continuam no banco do clube) */}
               {!member.isGuest && (
@@ -337,9 +294,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
           </div>
 
-          <p className="mt-6 pt-4 border-t border-[#F0E9D8] text-xs text-[#6B7365]">
-            {t.common.demoNote}
-          </p>
         </section>
       </div>
 
@@ -423,27 +377,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   disabled
                   className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-[#F3EDE0] border border-[#D8CEB8] text-sm text-[#5A6353] cursor-not-allowed"
                 />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="edit-branch"
-                  className="block text-xs font-semibold text-[#293622] mb-1.5"
-                >
-                  {t.profile.favoriteBranchLabel}
-                </label>
-                <select
-                  id="edit-branch"
-                  value={editBranch}
-                  onChange={(e) => setEditBranch(e.target.value)}
-                  className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-white border border-[#D8CEB8] text-sm text-[#1F281B] focus:outline-none focus:border-[#4A5D3F]"
-                >
-                  {BRANCH_OPTIONS.map((branch) => (
-                    <option key={branch} value={branch}>
-                      {branch}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               {editError && (
