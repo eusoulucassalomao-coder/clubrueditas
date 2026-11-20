@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#4A5D3F">
 <title>Club La Ruedita</title>
 <link rel="icon" href="assets/logo.webp">
+<link rel="stylesheet" href="js/vendor/itl/css/intlTelInput.css?v=20261120f">
 <style>
   :root{--green:#4A5D3F;--green-d:#38492F;--ink:#1F281B;--cream:#FAF7F0;--line:#E7DFCC;--muted:#5A6353;--sage:#EAEFE5;--bad:#9E3B2B;--ok:#2E6B3F;--gold:#C9A227}
   *{box-sizing:border-box}
@@ -65,7 +66,9 @@
   .appbar b{display:block}
   .appbar a{color:var(--green);font-weight:700}
   select{font:inherit;font-size:18px;padding:14px 10px;border:1px solid #D8CEB8;border-radius:14px;background:#fff;color:var(--ink)}
-  .phone{display:flex;gap:8px}.phone select{flex:none}
+  .iti{width:100%;display:block}
+  .iti input{font-size:18px;min-height:52px}
+  .iti--container{z-index:100000!important}
   .check{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:14px;margin-top:16px}
   .check input{width:22px;height:22px;margin:2px 0 0;flex:none}
   .tiny{font-size:13px;color:var(--muted);text-align:center;margin-top:18px}
@@ -107,10 +110,7 @@
       <label for="rName" data-i="rName">Nombre y apellido</label>
       <input id="rName" autocomplete="name" data-ip="rNamePh" placeholder="Ej.: Ana Pérez">
       <label for="rPhone" data-i="rPhone">Tu WhatsApp</label>
-      <div class="phone">
-        <select id="rCountry" aria-label="País / País"><option value="549">AR +54</option><option value="55">BR +55</option><option value="595">PY +595</option><option value="598">UY +598</option></select>
-        <input id="rPhone" type="tel" inputmode="tel" autocomplete="tel-national" data-ip="rPhonePh" placeholder="Ej.: 376 4123456">
-      </div>
+      <input id="rPhone" type="tel" inputmode="tel" autocomplete="tel-national" data-ip="rPhonePh" placeholder="Ej.: 376 4123456">
       <label for="rBirth" data-i="rBirth">Fecha de nacimiento</label>
       <input id="rBirth" type="date" autocomplete="bday">
       <label class="check"><input id="rConsent" type="checkbox"><span data-i="rConsent">Acepto que Club La Ruedita use mis datos para administrar mi cuenta y me envíe mensajes por WhatsApp.</span></label>
@@ -201,11 +201,12 @@
   </section>
 
 </main>
-<script src="js/config.js?v=20261120e"></script>
-<script src="js/api.js?v=20261120e"></script>
-<script src="js/vendor/qrcode.js?v=20261120e"></script>
-<script src="js/vendor/jsQR.js?v=20261120e"></script>
-<script src="js/k-i18n.js?v=20261120e"></script>
-<script src="js/kiosk.js?v=20261120e"></script>
+<script src="js/config.js?v=20261120f"></script>
+<script src="js/api.js?v=20261120f"></script>
+<script src="js/vendor/qrcode.js?v=20261120f"></script>
+<script src="js/vendor/jsQR.js?v=20261120f"></script>
+<script src="js/vendor/itl/js/intlTelInput.min.js?v=20261120f"></script>
+<script src="js/k-i18n.js?v=20261120f"></script>
+<script src="js/kiosk.js?v=20261120f"></script>
 </body>
 </html>

@@ -65,3 +65,21 @@
     animation: none;
   }
 }
+
+/* Campo de telefone com seletor de país (bandeiras) */
+.iti { width: 100%; display: block; }
+.phone-field-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #d8cdb8;
+  font-size: 14px;
+  color: #1f281b;
+}
+.phone-field-input:focus { outline: none; border-color: #4a5d3f; }
+.phone-field-input:disabled { opacity: 0.6; }
+.phone-field-input[aria-invalid='true'] { border-color: #9e3b2b; }
+.iti__selected-country { border-radius: 12px 0 0 12px; }
+.iti--container { z-index: 100000 !important; }

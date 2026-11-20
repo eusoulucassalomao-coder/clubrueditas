@@ -97,7 +97,9 @@ async function uniqueCode(r, name) {
 }
 async function registerCustomer(r, input) {
   const name = String(input.name || "").trim();
-  const phone = digits(input.phone);
+  let phone = digits(input.phone);
+  // Celulares da Argentina: o WhatsApp usa 549 + DDD + número (rede de segurança se vier só 54).
+  if (/^54\d{10}$/.test(phone) && !phone.startsWith("549")) phone = "549" + phone.slice(2);
   if (name.length < 2 || name.length > 80) throw Object.assign(new Error("Escribí tu nombre"), { code: "name" });
   if (phone.length < 8 || phone.length > 15) throw Object.assign(new Error("Revisá tu número de celular con código de área"), { code: "phone" });
   const birthday = String(input.birthday || "").trim();

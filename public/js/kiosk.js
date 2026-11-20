@@ -18,6 +18,33 @@
   const busy = (btn, on, key) => { btn.disabled = on; btn.textContent = on ? kt("busy") : kt(key); };
   const cleanCode = v => String(v || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
   const receiptFrom = raw => cleanCode(raw);
+  // Celulares da Argentina precisam do 9 depois do 54 para o WhatsApp (549...).
+  const normalizeWa = e164 => { const d = String(e164 || "").replace(/\D/g, ""); return (/^54\d{10}$/.test(d) && !d.startsWith("549")) ? "549" + d.slice(2) : d; };
+
+  // Seletor de país com bandeiras e todos os países (arquivos locais; nomes no idioma escolhido)
+  let iti = null, itiLang = "", itiBusy = false;
+  async function initPhone(){
+    const lang = window.kLang();
+    if(itiBusy || (iti && itiLang === lang)) return;
+    itiBusy = true;
+    try{
+      const keep = iti ? iti.getNumber() : "";
+      if(iti){ iti.destroy(); iti = null; }
+      const m = await import("/js/vendor/itl/js/i18n/" + lang + "/index.js");
+      iti = window.intlTelInput($("rPhone"), {
+        initialCountry: "ar",
+        countryOrder: ["ar", "br", "py", "uy", "cl", "us", "es"],
+        separateDialCode: true,
+        nationalMode: true,
+        dropdownContainer: document.body,
+        i18n: Object.assign({}, m.countryTranslations, m.interfaceTranslations),
+        loadUtils: () => import("/js/vendor/itl/js/utils.js")
+      });
+      itiLang = lang;
+      if(keep) iti.setNumber(keep);
+    }catch(e){ /* sem o seletor, o campo segue aceitando o número completo com + */ }
+    itiBusy = false;
+  }
 
   // kc (prova de identidade) dura 10 min: guardo a hora para não usar um vencido
   const kcGet = () => { const raw = store.get(KC); if(!raw) return ""; const [t, exp] = raw.split("|"); return Number(exp) > Date.now() ? t : ""; };
@@ -61,19 +88,24 @@
   $("needBack").onclick = () => show("menu");
 
   // ---- crear cuenta ----
-  $("goRegister").onclick = () => { $("rgMsg").textContent = ""; show("register"); $("rName").focus(); };
+  $("goRegister").onclick = () => { $("rgMsg").textContent = ""; show("register"); initPhone(); $("rName").focus(); };
   $("rgBack").onclick = () => show("menu");
   $("regForm").addEventListener("submit", async e => {
     e.preventDefault();
     const m = $("rgMsg"); m.textContent = "";
-    const name = $("rName").value.trim(), national = $("rPhone").value.replace(/\D/g, "").replace(/^0+/, ""), birth = $("rBirth").value;
+    const name = $("rName").value.trim(), birth = $("rBirth").value;
+    let phone = "";
+    try{
+      if(iti){ if(iti.promise) await iti.promise; if(iti.isValidNumber()) phone = normalizeWa(iti.getNumber()); }
+      else { const d = $("rPhone").value.replace(/\D/g, ""); phone = d.length >= 10 ? d : ""; }
+    }catch(x){ phone = ""; }
     if(name.length < 2){ m.textContent = kt("errName"); return; }
-    if(national.length < 8 || national.length > 11){ m.textContent = kt("errPhone"); return; }
+    if(!phone){ m.textContent = kt("errPhone"); return; }
     if(!birth){ m.textContent = kt("errBirth"); return; }
     if(!$("rConsent").checked){ m.textContent = kt("errConsent"); return; }
     busy($("rgBtn"), true, "rBtn");
     try{
-      const j = await F.register({ name, phone: $("rCountry").value + national, birthday: birth, consent: true, waConsent: true });
+      const j = await F.register({ name, phone, birthday: birth, consent: true, waConsent: true });
       try{ localStorage.setItem(TOKEN_KEY, j.token); }catch(x){}      // o app reconhece a conta sem pedir nada
       first = name.split(/\s+/)[0]; regName = first; regCode = j.customer.code;
       renderRegOk(); show("register-ok");
@@ -253,7 +285,7 @@
   // ---- idioma ES | PT ----
   document.querySelectorAll(".langbtn").forEach(b => b.addEventListener("click", () => window.kSetLang(b.dataset.lang)));
   window.__kOnLang = () => {
-    renderAppBar(); renderRegOk(); renderVisitTitle(); renderVisitOk(); renderRedeem(); renderCouponTexts();
+    renderAppBar(); renderRegOk(); renderVisitTitle(); renderVisitOk(); renderRedeem(); renderCouponTexts(); initPhone();
   };
 
   boot();

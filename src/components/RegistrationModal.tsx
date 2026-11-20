@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { CheckCircle2, X } from 'lucide-react';
 import { TranslationDictionary } from '../i18n/translations';
-import { MemberProfile } from '../types';
+import { Language, MemberProfile } from '../types';
+import { PhoneField, PhoneFieldHandle } from './PhoneField';
 import { BrandLogo } from './BrandLogo';
 
 interface RegistrationModalProps {
@@ -21,25 +22,7 @@ interface RegistrationModalProps {
 
 type LegalDocKey = 'terms' | 'privacy' | 'cookies';
 
-// Prefixo que o WhatsApp exige. Argentina usa 54 + 9 (celular) + DDD + número.
-const PHONE_COUNTRIES = [
-  { id: 'AR', label: 'AR +54', prefix: '549' },
-  { id: 'BR', label: 'BR +55', prefix: '55' },
-  { id: 'PY', label: 'PY +595', prefix: '595' },
-  { id: 'UY', label: 'UY +598', prefix: '598' },
-] as const;
-
-/** Número só com dígitos, já com o código do país (sem zeros à esquerda). */
-function toInternational(countryId: string, raw: string): string {
-  const prefix = PHONE_COUNTRIES.find((c) => c.id === countryId)?.prefix ?? '549';
-  const digits = raw.replace(/\D/g, '').replace(/^0+/, '');
-  return prefix + digits;
-}
-
-const phoneLooksValid = (raw: string) => {
-  const n = raw.replace(/\D/g, '').replace(/^0+/, '').length;
-  return n >= 8 && n <= 11;
-};
+// O número é digitado com o seletor de país (bandeiras); o app guarda só dígitos com o código do país.
 
 export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   isOpen,
@@ -49,14 +32,15 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   onRequestCode,
   onVerifyCode,
 }) => {
-  const [country, setCountry] = useState<string>('AR');
+  const phoneRef = useRef<PhoneFieldHandle | null>(null);
   const [mode, setMode] = useState<'register' | 'recover'>('register');
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState('');
   const [recoverError, setRecoverError] = useState('');
   const [recoverBusy, setRecoverBusy] = useState(false);
   const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('');   // último número digitado (formato internacional)
+  const language = (t.locale.slice(0, 2) as Language) || 'es';
   const [birthDate, setBirthDate] = useState('');
   const [consent, setConsent] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -87,14 +71,15 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   };
 
   const handleSendCode = async () => {
-    if (!phoneLooksValid(phone)) {
+    const phoneDigits = await phoneRef.current?.getDigits();
+    if (!phoneDigits) {
       setRecoverError(t.registration.errorPhoneInvalid);
       return;
     }
     setRecoverError('');
     setRecoverBusy(true);
     try {
-      await onRequestCode(toInternational(country, phone));
+      await onRequestCode(phoneDigits);
       setCodeSent(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
@@ -110,10 +95,15 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
+    const phoneDigits = await phoneRef.current?.getDigits();
+    if (!phoneDigits) {
+      setRecoverError(t.registration.errorPhoneInvalid);
+      return;
+    }
     setRecoverError('');
     setRecoverBusy(true);
     try {
-      await onVerifyCode(toInternational(country, phone), code.replace(/\D/g, ''));
+      await onVerifyCode(phoneDigits, code.replace(/\D/g, ''));
       resetAndClose();
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
@@ -133,8 +123,8 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
     if (fullName.trim().length < 2) {
       nextErrors.fullName = t.registration.errorNameRequired;
     }
-    const phoneDigits = toInternational(country, phone);
-    if (!phoneLooksValid(phone)) {
+    const phoneDigits = await phoneRef.current?.getDigits();
+    if (!phoneDigits) {
       nextErrors.phone = t.registration.errorPhoneInvalid;
     }
     if (!birthDate) {
@@ -148,6 +138,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
       setErrors(nextErrors);
       return;
     }
+    if (!phoneDigits) return;
 
     setErrors({});
     setSubmitError('');
@@ -273,16 +264,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 <label htmlFor="rec-phone" className="block text-xs font-semibold text-[#293622] mb-1.5">
                   {t.registration.phoneLabel}
                 </label>
-                <div className="flex gap-2">
-                  <select aria-label="País" value={country} onChange={(e) => setCountry(e.target.value)} disabled={codeSent}
-                    className="min-h-[46px] px-2 rounded-xl bg-white border border-[#D8CEB8] text-sm text-[#1F281B] focus:outline-none focus:border-[#4A5D3F] disabled:opacity-60">
-                    {PHONE_COUNTRIES.map((c) => (<option key={c.id} value={c.id}>{c.label}</option>))}
-                  </select>
-                  <input id="rec-phone" type="tel" inputMode="tel" autoComplete="tel-national" value={phone}
-                    onChange={(e) => setPhone(e.target.value)} placeholder={t.registration.phonePlaceholder}
-                    disabled={codeSent}
-                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-white border border-[#D8CEB8] text-sm text-[#1F281B] placeholder:text-[#8A9184] focus:outline-none focus:border-[#4A5D3F] disabled:opacity-60" />
-                </div>
+                <PhoneField id="rec-phone" ref={phoneRef} language={language} placeholder={t.registration.phonePlaceholder} disabled={codeSent} initialNumber={phone} onNumberChange={setPhone} />
               </div>
 
               {!codeSent ? (
@@ -378,15 +360,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
                 <label htmlFor="reg-phone" className="block text-xs font-semibold text-[#293622] mb-1.5">
                   {t.registration.phoneLabel}
                 </label>
-                <div className="flex gap-2">
-                  <select aria-label="País" value={country} onChange={(e) => setCountry(e.target.value)}
-                    className="min-h-[46px] px-2 rounded-xl bg-white border border-[#D8CEB8] text-sm text-[#1F281B] focus:outline-none focus:border-[#4A5D3F]">
-                    {PHONE_COUNTRIES.map((c) => (<option key={c.id} value={c.id}>{c.label}</option>))}
-                  </select>
-                  <input id="reg-phone" type="tel" inputMode="tel" autoComplete="tel-national" value={phone}
-                    onChange={(e) => setPhone(e.target.value)} placeholder={t.registration.phonePlaceholder}
-                    className="w-full min-h-[46px] px-3.5 py-2.5 rounded-xl bg-white border border-[#D8CEB8] text-sm text-[#1F281B] placeholder:text-[#8A9184] focus:outline-none focus:border-[#4A5D3F]" />
-                </div>
+                <PhoneField id="reg-phone" ref={phoneRef} language={language} placeholder={t.registration.phonePlaceholder} initialNumber={phone} onNumberChange={setPhone} invalid={!!errors.phone} />
                 {errors.phone && <p className="mt-1 text-xs text-[#9E3B2B] font-medium">{errors.phone}</p>}
               </div>
 
