@@ -108,6 +108,5 @@ export const fidApi = {
   lookupCode: (code: string) =>
     call<{
       customer: { name: string; code: string; points: number };
-      redemptions: ApiRedemption[];
     }>({ action: 'lookup_code', code }),
 };

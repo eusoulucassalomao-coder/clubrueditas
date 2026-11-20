@@ -13,6 +13,21 @@ const isoNow = () => new Date().toISOString();
 // "baja el volumen" ou "me dieron de baja del gym" NÃO contam.
 const normCmd = value => String(value || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
   .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+// Freio por endereço de rede (memória da instância): protege cadastro, consulta de código e login da equipe.
+const hitLog = new Map();
+const clientIp = req => {
+  const h = req.headers || {};
+  return String(h["x-nf-client-connection-ip"] || String(h["x-forwarded-for"] || "").split(",")[0] || h["x-real-ip"] || "?").trim() || "?";
+};
+function tooMany(req, bucket, max, windowMs = 60000) {
+  const key = bucket + "|" + clientIp(req), now = Date.now();
+  const rec = (hitLog.get(key) || []).filter(t => now - t < windowMs);
+  rec.push(now);
+  hitLog.set(key, rec);
+  if (hitLog.size > 5000) for (const [k, v] of hitLog) if (!v.length || now - v[v.length - 1] > windowMs) hitLog.delete(k);
+  return rec.length > max;
+}
+const slowDown = res => res.status(429).json({ error: "slow-down", message: "Demasiados intentos. Probá de nuevo en un minuto." });
 const sameSecret = (a, b) => {
   const ha = crypto.createHash("sha256").update(String(a)).digest();
   const hb = crypto.createHash("sha256").update(String(b)).digest();
@@ -391,7 +406,12 @@ module.exports = async function handler(req,res) {
   try {
     const r=await restaurantBySlug(slug),action=String(body.action||"");
     if(action==="config") return res.status(200).json({name:r.name,config:r.config});
+    if(action==="claim_by_code"){
+      // Fechado: resgatar prêmio só com o código de sócio permitia gastar os pontos de outra pessoa. Agora só com a sessão (token) do cliente.
+      return res.status(401).json({error:"unauthorized",message:"Iniciá sesión en tu cuenta para canjear premios."});
+    }
     if(action==="register"||action==="new_customer"){
+      if(action==="register"&&tooMany(req,"register",12)) return slowDown(res);
       const c=await registerCustomer(r,body);
       if(action==="new_customer") return res.status(200).json({customer:{id:c.id,name:c.name,code:c.code}});
       return res.status(200).json({customer:publicCustomer(c),token:c.access_token});
@@ -405,15 +425,16 @@ module.exports = async function handler(req,res) {
       return res.status(200).json({customer:{...publicCustomer(c),confirmed:!!c.wa_confirmed_at},history:history.map(x=>({points:x.points,type:x.type,note:x.note,created_at:x.created_at})),redemptions:redemptions.map(x=>({name:x.name,points:x.points,code:x.code,status:x.status,created_at:x.created_at}))});
     }
     if(action==="lookup_code"){
+      // Consulta pública por código de sócio: limite de tentativas e dados mínimos (só primeiro nome e pontos; nunca códigos de resgate).
+      if(tooMany(req,"lookup",15)) return slowDown(res);
       const c=await customerByCode(r,body.code);
-      const redemptions=await many("redemptions",[queryEqual("customer_id",c.id),queryOrderDesc("created_at")],10);
       return res.status(200).json({
-        customer:{name:c.name,code:c.code,points:c.points},
-        redemptions:redemptions.map(x=>({name:x.name,points:x.points,code:x.code,status:x.status,created_at:x.created_at}))
+        customer:{name:String(c.name||"").trim().split(/\s+/)[0]||"",code:c.code,points:c.points}
       });
     }
     if(action==="login") return res.status(200).json({ok:true,channel:false});
     if(action==="auth"){
+      if(tooMany(req,"auth",10)) return slowDown(res);
       const role = body.role === "panel" ? "panel" : body.role === "caja" ? "caja" : "";
       const email = String(body.email || "").trim().toLowerCase();
       const password = String(body.password || "");

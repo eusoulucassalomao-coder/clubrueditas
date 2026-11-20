@@ -71,6 +71,8 @@ export interface TranslationDictionary {
     actionPoints: string;
     actionRewards: string;
     actionRegister: string;
+    actionMenu: string;
+    actionOrder: string;
     featuredRewardsTitle: string;
     featuredRewardsSub: string;
     recentActivityTitle: string;
@@ -373,6 +375,8 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       actionPoints: 'Mis puntos',
       actionRewards: 'Beneficios',
       actionRegister: 'Crear cuenta',
+      actionMenu: 'Ver la carta',
+      actionOrder: 'Pedir delivery',
       featuredRewardsTitle: 'Beneficios destacados',
       featuredRewardsSub: 'Canjea tus puntos por experiencias artesanales en tienda.',
       recentActivityTitle: 'Actividad reciente',
@@ -746,6 +750,8 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       actionPoints: 'My points',
       actionRewards: 'Rewards',
       actionRegister: 'Sign up',
+      actionMenu: 'View the menu',
+      actionOrder: 'Order delivery',
       featuredRewardsTitle: 'Featured benefits',
       featuredRewardsSub: 'Redeem your points for handcrafted café & bakery treats.',
       recentActivityTitle: 'Recent activity',
@@ -1119,6 +1125,8 @@ export const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       actionPoints: 'Meus pontos',
       actionRewards: 'Benefícios',
       actionRegister: 'Criar conta',
+      actionMenu: 'Ver o cardápio',
+      actionOrder: 'Pedir delivery',
       featuredRewardsTitle: 'Benefícios em destaque',
       featuredRewardsSub: 'Troque seus pontos por experiências artesanais na loja.',
       recentActivityTitle: 'Últimas atividades',

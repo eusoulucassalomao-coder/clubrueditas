@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import {
   ArrowRight,
   Award,
+  Bike,
   CreditCard,
   Download,
   Gift,
   UserPlus,
+  UtensilsCrossed,
   X,
 } from 'lucide-react';
+import { CARTA_URL, DELIVERY_URL, openExternal } from '../config/links';
 import { getRewardCopy } from '../utils/rewardCopy';
 import {
   formatDate,
@@ -182,6 +185,28 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => openExternal(CARTA_URL)}
+                className="min-h-[76px] p-4 rounded-2xl bg-[#4A5D3F] hover:bg-[#38492F] text-left transition-colors flex flex-col justify-between gap-2"
+              >
+                <UtensilsCrossed className="w-5 h-5 text-[#FAF7F0]" strokeWidth={1.9} />
+                <span className="text-sm font-semibold text-[#FAF7F0]">
+                  {t.home.actionMenu}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openExternal(DELIVERY_URL)}
+                className="min-h-[76px] p-4 rounded-2xl bg-[#4A5D3F] hover:bg-[#38492F] text-left transition-colors flex flex-col justify-between gap-2"
+              >
+                <Bike className="w-5 h-5 text-[#FAF7F0]" strokeWidth={1.9} />
+                <span className="text-sm font-semibold text-[#FAF7F0]">
+                  {t.home.actionOrder}
+                </span>
+              </button>
+
               <button
                 type="button"
                 onClick={onOpenMemberCard}
