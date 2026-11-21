@@ -11,7 +11,7 @@
 <body>
 <div class="gate" id="gate">
   <form class="card" id="passForm">
-    <h2>Panel del dueño</h2><p class="sub">Ingresá con tu cuenta de Supabase</p>
+    <h2>Panel del dueño</h2><p class="sub">Ingresá con tu correo y contraseña</p>
     <label for="loginEmail">Correo electrónico</label>
     <input id="loginEmail" type="email" autocomplete="username" placeholder="tu@email.com" aria-label="Correo electrónico" required>
     <label for="pass">Contraseña</label>
@@ -24,7 +24,7 @@
 <div id="app" hidden>
   <header class="top">
     <div class="top-in"><img id="logo" alt=""><h1>Panel<small id="club"></small></h1><a href="caja.html">Ir a caja</a><button id="out" type="button">Salir</button></div>
-    <nav class="nav2"><a href="#resumen">Resumen</a><a href="#recuperar">Recuperar</a><a href="#clientes">Clientes</a><a href="#premios">Premios</a><a href="#encuestas">Encuestas</a><a href="#whatsapp">WhatsApp</a><a href="#reglas">Reglas</a></nav>
+    <nav class="nav2"><a href="#resumen">Resumen</a><a href="#recuperar">Recuperar</a><a href="#clientes">Clientes</a><a href="#premios">Premios</a><a href="#encuestas">Encuestas</a><a href="#whatsapp">WhatsApp</a><a href="#reglas">Reglas</a><a href="#seguridad">Seguridad</a></nav>
   </header>
   <main class="wrap">
     <section id="resumen">
@@ -99,6 +99,44 @@
       </details>
     </section>
 
+    <section id="seguridad" class="card">
+      <h2>Seguridad y registro de actividad</h2>
+      <p class="sub">Quién entró, qué hizo la caja y cualquier intento sospechoso. Se guarda durante 13 meses.</p>
+      <div class="kpis" id="secKpis"></div>
+      <div class="row2" style="grid-template-columns:auto auto 1fr auto;align-items:center;margin-top:12px">
+        <select id="secFilter" aria-label="Filtrar actividad" style="margin:0">
+          <option value="">Toda la actividad</option>
+          <option value="login">Ingresos</option>
+          <option value="visit">Visitas</option>
+          <option value="deliver">Premios entregados</option>
+          <option value="export_customers">Descargas de clientes</option>
+          <option value="password_change">Cambios de contraseña</option>
+          <option value="rate_limited">Bloqueos</option>
+        </select>
+        <label style="display:flex;gap:6px;align-items:center;margin:0;font-weight:500"><input type="checkbox" id="secBad" style="width:auto;margin:0"> Solo alertas</label>
+        <span></span>
+        <button class="btn sm ghost" id="secRefresh" type="button">Actualizar</button>
+      </div>
+      <div class="tbl-wrap" style="margin-top:12px"><table class="tbl"><thead><tr><th>Fecha</th><th>Quién</th><th>Acción</th><th>Detalle</th><th>IP</th></tr></thead><tbody id="secRows"></tbody></table></div>
+    </section>
+
+    <section id="cuentas" class="card">
+      <h2>Contraseñas y accesos</h2>
+      <p class="sub">Cambiá la contraseña (y el correo, si querés) de la caja o del panel. Usá una contraseña larga y única: 16 o más caracteres, o una frase de 20 o más. No uses el nombre del local ni años.</p>
+      <form id="pwForm" autocomplete="off" novalidate>
+        <label>Cuenta<select name="who"><option value="caja">Caja</option><option value="panel">Panel del dueño</option></select></label>
+        <label>Correo nuevo (opcional)<input name="newEmail" type="email" autocomplete="off" placeholder="Dejalo vacío para no cambiarlo"></label>
+        <label>Contraseña nueva<input name="newPassword" type="password" autocomplete="new-password" placeholder="Mínimo 12 caracteres"></label>
+        <label>Repetí la contraseña nueva<input name="newPassword2" type="password" autocomplete="new-password"></label>
+        <label>Tu contraseña actual del panel<input name="currentPassword" type="password" autocomplete="current-password"></label>
+        <p class="msg" id="pwMsg" role="status"></p>
+        <button class="btn" type="submit">Guardar cambios</button>
+      </form>
+      <h2 style="margin-top:26px;font-size:17px">Cerrar todas las sesiones</h2>
+      <p class="sub">Si se perdió un tablet o se fue un empleado: cierra la caja, el panel y los tablets al instante. Todos tendrán que volver a entrar con su contraseña.</p>
+      <p class="msg" id="revMsg" role="status"></p>
+      <button class="btn ghost" id="revBtn" type="button">Cerrar todas las sesiones</button>
+    </section>
     <section id="reglas" class="card">
       <h2>Reglas del programa</h2><p class="sub">Cambiá cuánto se gana y qué se regala. Se aplica al instante.</p>
       <form id="cfgForm">
@@ -122,8 +160,8 @@
     </section>
   </main>
 </div>
-<script src="js/config.js?v=20261120e"></script>
-<script src="js/api.js?v=20261120e"></script>
-<script src="js/panel.js?v=20261120e"></script>
+<script src="js/config.js?v=20261121a"></script>
+<script src="js/api.js?v=20261121a"></script>
+<script src="js/panel.js?v=20261121a"></script>
 </body>
 </html>

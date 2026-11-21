@@ -63,7 +63,7 @@
       return `<tr><td>${esc(c.name)}</td><td>${dshort(c.last_visit)} <small style="color:var(--muted)">(${daysAgo(c.last_visit)} d)</small></td><td>${fmt(c.points)}</td><td><a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/${F.digits(c.phone)}?text=${encodeURIComponent(msg)}">Escribir</a></td></tr>`;
     }).join("") || `<tr><td colspan="4"><small>Nada por recuperar.</small></td></tr>`;
 
-    drawClients(); drawReds(); drawSurveys(); drawCfg(); waCheck();
+    drawClients(); drawReds(); drawSurveys(); drawCfg(); waCheck(); drawSecurity();
   }
 
   // ---- encuestas de satisfacción ----
@@ -203,5 +203,64 @@
       const r = (await run(() => F.exportVisits(tok))).visits;
       csv([["Fecha", "Cliente", "Cuenta ($)", "Puntos", "Multiplicador"]].concat(r.map(v => [new Date(v.ts).toLocaleString("es-AR"), v.name, v.amount, v.pts, v.mult])), "visitas.csv");
     }catch(e){ alert(e.message); }
+  };
+
+  // ---- seguridad: registro de actividad, contraseñas y sesiones (solo el dueño) ----
+  const ACT = {
+    login: "Ingreso", visit: "Visita registrada", bonus: "Bono de puntos", deliver: "Premio entregado en caja", delivery_done: "Premio marcado como entregado",
+    receipt_create: "Comprobante creado", new_customer: "Cliente nuevo (caja)", register: "Cuenta creada por el cliente", customers_list: "Miró la lista de clientes",
+    export_customers: "Descargó los clientes", export_visits: "Descargó las visitas", surveys_view: "Miró las encuestas", save_config: "Cambió las reglas",
+    wa_status: "WhatsApp: consulta", wa_connect: "WhatsApp: conectó", wa_logout: "WhatsApp: desconectó", password_change: "Cambio de contraseña o correo",
+    revoke_sessions: "Cerró todas las sesiones", rate_limited: "Bloqueo por demasiados intentos", otp_request: "Código por WhatsApp pedido", otp_verify: "Código por WhatsApp probado",
+    kiosk_claim: "Premio canjeado en el tablet", kiosk_visit: "Visita por QR", kiosk_coupon_use: "Cupón usado en el tablet", claim: "Premio canjeado en la app",
+    wa_optout: "Baja de WhatsApp", wa_optin: "Alta de WhatsApp", error: "Error del sistema"
+  };
+  const ROLE = { caja: "Caja", panel: "Dueño", tablet: "Tablet", cliente: "Cliente", sistema: "Sistema", n8n: "Automatización" };
+  const REASON = { bad_credentials: "contraseña incorrecta", role_not_authorized: "cuenta sin permiso", locked: "cuenta bloqueada", bad_current: "contraseña actual incorrecta" };
+  const detailText = d => {
+    if(!d || typeof d !== "object") return "";
+    return Object.keys(d).map(k => {
+      const v = d[k]; if(v === null || v === undefined || v === "" || v === false) return "";
+      if(k === "reason") return REASON[v] || v;
+      if(k === "asked") return "quiso entrar a: " + v;
+      if(k === "amount") return "$" + fmt(v);
+      if(k === "pts") return fmt(v) + " pts";
+      if(typeof v === "object") return "";
+      return k === "reward" ? String(v) : (typeof v === "boolean" ? k : k + ": " + v);
+    }).filter(Boolean).join(" · ");
+  };
+  const tstamp = ts => new Date(ts).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  async function drawSecurity(){
+    try{
+      const s = await run(() => F.auditSummary(tok));
+      $("secKpis").innerHTML = [
+        ["Ingresos fallidos (24 h)", fmt(s.failed_logins_24h), s.failed_logins_24h ? "revisá si fuiste vos" : "todo tranquilo", s.failed_logins_24h > 2],
+        ["Bloqueos (24 h)", fmt(s.blocked_24h), "intentos frenados", s.blocked_24h > 0],
+        ["Descargas de datos (24 h)", fmt(s.exports_24h), "clientes y visitas", false],
+        ["Ingresos correctos (24 h)", fmt(s.logins_24h), "caja y panel", false]
+      ].map(([t, v, sub, bad]) => `<div class="kpi"><small>${esc(t)}</small><b style="${bad ? "color:#b0361f" : ""}">${esc(v)}</b><span>${esc(sub)}</span></div>`).join("");
+      const ev = (await run(() => F.auditList(tok, $("secFilter").value, $("secBad").checked, 120))).events || [];
+      $("secRows").innerHTML = ev.map(e => `<tr${e.ok ? "" : ' style="color:#b0361f"'}><td style="white-space:nowrap">${esc(tstamp(e.at))}</td><td>${esc(ROLE[e.actor_role] || e.actor_role)}${e.actor ? "<br><small>" + esc(String(e.actor).slice(0, 40)) + "</small>" : ""}</td><td>${esc((e.ok ? "" : "⚠ ") + (ACT[e.action] || e.action))}${e.target ? "<br><small>" + esc(String(e.target).slice(0, 40)) + "</small>" : ""}</td><td><small>${esc(detailText(e.detail))}</small></td><td><small>${esc(e.ip || "")}</small></td></tr>`).join("") || `<tr><td colspan="5"><small>Todavía no hay actividad.</small></td></tr>`;
+    }catch(e){ $("secRows").innerHTML = `<tr><td colspan="5"><small>${esc(e.message)}</small></td></tr>`; }
+  }
+  $("secRefresh").onclick = drawSecurity; $("secFilter").onchange = drawSecurity; $("secBad").onchange = drawSecurity;
+  $("pwForm").addEventListener("submit", async e => {
+    e.preventDefault(); const f = e.target, m = $("pwMsg"); m.className = "msg"; m.textContent = "";
+    if(f.newPassword.value !== f.newPassword2.value){ m.className = "msg err"; m.textContent = "Las contraseñas nuevas no coinciden."; return; }
+    if(!f.currentPassword.value){ m.className = "msg err"; m.textContent = "Escribí tu contraseña actual."; return; }
+    const btn = f.querySelector("button[type=submit]"); btn.disabled = true;
+    try{
+      await run(() => F.staffPassword(tok, { who: f.who.value, newEmail: f.newEmail.value, newPassword: f.newPassword.value, currentPassword: f.currentPassword.value }));
+      m.className = "msg ok"; m.textContent = "✓ Listo. Se cerraron las sesiones de esa cuenta: tendrá que entrar de nuevo con los datos nuevos." + (f.who.value === "panel" ? " Vas a tener que volver a entrar vos también." : "");
+      f.reset();
+      if(f.who.value === "panel"){ setTimeout(() => logout("Entrá de nuevo con tus datos nuevos."), 2500); }
+    }catch(err){ m.className = "msg err"; m.textContent = err.message; }
+    btn.disabled = false; f.currentPassword.value = "";
+  });
+  $("revBtn").onclick = async () => {
+    if(!confirm("¿Cerrar TODAS las sesiones? Caja, panel y tablets tendrán que volver a entrar.")) return;
+    const m = $("revMsg"); m.className = "msg";
+    try{ await run(() => F.revokeSessions(tok)); m.className = "msg ok"; m.textContent = "✓ Sesiones cerradas. Vas a tener que entrar de nuevo."; setTimeout(() => logout("Entrá de nuevo."), 2000); }
+    catch(err){ m.className = "msg err"; m.textContent = err.message; }
   };
 })();

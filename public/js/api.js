@@ -73,6 +73,11 @@
     visitRequests: t => call({ action: "visit_requests" }, t),
     pendingDeliveries: t => call({ action: "pending_deliveries" }, t),
     deliveryDone: (t, id) => call({ action: "delivery_done", id }, t),
+    // segurança (só o dono)
+    auditSummary: t => call({ action: "audit_summary" }, t),
+    auditList: (t, filter, onlyBad, limit) => call({ action: "audit_list", filter, onlyBad, limit }, t),
+    staffPassword: (t, d) => call(Object.assign({ action: "staff_password" }, d), t),
+    revokeSessions: t => call({ action: "revoke_sessions" }, t),
     visitDecide: (t, id, approve, amount) => call({ action: "visit_decide", id, approve, amount }, t),
     // painel
     stats: t => call({ action: "stats" }, t),

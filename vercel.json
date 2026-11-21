@@ -4,33 +4,89 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/caja", "destination": "/caja.html" },
-    { "source": "/panel", "destination": "/panel.html" },
-    { "source": "/tablet", "destination": "/tablet.html" },
-    { "source": "/k", "destination": "/k.html" },
-    { "source": "/pos", "destination": "/pos.html" },
-    { "source": "/survey", "destination": "/survey.html" },
-    { "source": "/surveys", "destination": "/survey.html" }
+    {
+      "source": "/caja",
+      "destination": "/caja.html"
+    },
+    {
+      "source": "/panel",
+      "destination": "/panel.html"
+    },
+    {
+      "source": "/tablet",
+      "destination": "/tablet.html"
+    },
+    {
+      "source": "/k",
+      "destination": "/k.html"
+    },
+    {
+      "source": "/pos",
+      "destination": "/pos.html"
+    },
+    {
+      "source": "/survey",
+      "destination": "/survey.html"
+    },
+    {
+      "source": "/surveys",
+      "destination": "/survey.html"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+        }
       ]
     },
     {
       "source": "/api/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     },
     {
       "source": "/(tablet|pos)(.html)?",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "Referrer-Policy", "value": "no-referrer" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), geolocation=()" },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(), geolocation=()"
+        },
         {
           "key": "Content-Security-Policy",
           "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
@@ -40,9 +96,18 @@
     {
       "source": "/k(.html)?",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "Referrer-Policy", "value": "no-referrer" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), geolocation=()" },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(), geolocation=()"
+        },
         {
           "key": "Content-Security-Policy",
           "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
@@ -52,10 +117,17 @@
     {
       "source": "/(caja|panel|survey|surveys)(.html)?",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
         {
           "key": "Content-Security-Policy",
           "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://cdn.jsdelivr.net; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(), geolocation=()"
         }
       ]
     }

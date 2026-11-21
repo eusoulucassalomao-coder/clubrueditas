@@ -28,6 +28,61 @@ function tooMany(req, bucket, max, windowMs = 60000) {
   return rec.length > max;
 }
 const slowDown = res => res.status(429).json({ error: "slow-down", message: "Demasiados intentos. Probá de nuevo en un minuto." });
+// ---- registro de atividade, limites persistentes e sessões da equipe ----
+const shortHash = v => crypto.createHash("sha256").update(String(v)).digest("hex").slice(0, 10);
+const uaOf = req => String(((req.headers || {})["user-agent"]) || "").slice(0, 200);
+// Grava no registro (quem fez o quê, quando e de onde). Nunca derruba o serviço se o banco falhar.
+async function auditWrite(req, rid, e) {
+  try {
+    await supabase.from("audit_log").insert({
+      restaurant_id: rid || null,
+      actor_role: String(e.role || "sistema").slice(0, 20),
+      actor_id: e.actor ? String(e.actor).slice(0, 80) : null,
+      action: String(e.action || "?").slice(0, 60),
+      target: e.target ? String(e.target).slice(0, 120) : null,
+      detail: e.detail && typeof e.detail === "object" ? e.detail : {},
+      ip: clientIp(req), ua: uaOf(req), ok: e.ok !== false,
+    });
+    if (Math.random() < 0.005) await supabase.rpc("fid_audit_prune");
+  } catch (err) { console.error("audit", err && err.message); }
+}
+// Limite que vale para TODAS as instâncias do servidor (guardado no banco). Se o banco falhar, deixa passar.
+async function hitLimit(A, req, bucket, key, max, windowS) {
+  try {
+    const { data, error } = await supabase.rpc("fid_rate_hit", { p_bucket: bucket, p_key: String(key), p_window_s: windowS });
+    if (error) return false;
+    if (Number(data) > max) { A.log({ role: "sistema", action: "rate_limited", target: bucket, ok: false, detail: { key: shortHash(key), count: Number(data) } }); return true; }
+  } catch (_) { /* ignore */ }
+  return false;
+}
+// Sessão da equipe: o token é de verdade E o usuário continua ativo E a sessão não foi derrubada (cache de 20 s).
+const sessCache = new Map();
+async function staffOk(slug, token, roles, r) {
+  const s = verifyToken(slug, token, roles);
+  if (!s) return null;
+  if (!s.uid) return s;   // token antigo (sem usuário): vale até vencer
+  let c = sessCache.get(s.uid);
+  if (!c || Date.now() - c.at > 20000) {
+    const { data } = await supabase.from("staff_access").select("active, tokens_valid_after").eq("user_id", s.uid).eq("restaurant_id", r.id).maybeSingle();
+    c = { at: Date.now(), active: !!(data && data.active), after: data && data.tokens_valid_after ? new Date(data.tokens_valid_after).getTime() : 0 };
+    sessCache.set(s.uid, c); if (sessCache.size > 200) sessCache.clear();
+  }
+  if (!c.active || s.iat < c.after) return null;
+  return s;
+}
+// Regras de senha forte para a equipe.
+function passwordProblem(pw) {
+  const p = String(pw || "");
+  if (p.length < 12) return "La contraseña debe tener al menos 12 caracteres (mejor 16 o más).";
+  if (p.length > 72) return "La contraseña es demasiado larga (máximo 72 caracteres).";
+  const low = p.toLowerCase();
+  const bad = ["ruedita", "caja", "panel", "club", "2027", "2026", "password", "contrase", "qwerty", "123456", "abcdef", "admin", "parrilla", "galeter"];
+  if (bad.some(w => low.includes(w))) return "No uses palabras del negocio ni secuencias fáciles (ruedita, caja, 2027, 123456, password...).";
+  if (/(.)\1{3,}/.test(p)) return "Evitá repetir el mismo carácter muchas veces seguidas.";
+  const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter(re => re.test(p)).length;
+  if (p.length < 20 && classes < 3) return "Combiná mayúsculas, minúsculas, números y símbolos (o usá una frase larga de 20 o más caracteres).";
+  return "";
+}
 const sameSecret = (a, b) => {
   const ha = crypto.createHash("sha256").update(String(a)).digest();
   const hb = crypto.createHash("sha256").update(String(b)).digest();
@@ -496,7 +551,7 @@ async function autoCandidates(r, kind) {
   return selected.slice(0,50).map(c=>({...publicCustomer(c),token:c.access_token}));
 }
 
-module.exports = async function handler(req,res) {
+async function inner(req,res,A) {
   res.setHeader("Cache-Control","no-store");
   res.setHeader("Content-Type","application/json; charset=utf-8");
   if(req.method!=="POST") return res.status(405).json({error:"method"});
@@ -504,6 +559,7 @@ module.exports = async function handler(req,res) {
   if(!/^[a-z0-9_-]{2,40}$/.test(slug)) return res.status(400).json({error:"bad-slug"});
   try {
     const r=await restaurantBySlug(slug),action=String(body.action||"");
+    A.rid=r.id;
     if(action==="config") return res.status(200).json({name:r.name,config:r.config});
     if(action==="claim_by_code"){
       // Fechado: resgatar prêmio só com o código de sócio permitia gastar os pontos de outra pessoa. Agora só com a sessão (token) do cliente.
@@ -511,7 +567,15 @@ module.exports = async function handler(req,res) {
     }
     if(action==="register"||action==="new_customer"){
       if(action==="register"&&tooMany(req,"register",12)) return slowDown(res);
+      if(action==="register"&&await hitLimit(A,req,"reg",clientIp(req),40,3600)) return slowDown(res);   // varios clientes no local compartem o mesmo IP
+      if(action==="new_customer"){
+        // O cadastro rápido é da caixa: exige sessão da equipe (antes qualquer pessoa conseguia chamar).
+        const ns=await staffOk(slug,bearer(req),["caja","panel"],r);
+        if(!ns) return res.status(401).json({error:"unauthorized",message:"La sesión venció. Entrá de nuevo."});
+        req._staff=ns;
+      }
       const c=await registerCustomer(r,body);
+      A.log(action==="new_customer"?{role:"caja",actor:req._staff&&req._staff.uid,action:"new_customer",target:c.code}:{role:"cliente",actor:c.code,action:"register",target:c.code});
       if(action==="new_customer") return res.status(200).json({customer:{id:c.id,name:c.name,code:c.code}});
       return res.status(200).json({customer:publicCustomer(c),token:c.access_token});
     }
@@ -527,6 +591,7 @@ module.exports = async function handler(req,res) {
     if(action==="lookup_code"){
       // Consulta pública por código de sócio: limite de tentativas e dados mínimos (só primeiro nome e pontos; nunca códigos de resgate).
       if(tooMany(req,"lookup",15)) return slowDown(res);
+      if(await hitLimit(A,req,"lookup",clientIp(req),40,600)) return slowDown(res);
       const c=await customerByCode(r,body.code);
       return res.status(200).json({
         customer:{name:String(c.name||"").trim().split(/\s+/)[0]||"",code:c.code,points:c.points}
@@ -535,15 +600,18 @@ module.exports = async function handler(req,res) {
     if(action==="otp_request"||action==="otp_verify"){
       // Recuperar a conta num aparelho novo: código de 6 dígitos enviado por WhatsApp ao telefone cadastrado.
       if(tooMany(req,action,6)) return slowDown(res);
+      if(await hitLimit(A,req,"otp",clientIp(req),60,600)) return slowDown(res);
       const phoneKey=digits(body.phone).slice(-8);
       if(phoneKey.length<8) return res.status(400).json({error:"phone",message:"Ingresá tu teléfono."});
       const c=await one("customers",[queryEqual("restaurant_id",r.id),queryEqual("phone_key",phoneKey)]);
       if(action==="otp_request"){
         // Resposta sempre igual, exista ou não a conta (não revela quem é cliente).
-        await issueOtp(r,c,"recovery");
+        const sentOtp=await issueOtp(r,c,"recovery");
+        A.log({role:"cliente",action:"otp_request",target:shortHash(phoneKey),detail:{purpose:"recovery",sent:!!sentOtp}});
         return res.status(200).json({ok:true,message:"Si ese teléfono tiene cuenta, te enviamos un código por WhatsApp."});
       }
-      if(!(await checkOtp(c,body.code))) return res.status(401).json({error:"invalid_code",message:"Código incorrecto o vencido."});
+      if(!(await checkOtp(c,body.code))){ A.log({role:"cliente",action:"otp_verify",target:shortHash(phoneKey),ok:false,detail:{purpose:"recovery"}}); return res.status(401).json({error:"invalid_code",message:"Código incorrecto o vencido."}); }
+      A.log({role:"cliente",actor:c.code,action:"otp_verify",target:c.code,detail:{purpose:"recovery"}});
       return res.status(200).json({customer:publicCustomer(c),token:c.access_token});
     }
 
@@ -555,13 +623,16 @@ module.exports = async function handler(req,res) {
     }
     if(action==="kiosk_otp_request"||action==="kiosk_otp_verify"){
       if(tooMany(req,action,8)) return slowDown(res);
+      if(await hitLimit(A,req,"otp",clientIp(req),60,600)) return slowDown(res);
       if(!verifyToken(slug,body.session,["kiosk"])) return res.status(401).json({error:"qr_expired",message:"La sesión venció. Volvé a escanear el QR de la caja."});
       const c=await findCustomerLoose(r,body.id);
       if(action==="kiosk_otp_request"){
-        await issueOtp(r,c,"kiosk");
+        const sentK=await issueOtp(r,c,"kiosk");
+        A.log({role:"cliente",action:"otp_request",target:shortHash(body.id||""),detail:{purpose:"kiosk",sent:!!sentK}});
         return res.status(200).json({ok:true,message:"Si la cuenta existe, te enviamos un código por WhatsApp."});
       }
-      if(!(await checkOtp(c,body.code))) return res.status(401).json({error:"invalid_code",message:"Código incorrecto o vencido."});
+      if(!(await checkOtp(c,body.code))){ A.log({role:"cliente",action:"otp_verify",target:shortHash(body.id||""),ok:false,detail:{purpose:"kiosk"}}); return res.status(401).json({error:"invalid_code",message:"Código incorrecto o vencido."}); }
+      A.log({role:"cliente",actor:c.code,action:"otp_verify",target:c.code,detail:{purpose:"kiosk"}});
       return res.status(200).json({kc:custTokenMake(slug,c.id),firstName:String(c.name||"").trim().split(/\s+/)[0]||""});
     }
     if(action==="kiosk_me"||action==="kiosk_claim"||action==="kiosk_visit"){
@@ -572,6 +643,7 @@ module.exports = async function handler(req,res) {
       const c=await customerById(r,cid);
       if(action==="kiosk_claim"){
         const coupon=await rpc("fid_kiosk_claim",{p_slug:r.slug,p_customer:c.id,p_reward:String(body.reward||"")});
+        A.log({role:"cliente",actor:c.code,action:"kiosk_claim",target:coupon.code,detail:{reward:coupon.name,pts:coupon.pts}});
         return res.status(200).json({coupon});
       }
       if(action==="kiosk_visit"){
@@ -579,6 +651,7 @@ module.exports = async function handler(req,res) {
         const taken=await rpc("fid_receipt_take",{p_slug:r.slug,p_code:String(body.ticket||""),p_customer:c.id});
         try{
           const done=await addVisit(r,c,Number(taken.amount));
+          A.log({role:"cliente",actor:c.code,action:"kiosk_visit",target:String(taken.id),detail:{amount:Number(taken.amount),pts:done.pts}});
           return res.status(200).json({ok:true,amount:Number(taken.amount),pts:done.pts,total:done.customer.points});
         }catch(err){
           // Se a visita não foi registrada, devolve o comprobante para a pessoa tentar de novo.
@@ -595,16 +668,28 @@ module.exports = async function handler(req,res) {
     if(action==="auth"){
       if(tooMany(req,"auth",10)) return slowDown(res);
       const role = body.role === "panel" ? "panel" : body.role === "caja" ? "caja" : body.role === "tablet" ? "tablet" : "";
-      const email = String(body.email || "").trim().toLowerCase();
+      const email = String(body.email || "").trim().toLowerCase().slice(0, 120);
       const password = String(body.password || "");
       if (!role || !email || !password) {
         return res.status(400).json({ error: "missing_credentials", message: "Ingresá tu correo y contraseña." });
       }
+      // Trava: 5 errores seguidos en la misma cuenta (o 25 desde el mismo IP) en 15 minutos bloquean por 15 minutos.
+      const ip = clientIp(req);
+      const countFails = async (bucket, key) => { try { const { data } = await supabase.rpc("fid_rate_count", { p_bucket: bucket, p_key: key, p_window_s: 900 }); return Number(data || 0); } catch (_) { return 0; } };
+      if ((await countFails("authfail", email)) >= 5 || (await countFails("authfail_ip", ip)) >= 25) {
+        A.log({ role: "sistema", action: "login", target: email, ok: false, detail: { reason: "locked", asked: role } });
+        return res.status(429).json({ error: "locked", message: "Demasiados intentos fallidos. Esperá 15 minutos y probá de nuevo." });
+      }
+      const failLogin = async (reason, status, message, code) => {
+        try { await supabase.rpc("fid_rate_hit", { p_bucket: "authfail", p_key: email, p_window_s: 900 }); await supabase.rpc("fid_rate_hit", { p_bucket: "authfail_ip", p_key: ip, p_window_s: 900 }); } catch (_) { /* ignore */ }
+        A.log({ role: "sistema", action: "login", target: email, ok: false, detail: { reason, asked: role } });
+        return res.status(status).json({ error: code, message });
+      };
 
       const authClient = createAuthClient();
       const { data: signedIn, error: signInError } = await authClient.auth.signInWithPassword({ email, password });
       if (signInError || !signedIn?.user) {
-        return res.status(401).json({ error: "invalid_credentials", message: "Correo o contraseña incorrectos." });
+        return failLogin("bad_credentials", 401, "Correo o contraseña incorrectos.", "invalid_credentials");
       }
 
       const { data: staff, error: staffError } = await supabase
@@ -622,12 +707,12 @@ module.exports = async function handler(req,res) {
       // O tablet entra com a conta da caixa (ou do painel); o token dele só serve para mostrar o QR.
       const allowed = role === "tablet" ? ["caja", "panel"].includes(staff?.role) : staff?.role === role;
       if (!staff || !allowed) {
-        return res.status(403).json({ error: "role_not_authorized", message: "Esta cuenta no tiene permiso para este panel." });
+        return failLogin("role_not_authorized", 403, "Esta cuenta no tiene permiso para este panel.", "role_not_authorized");
       }
 
-      return res.status(200).json({ token: mintToken(slug, role, role === "tablet" ? 7 * 24 * 60 * 60 * 1000 : undefined), role });
+      A.log({ role, actor: signedIn.user.id, action: "login", target: email, detail: {} });
+      return res.status(200).json({ token: mintToken(slug, role, role === "tablet" ? 7 * 24 * 60 * 60 * 1000 : undefined, signedIn.user.id), role });
     }
-
     if(action==="wa_optout"||action==="wa_optin"){
       // Chamado pelo n8n quando chega uma resposta de WhatsApp. Protegido pela mesma chave do webhook (cabeçalho apikey).
       const expected=process.env.N8N_VISIT_WEBHOOK_API_KEY||"",given=String(req.headers["apikey"]||"");
@@ -645,6 +730,7 @@ module.exports = async function handler(req,res) {
         await updateDocument("customers",c.id,{opted_out:off});
         await commitOperations([transactionCreate("message_log",crypto.randomUUID(),{restaurant_id:r.id,customer_id:c.id,kind:off?"optout":"optin",meta:JSON.stringify({via:"whatsapp"}),created_at:isoNow()})]);
       }
+      A.log({role:"n8n",action:action,target:c.code,detail:{changed}});
       return res.status(200).json({ok:true,matched:true,changed,firstName:String(c.name||"").trim().split(/\s+/)[0]||""});
     }
 
@@ -674,12 +760,12 @@ module.exports = async function handler(req,res) {
     const token=bearer(req);
     if(action==="kiosk_qr"){
       // Tablet: devolve o código atual do QR (a página pede de novo antes de cada troca).
-      if(!verifyToken(slug,token,["tablet"])) return res.status(401).json({error:"unauthorized",message:"La sesión venció. Entrá de nuevo."});
+      const ts=await staffOk(slug,token,["tablet"],r); if(!ts) return res.status(401).json({error:"unauthorized",message:"La sesión venció. Entrá de nuevo."});
       return res.status(200).json({c:kioskMake(slug),slotMs:KIOSK_SLOT_MS,serverNow:Date.now()});
     }
     if(action==="kiosk_coupon_check"||action==="kiosk_coupon_use"){
       // Tablet do caixa lê o QR do cupom do cliente: confere e, ao confirmar, entrega (uso único, atômico no banco).
-      if(!verifyToken(slug,token,["tablet"])) return res.status(401).json({error:"unauthorized",message:"La sesión venció. Entrá de nuevo."});
+      const ts=await staffOk(slug,token,["tablet"],r); if(!ts) return res.status(401).json({error:"unauthorized",message:"La sesión venció. Entrá de nuevo."});
       if(tooMany(req,action,40)) return slowDown(res);
       await expireCoupons(r);
       const code=String(body.code||"").trim().toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,12);
@@ -693,6 +779,7 @@ module.exports = async function handler(req,res) {
       if(state!=="valid") return res.status(200).json({status:state,name:red.name,customer:who});
       try{
         const d=await rpc("fid_deliver",{p_slug:r.slug,p_code:code});
+        A.log({role:"tablet",actor:ts.uid,action:"kiosk_coupon_use",target:code,detail:{reward:d.name}});
         return res.status(200).json({status:"done",name:d.name,customer:who});
       }catch(err){
         if(/ya fue entregado/i.test(err.message||"")) return res.status(200).json({status:"used",name:red.name,customer:who});
@@ -701,12 +788,14 @@ module.exports = async function handler(req,res) {
       }
     }
     const cashier=["search","visit","bonus","find_code","deliver","recent","visit_requests","visit_decide","receipt_create","pending_deliveries","delivery_done"].includes(action);
-    const owner=["stats","customers","export_customers","export_visits","redemptions","surveys","save_config","wa_status","wa_connect","wa_logout"].includes(action);
+    const owner=["stats","customers","export_customers","export_visits","redemptions","surveys","save_config","wa_status","wa_connect","wa_logout","audit_list","audit_summary","staff_password","revoke_sessions"].includes(action);
+    let sess=null;
     if(cashier||owner){
       const roles=owner?["panel"]:["caja","panel"];
-      if(!verifyToken(slug,token,roles)) return res.status(401).json({error:"unauthorized",message:"La sesión venció. Entrá de nuevo."});
+      sess=await staffOk(slug,token,roles,r);
+      if(!sess) return res.status(401).json({error:"unauthorized",message:"La sesión venció. Entrá de nuevo."});
     }
-
+    const who=sess?{role:sess.role,actor:sess.uid}:{};
     if(action==="search"){
       const q=String(body.q||"").trim().toLowerCase(),d=digits(q);
       const all=await many("customers",[queryEqual("restaurant_id",r.id)],5000);
@@ -716,11 +805,15 @@ module.exports = async function handler(req,res) {
     }
     if(action==="visit"){
       const c=await customerById(r,body.customer);
-      return res.status(200).json(await addVisit(r,c,body.amount));
+      const outV=await addVisit(r,c,body.amount);
+      A.log({...who,action:"visit",target:c.code,detail:{amount:Number(body.amount),pts:outV.pts}});
+      return res.status(200).json(outV);
     }
     if(action==="bonus"){
       const c=await customerById(r,body.customer);
-      return res.status(200).json(await addBonus(r,c,String(body.type||"")));
+      const outB=await addBonus(r,c,String(body.type||""));
+      A.log({...who,action:"bonus",target:c.code,detail:{type:String(body.type||""),pts:outB.pts}});
+      return res.status(200).json(outB);
     }
     if(action==="pending_deliveries"){
       // Resgates já validados (no tablet ou na caixa) que a equipe ainda precisa entregar.
@@ -728,11 +821,13 @@ module.exports = async function handler(req,res) {
     }
     if(action==="delivery_done"){
       await rpc("fid_delivery_done",{p_slug:r.slug,p_id:String(body.id||"")});
+      A.log({...who,action:"delivery_done",target:String(body.id||"")});
       return res.status(200).json({ok:true});
     }
     if(action==="receipt_create"){
       // Caixa de teste (provisório): gera um comprobante com código único e valor. Depois será o sistema do caixa do dono.
       const rec=await rpc("fid_receipt_create",{p_slug:r.slug,p_amount:Number(String(body.amount||"").replace(/\./g,"").replace(",","."))});
+      A.log({...who,action:"receipt_create",target:rec.code,detail:{amount:rec.amount}});
       return res.status(200).json({receipt:rec});
     }
     if(action==="visit_requests"){
@@ -774,6 +869,7 @@ module.exports = async function handler(req,res) {
       await expireCoupons(r);
       const result=await rpc("fid_deliver",{p_slug:r.slug,p_code:String(body.code||"").trim().toUpperCase()});
       try{ const rd=await one("redemptions",[queryEqual("restaurant_id",r.id),queryEqual("code",String(result.code||""))]); if(rd) await updateDocument("redemptions",rd.id,{delivered_at:isoNow()}); }catch(_){}
+      A.log({...who,action:"deliver",target:result.code,detail:{reward:result.name}});
       return res.status(200).json({
         code:result.code,name:result.name,pts:result.pts,status:result.status,customer:result.customer
       });
@@ -790,10 +886,50 @@ module.exports = async function handler(req,res) {
         p_customer:c.id,
         p_reward:String(body.reward||"")
       });
+      A.log({role:"cliente",actor:c.code,action:"claim",target:redemption.code,detail:{reward:redemption.name}});
       return res.status(200).json({redemption});
     }
-    if(action==="stats") return res.status(200).json(await statsFor(r));
+    if(action==="audit_summary") return res.status(200).json(await rpc("fid_audit_summary",{p_slug:r.slug}));
+    if(action==="audit_list"){
+      const events=await rpc("fid_audit_list",{p_slug:r.slug,p_limit:Number(body.limit)||100,p_action:String(body.filter||"").slice(0,60),p_only_bad:body.onlyBad===true});
+      return res.status(200).json({events});
+    }
+    if(action==="revoke_sessions"){
+      // Derruba TODAS las sesiones del equipo (caja, panel y tablet): sirve si se pierde un tablet o se va un empleado.
+      await supabase.from("staff_access").update({tokens_valid_after:isoNow()}).eq("restaurant_id",r.id);
+      sessCache.clear();
+      A.log({...who,action:"revoke_sessions"});
+      return res.status(200).json({ok:true});
+    }
+    if(action==="staff_password"){
+      // Cambia la contraseña (y, si se quiere, el correo) de la cuenta de la caja o del panel. Pide la contraseña actual del dueño.
+      if(!sess.uid) return res.status(401).json({error:"unauthorized",message:"Salí y volvé a entrar para cambiar contraseñas o correos."});
+      if(await hitLimit(A,req,"pwchg",sess.uid,6,900)) return slowDown(res);
+      const target=body.who==="panel"?"panel":"caja";
+      const cur=String(body.currentPassword||""),next=String(body.newPassword||""),newEmail=String(body.newEmail||"").trim().toLowerCase();
+      if(!next&&!newEmail) throw Object.assign(new Error("No hay nada para cambiar."),{status:400,code:"nothing"});
+      if(next){ const problem=passwordProblem(next); if(problem) throw Object.assign(new Error(problem),{status:400,code:"weak_password"}); }
+      if(newEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(newEmail)) throw Object.assign(new Error("Revisá el correo."),{status:400,code:"email"});
+      const { data: me } = await supabase.auth.admin.getUserById(sess.uid);
+      const ownerEmail=me&&me.user&&me.user.email;
+      let okCur=false;
+      if(ownerEmail&&cur){ const { data: again, error: e2 } = await createAuthClient().auth.signInWithPassword({email:ownerEmail,password:cur}); okCur=!e2&&!!(again&&again.user); }
+      if(!okCur){
+        A.log({...who,action:"password_change",target,ok:false,detail:{reason:"bad_current"}});
+        return res.status(401).json({error:"bad_current",message:"Tu contraseña actual no es correcta."});
+      }
+      const { data: st } = await supabase.from("staff_access").select("user_id").eq("restaurant_id",r.id).eq("role",target).eq("active",true).maybeSingle();
+      if(!st) throw Object.assign(new Error("No encontramos esa cuenta."),{status:404,code:"staff"});
+      const patch={}; if(next) patch.password=next; if(newEmail){ patch.email=newEmail; patch.email_confirm=true; }
+      const { error: e3 } = await supabase.auth.admin.updateUserById(st.user_id,patch);
+      if(e3){ console.error("staff_password",e3.message); throw Object.assign(new Error(/already|registered|exists/i.test(e3.message)?"Ese correo ya está en uso.":"No se pudo cambiar. Probá de nuevo."),{status:400,code:"update_failed"}); }
+      await supabase.from("staff_access").update({tokens_valid_after:isoNow()}).eq("user_id",st.user_id);
+      sessCache.delete(st.user_id);
+      A.log({...who,action:"password_change",target,detail:{password:!!next,email:!!newEmail}});
+      return res.status(200).json({ok:true});
+    }    if(action==="stats") return res.status(200).json(await statsFor(r));
     if(action==="customers"){
+      A.log({...who,action:"customers_list",detail:{search:!!body.q}});
       const q=String(body.q||"").trim().toLowerCase(),d=digits(q);
       const all=await many("customers",[queryEqual("restaurant_id",r.id)],5000);
       const rows=all.filter(c=>!q||c.name.toLowerCase().includes(q)||(d.length>=4&&c.phone.includes(d))||c.code.toLowerCase()===q)
@@ -801,10 +937,12 @@ module.exports = async function handler(req,res) {
       return res.status(200).json({customers:rows.map(c=>({name:c.name,phone:c.phone,visits:c.visits,points:c.points,code:c.code,last_visit:c.last_visit,marketingConsent:!!c.wa_confirmed_at&&!c.opted_out}))});
     }
     if(action==="export_customers"){
+      A.log({...who,action:"export_customers"});
       const rows=await many("customers",[queryEqual("restaurant_id",r.id)],5000);
       return res.status(200).json({customers:rows.map(c=>({name:c.name,phone:c.phone,birthday:c.birthday,code:c.code,visits:c.visits,points:c.points,lifetime:c.lifetime,last_visit:c.last_visit,created_at:c.created_at,consent:c.consent,opted_out:c.opted_out,wa_confirmed_at:c.wa_confirmed_at,marketingConsent:!!c.wa_confirmed_at&&!c.opted_out}))});
     }
     if(action==="export_visits"){
+      A.log({...who,action:"export_visits"});
       const rows=await many("visits",[queryEqual("restaurant_id",r.id),queryOrderDesc("created_at")],5000);
       return res.status(200).json({visits:await Promise.all(rows.map(async v=>({ts:v.created_at,name:(await getDocument("customers",v.customer_id).catch(()=>null))?.name||"",amount:v.amount,pts:v.points,mult:v.multiplier})))});
     }
@@ -813,6 +951,7 @@ module.exports = async function handler(req,res) {
       return res.status(200).json({redemptions:await Promise.all(rows.map(async x=>({name:x.name,code:x.code,status:x.status,ts:x.created_at,usedAt:x.used_at,customer:(await getDocument("customers",x.customer_id).catch(()=>null))?.name||"—"})))});
     }
     if(action==="surveys"){
+      A.log({...who,action:"surveys_view"});
       // Respostas da pesquisa de satisfação (só o dono). Notas 1-3 = "baja", 4-5 = "alta" (mesma regra do n8n).
       const { data: rows, error } = await supabase.from("surveys")
         .select("rating,response,reviewed_at,created_at,customer_id")
@@ -839,9 +978,11 @@ module.exports = async function handler(req,res) {
     if(action==="save_config"){
       const next=cleanConfig(r.config,body.config);
       await updateDocument("restaurants",r.id,{config:JSON.stringify(next)});
+      A.log({...who,action:"save_config",detail:{rewards:next.rewards.length,earn:next.earn,bonus:next.bonus}});
       return res.status(200).json({ok:true,config:next});
     }
     if(["wa_status","wa_connect","wa_logout"].includes(action)){
+      A.log({...who,action:action});
       const state=await waCall(r,action.slice(3));
       return res.status(200).json(state);
     }
@@ -861,6 +1002,14 @@ module.exports = async function handler(req,res) {
   } catch(error) {
     const status=error.status||(error.code==="APPWRITE_NOT_CONFIGURED"||error.code==="APPWRITE_DATABASE_NOT_CONFIGURED"?503:500);
     if(status>=500) console.error("fid-supabase",error);
+    if(status>=500) A.log({role:"sistema",action:"error",target:String(body.action||""),ok:false,detail:{code:String(error.code||"server")}});
     return res.status(status).json({error:error.code||"server",message:status>=500?"No se pudo completar. Probá de nuevo.":error.message});
   }
+};
+
+module.exports = async function handler(req, res) {
+  // Os eventos do registro são gravados depois de responder, mas antes de a função terminar.
+  const A = { events: [], rid: null, log(e) { this.events.push(e); } };
+  try { await inner(req, res, A); }
+  finally { for (const e of A.events) await auditWrite(req, A.rid, e); }
 };
