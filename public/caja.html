@@ -44,6 +44,19 @@
       <div class="res" id="res"></div>
       <div id="sel" hidden>
         <div class="cust" id="custBox"></div>
+        <div style="margin:14px 0 4px;padding:12px;border:1px dashed var(--line);border-radius:14px">
+          <label for="rcCode" style="margin-top:0">Comprobante de pago: escaneá el QR o escribí el código</label>
+          <button class="btn ghost sm" id="rcScan" type="button" style="margin-top:6px">📷 Escanear QR del comprobante</button>
+          <div id="rcBox" hidden style="margin-top:10px">
+            <video id="rcVideo" playsinline muted style="width:100%;border-radius:14px;background:#000"></video>
+            <canvas id="rcCanvas" hidden></canvas>
+            <button class="btn ghost sm" id="rcStop" type="button" style="margin-top:8px">Cerrar cámara</button>
+          </div>
+          <input id="rcCode" autocomplete="off" autocapitalize="characters" placeholder="Código del comprobante (ej.: BF8F-AB51)" style="margin-top:8px" aria-label="Código del comprobante">
+          <p class="msg" id="rcMsg" role="status"></p>
+          <button class="btn ghost sm" id="rcClear" type="button" hidden>Quitar comprobante</button>
+          <small class="sub" style="display:block;margin-top:6px">Si no hay comprobante, escribí el valor de la cuenta abajo.</small>
+        </div>
         <label for="amount">Valor de la cuenta ($)</label>
         <input id="amount" type="tel" inputmode="numeric" placeholder="Ej.: 28500" autocomplete="off">
         <div class="prev" id="prev" hidden></div>
@@ -89,10 +102,10 @@
     <section class="card"><h2>Últimas visitas</h2><ul class="list" id="recent"></ul></section>
   </main>
 </div>
-<script src="js/config.js?v=20261120m"></script>
-<script src="js/api.js?v=20261120m"></script>
-<script src="js/vendor/jsQR.js?v=20261120m"></script>
+<script src="js/config.js?v=20261120n"></script>
+<script src="js/api.js?v=20261120n"></script>
+<script src="js/vendor/jsQR.js?v=20261120n"></script>
 <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/intlTelInput.min.js"></script>
-<script src="js/caja.js?v=20261120m"></script>
+<script src="js/caja.js?v=20261120n"></script>
 </body>
 </html>

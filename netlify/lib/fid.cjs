@@ -700,7 +700,7 @@ module.exports = async function handler(req,res) {
         throw err;
       }
     }
-    const cashier=["search","visit","bonus","find_code","deliver","recent","visit_requests","visit_decide","receipt_create","pending_deliveries","delivery_done"].includes(action);
+    const cashier=["search","visit","bonus","find_code","deliver","recent","visit_requests","visit_decide","receipt_create","pending_deliveries","delivery_done","receipt_info","visit_by_receipt"].includes(action);
     const owner=["stats","customers","export_customers","export_visits","redemptions","surveys","save_config","wa_status","wa_connect","wa_logout"].includes(action);
     if(cashier||owner){
       const roles=owner?["panel"]:["caja","panel"];
@@ -721,6 +721,22 @@ module.exports = async function handler(req,res) {
     if(action==="bonus"){
       const c=await customerById(r,body.customer);
       return res.status(200).json(await addBonus(r,c,String(body.type||"")));
+    }
+    if(action==="receipt_info"){
+      // A caixa confere o comprovante (código ou QR) e vê o valor, sem gastá-lo.
+      const info=await rpc("fid_receipt_info",{p_slug:r.slug,p_code:String(body.code||"")});
+      return res.status(200).json(info);
+    }
+    if(action==="visit_by_receipt"){
+      // Visita registrada pelo comprovante: o valor vem do comprovante, que só pode ser usado uma vez.
+      const c=await customerById(r,body.customer);
+      const taken=await rpc("fid_receipt_take",{p_slug:r.slug,p_code:String(body.code||""),p_customer:c.id});
+      try{
+        return res.status(200).json(await addVisit(r,c,Number(taken.amount)));
+      }catch(err){
+        await updateDocument("receipts",String(taken.id),{used_at:null,customer_id:null}).catch(()=>{});
+        throw err;
+      }
     }
     if(action==="pending_deliveries"){
       // Resgates já validados (no tablet ou na caixa) que a equipe ainda precisa entregar.

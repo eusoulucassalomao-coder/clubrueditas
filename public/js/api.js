@@ -72,6 +72,8 @@
     recent: t => call({ action: "recent" }, t),
     visitRequests: t => call({ action: "visit_requests" }, t),
     pendingDeliveries: t => call({ action: "pending_deliveries" }, t),
+    receiptInfo: (t, code) => call({ action: "receipt_info", code }, t),
+    visitReceipt: (t, customer, code) => call({ action: "visit_by_receipt", customer, code }, t),
     deliveryDone: (t, id) => call({ action: "delivery_done", id }, t),
     visitDecide: (t, id, approve, amount) => call({ action: "visit_decide", id, approve, amount }, t),
     // painel

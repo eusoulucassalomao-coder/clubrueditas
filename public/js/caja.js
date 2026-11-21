@@ -38,13 +38,14 @@
   document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
     document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
     ["visita", "canje", "entregas", "nuevo"].forEach(n => $("p-" + n).hidden = (n !== t.dataset.tab));
-    if(t.dataset.tab !== "canje") stopScan();
+    stopScan();
     if(t.dataset.tab === "canje") $("code").focus();
     if(t.dataset.tab === "entregas") pollEntregas();
   });
 
   // ---- visita ----
   function showCust(c){
+    clearReceipt();
     sel = c; $("res").innerHTML = ""; $("sel").hidden = false; $("q").value = "";
     const nx = CF.rewards.slice().sort((a, b) => a.pts - b.pts).find(w => w.pts > c.points);
     $("custBox").innerHTML = `<h3>${esc(c.name)}</h3><div class="meta">${esc(c.phone)} · código ${esc(c.code)}</div>
@@ -77,7 +78,7 @@
     const m = $("vMsg"), btn = $("doVisit"); m.className = "msg"; btn.disabled = true;
     try{
       const n = Number($("amount").value.replace(/\D/g, ""));
-      const r = await run(() => F.visit(tok, sel.id, n));
+      const r = rc ? await run(() => F.visitReceipt(tok, sel.id, rc.code)) : await run(() => F.visit(tok, sel.id, n));
       let t = `✓ ${r.customer.name} suma ${fmt(r.pts)} puntos. Total: ${fmt(r.customer.points)}.`;
       if(r.bonuses.length) t += ` Bono de invitación: +${fmt(r.bonuses[0].pts)} para cada uno.`;
       if(r.campaignEvent === "sent") t += " Aviso enviado al sistema de WhatsApp.";
@@ -122,22 +123,23 @@
   // el lector USB escribe el código y manda Enter: valida solo
   $("code").addEventListener("keydown", e => { if(e.key === "Enter") lookCode(); });
 
-  // ---- cámara (QR) ----
+  // ---- cámara (QR): sirve para el cupón y para el comprobante de pago ----
   let stream = null, scanRaf = 0;
   function stopScan(){
     cancelAnimationFrame(scanRaf);
     if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
-    const v = $("scanVideo"); if(v) v.srcObject = null;
-    $("scanBox").hidden = true;
+    ["scanVideo", "rcVideo"].forEach(id => { const v = $(id); if(v) v.srcObject = null; });
+    ["scanBox", "rcBox"].forEach(id => { const b = $(id); if(b) b.hidden = true; });
   }
-  async function startScan(){
-    const m = $("cMsg"); m.className = "msg"; m.textContent = "";
+  async function startScanner(o){
+    stopScan();
+    const m = $(o.msg); m.className = "msg"; m.textContent = "";
     if(!navigator.mediaDevices || !window.jsQR){ m.textContent = "Este navegador no permite usar la cámara."; m.className = "msg err"; return; }
     try{
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
     }catch(e){ m.textContent = "No se pudo abrir la cámara. Permití el acceso en el navegador."; m.className = "msg err"; return; }
-    const v = $("scanVideo"), cv = $("scanCanvas"), ctx = cv.getContext("2d", { willReadFrequently: true });
-    v.srcObject = stream; $("scanBox").hidden = false;
+    const v = $(o.video), cv = $(o.canvas), ctx = cv.getContext("2d", { willReadFrequently: true });
+    v.srcObject = stream; $(o.box).hidden = false;
     await v.play().catch(() => {});
     const loop = () => {
       if(!stream) return;
@@ -147,16 +149,46 @@
         const hit = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: "dontInvert" });
         if(hit && hit.data){
           const val = String(hit.data).trim().toUpperCase();
-          if(/^[A-Z0-9-]{3,30}$/.test(val)){ stopScan(); $("code").value = val; if(navigator.vibrate) navigator.vibrate(80); lookCode(); return; }
+          if(o.accept.test(val)){ stopScan(); if(navigator.vibrate) navigator.vibrate(80); o.onCode(val); return; }
         }
       }
       scanRaf = requestAnimationFrame(loop);
     };
     loop();
   }
-  $("scanBtn").onclick = startScan;
+  $("scanBtn").onclick = () => startScanner({ box: "scanBox", video: "scanVideo", canvas: "scanCanvas", msg: "cMsg", accept: /^[A-Z0-9-]{3,30}$/, onCode: val => { $("code").value = val; lookCode(); } });
   $("scanStop").onclick = stopScan;
 
+  // ---- comprobante de pago (registrar visita): el valor de la cuenta sale del comprobante ----
+  let rc = null;   // { code, amount }
+  function clearReceipt(){
+    rc = null; $("rcCode").value = ""; $("rcMsg").textContent = ""; $("rcMsg").className = "msg"; $("rcClear").hidden = true;
+    $("amount").readOnly = false; stopScan();
+  }
+  async function lookReceipt(){
+    const code = $("rcCode").value.replace(/[^A-Za-z0-9]/g, "").toUpperCase(), m = $("rcMsg");
+    if(code.length < 6) return;
+    m.className = "msg"; m.textContent = "Verificando…";
+    try{
+      const r = await run(() => F.receiptInfo(tok, code));
+      if(r.status === "ok"){
+        rc = { code: r.code || code, amount: Number(r.amount) };
+        $("amount").value = fmt(rc.amount); $("amount").readOnly = true;
+        const mult = F.multOf(Date.now());
+        $("prev").hidden = false; $("prev").textContent = `Suma ${fmt(F.calcPoints(rc.amount))} puntos${mult > 1 ? ` (hoy valen x${mult})` : ""}`;
+        m.className = "msg ok"; m.textContent = `✓ Comprobante válido: $${fmt(rc.amount)}. Tocá “Registrar visita”.`; $("rcClear").hidden = false;
+      }else{
+        rc = null; $("amount").readOnly = false;
+        m.className = "msg err";
+        m.textContent = r.status === "used" ? "Este comprobante ya fue usado." : r.status === "expired" ? "Este comprobante venció." : "No encontramos ese comprobante. Revisá el código.";
+      }
+    }catch(e){ m.className = "msg err"; m.textContent = e.message; }
+  }
+  $("rcScan").onclick = () => startScanner({ box: "rcBox", video: "rcVideo", canvas: "rcCanvas", msg: "rcMsg", accept: /^[A-Z0-9-]{6,16}$/, onCode: val => { $("rcCode").value = val; lookReceipt(); } });
+  $("rcStop").onclick = stopScan;
+  $("rcClear").onclick = () => { clearReceipt(); $("amount").value = ""; $("prev").hidden = true; };
+  // el lector USB escribe el código y manda Enter: valida solo
+  $("rcCode").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); lookReceipt(); } });
 
   // ---- alta rápida ----
   $("newForm").addEventListener("submit", async e => {
